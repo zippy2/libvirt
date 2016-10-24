@@ -947,7 +947,24 @@ virSecuritySELinuxSetFileconOptional(virSecurityManagerPtr mgr,
                                      const char *path, char *tcon)
 {
     bool privileged = virSecurityManagerGetPrivileged(mgr);
-    return virSecuritySELinuxSetFileconHelper(path, tcon, true, privileged);
+    virUdevMgrPtr udevMgr = virSecurityManagerGetUdevManager(mgr);
+    virSecurityDeviceLabelDefPtr seclabel = NULL;
+    int rc;
+
+    if (udevMgr &&
+        !(seclabel = virSecurityDeviceLabelDefNewLabel(SECURITY_SELINUX_NAME, tcon)))
+        return -1;
+
+    rc = virSecuritySELinuxSetFileconHelper(path, tcon, true, privileged);
+
+    if (udevMgr &&
+        virUdevMgrAddLabel(udevMgr, path, seclabel) < 0) {
+        virSecurityDeviceLabelDefFree(seclabel);
+        return -1;
+    }
+
+    virSecurityDeviceLabelDefFree(seclabel);
+    return rc;
 }
 
 static int
@@ -955,7 +972,24 @@ virSecuritySELinuxSetFilecon(virSecurityManagerPtr mgr,
                              const char *path, char *tcon)
 {
     bool privileged = virSecurityManagerGetPrivileged(mgr);
-    return virSecuritySELinuxSetFileconHelper(path, tcon, false, privileged);
+    virUdevMgrPtr udevMgr = virSecurityManagerGetUdevManager(mgr);
+    virSecurityDeviceLabelDefPtr seclabel = NULL;
+    int rc;
+
+    if (udevMgr &&
+        !(seclabel = virSecurityDeviceLabelDefNewLabel(SECURITY_SELINUX_NAME, tcon)))
+        return -1;
+
+    rc = virSecuritySELinuxSetFileconHelper(path, tcon, false, privileged);
+
+    if (udevMgr &&
+        virUdevMgrAddLabel(udevMgr, path, seclabel) < 0) {
+        virSecurityDeviceLabelDefFree(seclabel);
+        return -1;
+    }
+
+    virSecurityDeviceLabelDefFree(seclabel);
+    return rc;
 }
 
 static int
@@ -1018,6 +1052,8 @@ static int
 virSecuritySELinuxRestoreFileLabel(virSecurityManagerPtr mgr,
                                    const char *path)
 {
+    virUdevMgrPtr udevMgr = virSecurityManagerGetUdevManager(mgr);
+    bool privileged = virSecurityManagerGetPrivileged(mgr);
     struct stat buf;
     security_context_t fcon = NULL;
     int rc = -1;
@@ -1038,6 +1074,11 @@ virSecuritySELinuxRestoreFileLabel(virSecurityManagerPtr mgr,
         goto err;
     }
 
+    if (udevMgr) {
+        virUdevMgrRemoveAllLabels(udevMgr, path);
+        virUdevMgrRemoveAllLabels(udevMgr, newpath);
+    }
+
     if (stat(newpath, &buf) != 0) {
         VIR_WARN("cannot stat %s: %s", newpath,
                  virStrerror(errno, ebuf, sizeof(ebuf)));
@@ -1051,7 +1092,7 @@ virSecuritySELinuxRestoreFileLabel(virSecurityManagerPtr mgr,
         VIR_WARN("cannot lookup default selinux label for %s", newpath);
         rc = 0;
     } else {
-        rc = virSecuritySELinuxSetFilecon(mgr, newpath, fcon);
+        rc = virSecuritySELinuxSetFileconHelper(newpath, fcon, false, privileged);
     }
 
  err:

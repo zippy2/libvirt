@@ -39,6 +39,7 @@ struct _virSecurityManager {
     virSecurityDriverPtr drv;
     unsigned int flags;
     const char *virtDriver;
+    virUdevMgrPtr udevMgr;
     void *privateData;
 };
 
@@ -1000,4 +1001,19 @@ virSecurityManagerDomainSetPathLabel(virSecurityManagerPtr mgr,
     }
 
     return 0;
+}
+
+
+void
+virSecurityManagerSetUdevManager(virSecurityManagerPtr mgr,
+                                 virUdevMgrPtr udevMgr)
+{
+    mgr->udevMgr = virObjectRef(udevMgr);
+}
+
+
+virUdevMgrPtr
+virSecurityManagerGetUdevManager(virSecurityManagerPtr mgr)
+{
+    return mgr->udevMgr;
 }

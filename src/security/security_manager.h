@@ -26,6 +26,7 @@
 # include "domain_conf.h"
 # include "vircommand.h"
 # include "virstoragefile.h"
+# include "virudev.h"
 
 typedef struct _virSecurityManager virSecurityManager;
 typedef virSecurityManager *virSecurityManagerPtr;
@@ -163,5 +164,9 @@ int virSecurityManagerRestoreImageLabel(virSecurityManagerPtr mgr,
 int virSecurityManagerDomainSetPathLabel(virSecurityManagerPtr mgr,
                                          virDomainDefPtr vm,
                                          const char *path);
+
+void virSecurityManagerSetUdevManager(virSecurityManagerPtr mgr,
+                                      virUdevMgrPtr udevMgr);
+virUdevMgrPtr virSecurityManagerGetUdevManager(virSecurityManagerPtr mgr);
 
 #endif /* VIR_SECURITY_MANAGER_H__ */

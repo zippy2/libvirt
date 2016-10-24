@@ -356,7 +356,11 @@ virSecurityDACSetOwnership(virSecurityManagerPtr mgr,
                            gid_t gid)
 {
     virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
+    virUdevMgrPtr udevMgr = virSecurityManagerGetUdevManager(mgr);
+    virSecurityDeviceLabelDefPtr seclabel = NULL;
+    char *label = NULL;
     struct stat sb;
+    int ret = -1;
 
     if (!path && src && src->path &&
         virStorageSourceIsLocalStorage(src))
@@ -365,14 +369,36 @@ virSecurityDACSetOwnership(virSecurityManagerPtr mgr,
     if (path) {
         if (stat(path, &sb) < 0) {
             virReportSystemError(errno, _("unable to stat: %s"), path);
-            return -1;
+            return ret;
         }
 
         if (virSecurityDACRememberLabel(priv, path, sb.st_uid, sb.st_gid) < 0)
-            return -1;
+            return ret;
+
+        if (udevMgr) {
+            if (virAsprintf(&label, "%u %u",
+                            (unsigned int) uid,
+                            (unsigned int) gid) < 0)
+                goto cleanup;
+
+            if (!(seclabel = virSecurityDeviceLabelDefNewLabel(SECURITY_DAC_NAME, label)))
+                goto cleanup;
+            VIR_FREE(label);
+        }
     }
 
-    return virSecurityDACSetOwnershipInternal(priv, src, path, uid, gid);
+    if (virSecurityDACSetOwnershipInternal(priv, src, path, uid, gid) < 0)
+        goto cleanup;
+
+    if (udevMgr && path &&
+        virUdevMgrAddLabel(udevMgr, path, seclabel) < 0)
+        goto cleanup;
+
+    ret = 0;
+ cleanup:
+    VIR_FREE(label);
+    virSecurityDeviceLabelDefFree(seclabel);
+    return ret;
 }
 
 
@@ -382,6 +408,7 @@ virSecurityDACRestoreFileLabelInternal(virSecurityManagerPtr mgr,
                                        const char *path)
 {
     virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
+    virUdevMgrPtr udevMgr = virSecurityManagerGetUdevManager(mgr);
     int rv;
     uid_t uid = 0;  /* By default return to root:root */
     gid_t gid = 0;
@@ -399,6 +426,9 @@ virSecurityDACRestoreFileLabelInternal(virSecurityManagerPtr mgr,
             return -1;
         if (rv > 0)
             return 0;
+
+        if (udevMgr)
+            virUdevMgrRemoveAllLabels(udevMgr, path);
     }
 
     return virSecurityDACSetOwnershipInternal(priv, src, path, uid, gid);
