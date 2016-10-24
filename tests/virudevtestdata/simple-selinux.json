@@ -1,0 +1,13 @@
+{
+  "labels": [
+    {
+      "device": "/dev/sda",
+      "labels": [
+        {
+          "model": "selinux",
+          "label": "someSELinuxLabel"
+        }
+      ]
+    }
+  ]
+}

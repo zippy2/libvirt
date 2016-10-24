@@ -1,0 +1,30 @@
+{
+  "labels": [
+    {
+      "device": "/dev/sda",
+      "labels": [
+        {
+          "model": "dac",
+          "label": "someDACLabel"
+        },
+        {
+          "model": "selinux",
+          "label": "someSELinuxLabel"
+        }
+      ]
+    },
+    {
+      "device": "/dev/sdb",
+      "labels": [
+        {
+          "model": "dac",
+          "label": "otherDACLabel"
+        },
+        {
+          "model": "selinux",
+          "label": "otherSELinuxLabel"
+        }
+      ]
+    }
+  ]
+}

@@ -150,6 +150,7 @@ EXTRA_DIST =		\
 	virpcitestdata \
 	virscsidata \
 	virsh-uriprecedence \
+	virudevtestdata \
 	virusbtestdata \
 	vmwareverdata \
 	vmx2xmldata \
@@ -193,6 +194,7 @@ test_programs = virshtest sockettest \
 	vircaps2xmltest \
 	virnetdevtest \
 	virtypedparamtest \
+	virudevtest \
 	$(NULL)
 
 if WITH_REMOTE
@@ -406,6 +408,7 @@ test_libraries = libshunload.la \
 		virhostcpumock.la \
 		nssmock.la \
 		domaincapsmock.la \
+		virudevmock.la \
 		$(NULL)
 if WITH_QEMU
 test_libraries += libqemumonitortestutils.la \
@@ -1342,6 +1345,15 @@ objecteventtest_LDADD = $(LDADDS)
 virtypedparamtest_SOURCES = \
 	virtypedparamtest.c testutils.h testutils.c
 virtypedparamtest_LDADD = $(LDADDS)
+
+virudevtest_SOURCES = \
+	virudevtest.c testutils.h testutils.c
+virudevtest_LDADD = $(LDADDS)
+
+virudevmock_la_SOURCES = virudevmock.c
+virudevmock_la_CFLAGS = $(AM_CFLAGS)
+virudevmock_la_LDFLAGS = $(MOCKLIBS_LDFLAGS)
+virudevmock_la_LIBADD = $(MOCKLIBS_LIBS)
 
 
 if WITH_LINUX
