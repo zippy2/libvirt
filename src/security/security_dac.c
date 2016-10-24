@@ -377,10 +377,11 @@ virSecurityDACSetOwnership(virSecurityManagerPtr mgr,
 
 
 static int
-virSecurityDACRestoreFileLabelInternal(virSecurityDACDataPtr priv,
+virSecurityDACRestoreFileLabelInternal(virSecurityManagerPtr mgr,
                                        virStorageSourcePtr src,
                                        const char *path)
 {
+    virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
     int rv;
     uid_t uid = 0;  /* By default return to root:root */
     gid_t gid = 0;
@@ -405,10 +406,10 @@ virSecurityDACRestoreFileLabelInternal(virSecurityDACDataPtr priv,
 
 
 static int
-virSecurityDACRestoreFileLabel(virSecurityDACDataPtr priv,
+virSecurityDACRestoreFileLabel(virSecurityManagerPtr mgr,
                                const char *path)
 {
-    return virSecurityDACRestoreFileLabelInternal(priv, NULL, path);
+    return virSecurityDACRestoreFileLabelInternal(mgr, NULL, path);
 }
 
 
@@ -515,7 +516,7 @@ virSecurityDACRestoreImageLabelInt(virSecurityManagerPtr mgr,
         }
     }
 
-    return virSecurityDACRestoreFileLabelInternal(priv, src, NULL);
+    return virSecurityDACRestoreFileLabelInternal(mgr, src, NULL);
 }
 
 
@@ -693,8 +694,7 @@ virSecurityDACRestorePCILabel(virPCIDevicePtr dev ATTRIBUTE_UNUSED,
                               void *opaque)
 {
     virSecurityManagerPtr mgr = opaque;
-    virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
-    return virSecurityDACRestoreFileLabel(priv, file);
+    return virSecurityDACRestoreFileLabel(mgr, file);
 }
 
 
@@ -704,8 +704,7 @@ virSecurityDACRestoreUSBLabel(virUSBDevicePtr dev ATTRIBUTE_UNUSED,
                               void *opaque)
 {
     virSecurityManagerPtr mgr = opaque;
-    virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
-    return virSecurityDACRestoreFileLabel(priv, file);
+    return virSecurityDACRestoreFileLabel(mgr, file);
 }
 
 
@@ -715,8 +714,7 @@ virSecurityDACRestoreSCSILabel(virSCSIDevicePtr dev ATTRIBUTE_UNUSED,
                                void *opaque)
 {
     virSecurityManagerPtr mgr = opaque;
-    virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
-    return virSecurityDACRestoreFileLabel(priv, file);
+    return virSecurityDACRestoreFileLabel(mgr, file);
 }
 
 
@@ -908,7 +906,6 @@ virSecurityDACRestoreChardevLabel(virSecurityManagerPtr mgr,
                                   virDomainChrDefPtr dev,
                                   virDomainChrSourceDefPtr dev_source)
 {
-    virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
     virSecurityDeviceLabelDefPtr chr_seclabel = NULL;
     char *in = NULL, *out = NULL;
     int ret = -1;
@@ -923,7 +920,7 @@ virSecurityDACRestoreChardevLabel(virSecurityManagerPtr mgr,
     switch ((virDomainChrType) dev_source->type) {
     case VIR_DOMAIN_CHR_TYPE_DEV:
     case VIR_DOMAIN_CHR_TYPE_FILE:
-        ret = virSecurityDACRestoreFileLabel(priv, dev_source->data.file.path);
+        ret = virSecurityDACRestoreFileLabel(mgr, dev_source->data.file.path);
         break;
 
     case VIR_DOMAIN_CHR_TYPE_PIPE:
@@ -931,10 +928,10 @@ virSecurityDACRestoreChardevLabel(virSecurityManagerPtr mgr,
             virAsprintf(&in, "%s.in", dev_source->data.file.path) < 0)
             goto done;
         if (virFileExists(in) && virFileExists(out)) {
-            if (virSecurityDACRestoreFileLabel(priv, out) < 0 ||
-                virSecurityDACRestoreFileLabel(priv, in) < 0)
+            if (virSecurityDACRestoreFileLabel(mgr, out) < 0 ||
+                virSecurityDACRestoreFileLabel(mgr, in) < 0)
                 goto done;
-        } else if (virSecurityDACRestoreFileLabel(priv, dev_source->data.file.path) < 0) {
+        } else if (virSecurityDACRestoreFileLabel(mgr, dev_source->data.file.path) < 0) {
             goto done;
         }
         ret = 0;
@@ -1053,12 +1050,11 @@ virSecurityDACRestoreInputLabel(virSecurityManagerPtr mgr,
                                 virDomainDefPtr def ATTRIBUTE_UNUSED,
                                 virDomainInputDefPtr input)
 {
-    virSecurityDACDataPtr priv = virSecurityManagerGetPrivateData(mgr);
     int ret = -1;
 
     switch ((virDomainInputType) input->type) {
     case VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH:
-        ret = virSecurityDACRestoreFileLabel(priv, input->source.evdev);
+        ret = virSecurityDACRestoreFileLabel(mgr, input->source.evdev);
         break;
 
     case VIR_DOMAIN_INPUT_TYPE_MOUSE:
@@ -1126,7 +1122,7 @@ virSecurityDACRestoreAllLabel(virSecurityManagerPtr mgr,
     }
 
     if (def->os.loader && def->os.loader->nvram &&
-        virSecurityDACRestoreFileLabel(priv, def->os.loader->nvram) < 0)
+        virSecurityDACRestoreFileLabel(mgr, def->os.loader->nvram) < 0)
         rc = -1;
 
     return rc;
@@ -1257,7 +1253,7 @@ virSecurityDACRestoreSavedStateLabel(virSecurityManagerPtr mgr,
     if (!priv->dynamicOwnership)
         return 0;
 
-    return virSecurityDACRestoreFileLabel(priv, savefile);
+    return virSecurityDACRestoreFileLabel(mgr, savefile);
 }
 
 
