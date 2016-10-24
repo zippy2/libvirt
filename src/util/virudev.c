@@ -24,7 +24,9 @@
 
 #include "internal.h"
 #include "viralloc.h"
+#include "virfile.h"
 #include "virhash.h"
+#include "virjson.h"
 #include "virobject.h"
 #include "virudev.h"
 
@@ -109,6 +111,68 @@ udevSeclabelUpdate(udevSeclabelPtr list,
     }
 
     return -1;
+}
+
+
+static virJSONValuePtr
+udevSeclabelDump(const virSecurityDeviceLabelDef *seclabel)
+{
+    virJSONValuePtr object;
+
+    if (!(object = virJSONValueNewObject()) ||
+        virJSONValueObjectAppendString(object, "model", seclabel->model) < 0 ||
+        virJSONValueObjectAppendString(object, "label", seclabel->label) < 0)
+        goto error;
+
+    return object;
+
+ error:
+    virJSONValueFree(object);
+    return NULL;
+}
+
+
+static int
+udevSeclabelsDump(void *payload,
+                  const void *name,
+                  void *opaque)
+{
+    udevSeclabelPtr list = payload;
+    const char *device = name;
+    virJSONValuePtr seclabels = opaque;
+    virJSONValuePtr deviceLabels = NULL;
+    virJSONValuePtr deviceJSON = NULL;
+    size_t i;
+    int ret = -1;
+
+    if (!(deviceLabels = virJSONValueNewArray()))
+        return ret;
+
+    for (i = 0; i < list->nseclabels; i++) {
+        virJSONValuePtr seclabel = udevSeclabelDump(list->seclabels[i]);
+
+        if (!seclabel ||
+            virJSONValueArrayAppend(deviceLabels, seclabel) < 0) {
+            virJSONValueFree(seclabel);
+            goto cleanup;
+        }
+    }
+
+    if (!(deviceJSON = virJSONValueNewObject()) ||
+        virJSONValueObjectAppendString(deviceJSON, "device", device) < 0 ||
+        virJSONValueObjectAppend(deviceJSON, "labels", deviceLabels) < 0)
+        goto cleanup;
+    deviceLabels = NULL;
+
+    if (virJSONValueArrayAppend(seclabels, deviceJSON) < 0)
+        goto cleanup;
+    deviceJSON = NULL;
+
+    ret = 0;
+ cleanup:
+    virJSONValueFree(deviceJSON);
+    virJSONValueFree(deviceLabels);
+    return ret;
 }
 
 
@@ -200,5 +264,98 @@ virUdevMgrRemoveAllLabels(virUdevMgrPtr mgr,
     virObjectLock(mgr);
     ret = virHashRemoveEntry(mgr->labels, device);
     virObjectUnlock(mgr);
+    return ret;
+}
+
+
+static virJSONValuePtr
+virUdevSeclabelDump(virUdevMgrPtr mgr)
+{
+    virJSONValuePtr seclabels;
+
+    if (!(seclabels = virJSONValueNewArray()))
+        return NULL;
+
+    if (virHashForEach(mgr->labels, udevSeclabelsDump, seclabels) < 0) {
+        virJSONValueFree(seclabels);
+        return NULL;
+    }
+
+    return seclabels;
+}
+
+
+static char *
+virUdevMgrDumpInternal(virUdevMgrPtr mgr)
+{
+    virJSONValuePtr object = NULL;
+    virJSONValuePtr child = NULL;
+    char *ret = NULL;
+
+    if (!(object = virJSONValueNewObject()))
+        goto cleanup;
+
+    if (!(child = virUdevSeclabelDump(mgr)))
+        goto cleanup;
+
+    if (virJSONValueObjectAppend(object, "labels", child) < 0) {
+        virJSONValueFree(child);
+        goto cleanup;
+    }
+
+    ret = virJSONValueToString(object, true);
+ cleanup:
+    virJSONValueFree(object);
+    return ret;
+}
+
+
+char *
+virUdevMgrDumpStr(virUdevMgrPtr mgr)
+{
+    char *ret;
+
+    virObjectLock(mgr);
+    ret = virUdevMgrDumpInternal(mgr);
+    virObjectUnlock(mgr);
+    return ret;
+}
+
+
+static int
+virUdevMgrRewriter(int fd, void *opaque)
+{
+    const char *str = opaque;
+
+    return safewrite(fd, str, strlen(str));
+}
+
+
+int
+virUdevMgrDumpFile(virUdevMgrPtr mgr,
+                   const char *filename)
+{
+    int ret = -1;
+    char *state;
+
+    virObjectLock(mgr);
+
+    if (!(state = virUdevMgrDumpInternal(mgr)))
+        goto cleanup;
+
+    /* Here we shouldn't use pure virFileWriteStr() as that one is not atomic.
+     * We can be interrupted in the middle (e.g. due to a context switch) and
+     * thus leave the file partially written. */
+    if (virFileRewrite(filename, 0644, virUdevMgrRewriter, state) < 0) {
+        virReportSystemError(errno,
+                             _("Unable to save state file %s"),
+                             filename);
+        goto cleanup;
+    }
+
+    ret = 0;
+ cleanup:
+    virObjectUnlock(mgr);
+    VIR_FREE(state);
     return ret;
 }

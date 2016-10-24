@@ -36,4 +36,9 @@ int virUdevMgrAddLabel(virUdevMgrPtr mgr,
 int virUdevMgrRemoveAllLabels(virUdevMgrPtr mgr,
                               const char *device);
 
+char *virUdevMgrDumpStr(virUdevMgrPtr mgr);
+
+int virUdevMgrDumpFile(virUdevMgrPtr mgr,
+                       const char *filename);
+
 #endif
