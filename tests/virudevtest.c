@@ -93,6 +93,37 @@ testDump(const void *opaque)
 
 
 static int
+testParse(const void *opaque)
+{
+    const struct testUdevData *data = opaque;
+    virUdevMgrPtr mgr = NULL;
+    char *filename = NULL;
+    char *state = NULL;
+    int ret = -1;
+
+    if (virAsprintf(&filename, "%s/virudevtestdata/%s.json",
+                    abs_srcdir, data->file) < 0)
+        goto cleanup;
+
+    if (!(mgr = virUdevMgrNewFromFile(filename)))
+        goto cleanup;
+
+    if (!(state = virUdevMgrDumpStr(mgr)))
+        goto cleanup;
+
+    if (virTestCompareToFile(state, filename))
+        goto cleanup;
+
+    ret = 0;
+ cleanup:
+    VIR_FREE(state);
+    VIR_FREE(filename);
+    virObjectUnref(mgr);
+    return ret;
+}
+
+
+static int
 mymain(void)
 {
     int ret = 0;
@@ -107,6 +138,15 @@ mymain(void)
             ret = -1;                                               \
     } while (0)
 
+#define DO_TEST_PARSE(filename)                                     \
+    do {                                                            \
+        struct testUdevData data = {                                \
+            .file = filename,                                       \
+        };                                                          \
+        if (virTestRun("Parse " filename, testParse, &data) < 0)    \
+            ret = -1;                                               \
+    } while (0)
+
     DO_TEST_DUMP("empty", NULL);
     DO_TEST_DUMP("simple-selinux",
                  "/dev/sda", "selinux", "someSELinuxLabel");
@@ -117,6 +157,11 @@ mymain(void)
                  "/dev/sda", "selinux", "someSELinuxLabel",
                  "/dev/sdb", "dac",     "otherDACLabel",
                  "/dev/sdb", "selinux", "otherSELinuxLabel");
+
+    DO_TEST_PARSE("empty");
+    DO_TEST_PARSE("simple-selinux");
+    DO_TEST_PARSE("simple-dac");
+    DO_TEST_PARSE("complex");
 
     return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

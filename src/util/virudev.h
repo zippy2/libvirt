@@ -29,6 +29,8 @@ typedef struct _virUdevMgr virUdevMgr;
 typedef virUdevMgr *virUdevMgrPtr;
 
 virUdevMgrPtr virUdevMgrNew(void);
+virUdevMgrPtr virUdevMgrNewFromStr(const char *str);
+virUdevMgrPtr virUdevMgrNewFromFile(const char *filename);
 
 int virUdevMgrAddLabel(virUdevMgrPtr mgr,
                        const char *device,

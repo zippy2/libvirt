@@ -2578,6 +2578,8 @@ virUdevMgrAddLabel;
 virUdevMgrDumpFile;
 virUdevMgrDumpStr;
 virUdevMgrNew;
+virUdevMgrNewFromFile;
+virUdevMgrNewFromStr;
 virUdevMgrRemoveAllLabels;
 
 

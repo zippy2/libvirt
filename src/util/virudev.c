@@ -28,6 +28,7 @@
 #include "virhash.h"
 #include "virjson.h"
 #include "virobject.h"
+#include "virstring.h"
 #include "virudev.h"
 
 #define VIR_FROM_THIS VIR_FROM_SECURITY
@@ -173,6 +174,49 @@ udevSeclabelsDump(void *payload,
     virJSONValueFree(deviceJSON);
     virJSONValueFree(deviceLabels);
     return ret;
+}
+
+
+static udevSeclabelPtr
+udevSeclabelRestore(virJSONValuePtr labels)
+{
+    udevSeclabelPtr ret = NULL;
+    size_t i;
+
+    if (VIR_ALLOC(ret) < 0)
+        goto error;
+
+    for (i = 0; i < virJSONValueArraySize(labels); i++) {
+        virJSONValuePtr labelJSON = virJSONValueArrayGet(labels, i);
+        virSecurityDeviceLabelDefPtr seclabel;
+        const char *model;
+        const char *label;
+
+        if (!(model = virJSONValueObjectGetString(labelJSON, "model"))) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("seclabel missing model in JSON"));
+            goto error;
+        }
+
+        if (!(label = virJSONValueObjectGetString(labelJSON, "label"))) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("seclabel missing label in JSON"));
+            goto error;
+        }
+
+        if (!(seclabel = virSecurityDeviceLabelDefNewLabel(model, label)) ||
+            udevSeclabelAppend(ret, seclabel) < 0) {
+            virSecurityDeviceLabelDefFree(seclabel);
+            goto error;
+        }
+        virSecurityDeviceLabelDefFree(seclabel);
+    }
+
+    return ret;
+
+ error:
+    udevSeclabelFree(ret, NULL);
+    return NULL;
 }
 
 
@@ -358,4 +402,119 @@ virUdevMgrDumpFile(virUdevMgrPtr mgr,
     virObjectUnlock(mgr);
     VIR_FREE(state);
     return ret;
+}
+
+
+static int
+virUdevRestoreLabels(virUdevMgrPtr mgr ATTRIBUTE_UNUSED,
+                     virJSONValuePtr labelsArray)
+{
+    int ret = -1;
+    size_t i;
+    udevSeclabelPtr list = NULL;
+
+    for (i = 0; i < virJSONValueArraySize(labelsArray); i++) {
+        virJSONValuePtr deviceJSON = virJSONValueArrayGet(labelsArray, i);
+        virJSONValuePtr labels;
+        const char *device;
+
+        if (!(device = virJSONValueObjectGetString(deviceJSON, "device"))) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("Missing device name"));
+            goto cleanup;
+        }
+
+        if (!(labels = virJSONValueObjectGetArray(deviceJSON, "labels"))) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("Missing device labels array"));
+            goto cleanup;
+        }
+
+        if (!(list = udevSeclabelRestore(labels))) {
+            virReportError(VIR_ERR_INTERNAL_ERROR,
+                           _("Malformed seclabels for device %s"), device);
+            goto cleanup;
+        }
+
+        if (virHashAddEntry(mgr->labels, device, list) < 0)
+            goto cleanup;
+        list = NULL;
+    }
+
+    ret = 0;
+ cleanup:
+    udevSeclabelFree(list, NULL);
+    return ret;
+}
+
+
+static int
+virUdevMgrNewFromStrInternal(virUdevMgrPtr mgr,
+                             const char *state)
+{
+    virJSONValuePtr object;
+    virJSONValuePtr child;
+    int ret = -1;
+
+    if (!(object = virJSONValueFromString(state)))
+        goto cleanup;
+
+    if (!(child = virJSONValueObjectGetArray(object, "labels"))) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("Missing 'labels' object in JSON document"));
+        goto cleanup;
+    }
+
+    if (virUdevRestoreLabels(mgr, child) < 0)
+        goto cleanup;
+
+    ret = 0;
+ cleanup:
+    virJSONValueFree(object);
+    return ret;
+}
+
+
+virUdevMgrPtr
+virUdevMgrNewFromStr(const char *str)
+{
+    virUdevMgrPtr mgr;
+
+    if (!(mgr = virUdevMgrNew()))
+        goto error;
+
+    if (virUdevMgrNewFromStrInternal(mgr, str) < 0)
+        goto error;
+
+    return mgr;
+ error:
+    virObjectUnref(mgr);
+    return NULL;
+}
+
+
+virUdevMgrPtr
+virUdevMgrNewFromFile(const char *filename)
+{
+    virUdevMgrPtr mgr;
+    char *state = NULL;
+
+    if (!(mgr = virUdevMgrNew()))
+        goto error;
+
+    if (virFileReadAll(filename,
+                       1024 * 1024 * 10, /* 10 MB */
+                       &state) < 0)
+        goto error;
+
+    if (virUdevMgrNewFromStrInternal(mgr, state) < 0)
+        goto error;
+
+    VIR_FREE(state);
+
+    return mgr;
+ error:
+    virObjectUnref(mgr);
+    VIR_FREE(state);
+    return NULL;
 }
