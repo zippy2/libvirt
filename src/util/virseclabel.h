@@ -64,6 +64,10 @@ virSecurityDeviceLabelDefPtr
 virSecurityDeviceLabelDefNew(const char *model);
 
 virSecurityDeviceLabelDefPtr
+virSecurityDeviceLabelDefNewLabel(const char *model,
+                                  const char *label);
+
+virSecurityDeviceLabelDefPtr
 virSecurityDeviceLabelDefCopy(const virSecurityDeviceLabelDef *src)
     ATTRIBUTE_NONNULL(1);
 

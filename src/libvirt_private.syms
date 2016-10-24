@@ -2303,6 +2303,7 @@ virSCSIDeviceSetUsedBy;
 # util/virseclabel.h
 virSecurityDeviceLabelDefFree;
 virSecurityDeviceLabelDefNew;
+virSecurityDeviceLabelDefNewLabel;
 virSecurityLabelDefFree;
 virSecurityLabelDefNew;
 

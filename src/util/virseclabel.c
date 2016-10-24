@@ -83,6 +83,20 @@ virSecurityDeviceLabelDefNew(const char *model)
     return seclabel;
 }
 
+virSecurityDeviceLabelDefPtr
+virSecurityDeviceLabelDefNewLabel(const char *model,
+                                  const char *label)
+{
+    virSecurityDeviceLabelDefPtr seclabel;
+
+    if (!(seclabel = virSecurityDeviceLabelDefNew(model)) ||
+        VIR_STRDUP(seclabel->label, label) < 0) {
+        virSecurityDeviceLabelDefFree(seclabel);
+        seclabel = NULL;
+    }
+
+    return seclabel;
+}
 
 virSecurityDeviceLabelDefPtr
 virSecurityDeviceLabelDefCopy(const virSecurityDeviceLabelDef *src)
