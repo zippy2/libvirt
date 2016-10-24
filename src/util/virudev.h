@@ -23,9 +23,17 @@
 #ifndef __VIR_UDEV_H__
 # define __VIR_UDEV_H__
 
+# include "virseclabel.h"
+
 typedef struct _virUdevMgr virUdevMgr;
 typedef virUdevMgr *virUdevMgrPtr;
 
 virUdevMgrPtr virUdevMgrNew(void);
+
+int virUdevMgrAddLabel(virUdevMgrPtr mgr,
+                       const char *device,
+                       const virSecurityDeviceLabelDef *seclabel);
+int virUdevMgrRemoveAllLabels(virUdevMgrPtr mgr,
+                              const char *device);
 
 #endif
