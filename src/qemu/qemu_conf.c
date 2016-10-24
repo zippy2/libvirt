@@ -795,6 +795,9 @@ int virQEMUDriverConfigLoadFile(virQEMUDriverConfigPtr cfg,
         }
     }
 
+    if (virConfGetValueBool(conf, "write_udev", &cfg->writeUdev) < 0)
+        goto cleanup;
+
     ret = 0;
 
  cleanup:

@@ -378,6 +378,10 @@ qemuSecurityInit(virQEMUDriverPtr driver)
     virQEMUDriverConfigPtr cfg = virQEMUDriverGetConfig(driver);
     unsigned int flags = 0;
 
+    if (cfg->writeUdev &&
+        !(driver->udevMgr = virUdevMgrNew()))
+        goto error;
+
     if (cfg->allowDiskFormatProbing)
         flags |= VIR_SECURITY_MANAGER_ALLOW_DISK_PROBE;
     if (cfg->securityDefaultConfined)
@@ -395,6 +399,7 @@ qemuSecurityInit(virQEMUDriverPtr driver)
                                               QEMU_DRIVER_NAME,
                                               flags)))
                 goto error;
+            virSecurityManagerSetUdevManager(mgr, driver->udevMgr);
             if (!stack) {
                 if (!(stack = virSecurityManagerNewStack(mgr)))
                     goto error;
@@ -410,6 +415,7 @@ qemuSecurityInit(virQEMUDriverPtr driver)
                                           QEMU_DRIVER_NAME,
                                           flags)))
             goto error;
+        virSecurityManagerSetUdevManager(mgr, driver->udevMgr);
         if (!(stack = virSecurityManagerNewStack(mgr)))
             goto error;
         mgr = NULL;
@@ -424,6 +430,7 @@ qemuSecurityInit(virQEMUDriverPtr driver)
                                              flags,
                                              qemuSecurityChownCallback)))
             goto error;
+        virSecurityManagerSetUdevManager(mgr, driver->udevMgr);
         if (!stack) {
             if (!(stack = virSecurityManagerNewStack(mgr)))
                 goto error;
@@ -1091,6 +1098,7 @@ qemuStateCleanup(void)
     VIR_FREE(qemu_driver->qemuImgBinary);
 
     virObjectUnref(qemu_driver->securityManager);
+    virObjectUnref(qemu_driver->udevMgr);
 
     ebtablesContextFree(qemu_driver->ebtables);
 

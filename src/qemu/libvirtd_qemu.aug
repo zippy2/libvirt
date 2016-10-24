@@ -70,6 +70,7 @@ module Libvirtd_qemu =
                  | str_array_entry "cgroup_controllers"
                  | str_array_entry "cgroup_device_acl"
                  | int_entry "seccomp_sandbox"
+                 | bool_entry "write_udev"
 
    let save_entry =  str_entry "save_image_format"
                  | str_entry "dump_image_format"

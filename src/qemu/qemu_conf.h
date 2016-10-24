@@ -192,6 +192,8 @@ struct _virQEMUDriverConfig {
 
     virFirmwarePtr *firmwares;
     size_t nfirmwares;
+
+    bool writeUdev;
 };
 
 /* Main driver state */
@@ -269,6 +271,9 @@ struct _virQEMUDriver {
 
     /* Immutable pointer, self-locking APIs */
     virHashAtomicPtr migrationErrors;
+
+    /* Immutable pointer, self-locking APIs*/
+    virUdevMgrPtr udevMgr;
 };
 
 typedef struct _qemuDomainCmdlineDef qemuDomainCmdlineDef;

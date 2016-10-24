@@ -33,6 +33,7 @@ module Test_libvirtd_qemu =
 { "security_driver" = "selinux" }
 { "security_default_confined" = "1" }
 { "security_require_confined" = "1" }
+{ "write_udev" = "1" }
 { "user" = "root" }
 { "group" = "root" }
 { "dynamic_ownership" = "1" }
