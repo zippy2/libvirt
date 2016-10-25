@@ -113,6 +113,9 @@ qemuDomainPrepareDisk(virQEMUDriverPtr driver,
                                        vm->def, disk) < 0)
         goto rollback_lock;
 
+    if (qemuProcessFlushUdev(driver) < 0)
+        goto rollback_label;
+
     if (qemuSetupDiskCgroup(vm, disk) < 0)
         goto rollback_label;
 
@@ -129,6 +132,9 @@ qemuDomainPrepareDisk(virQEMUDriverPtr driver,
                                            vm->def, disk) < 0)
         VIR_WARN("Unable to restore security label on %s",
                  virDomainDiskGetSource(disk));
+
+    if (qemuProcessFlushUdev(driver) < 0)
+        VIR_WARN("Unable to clean up udev rules");
 
  rollback_lock:
     if (virDomainLockDiskDetach(driver->lockManager, vm, disk) < 0)
@@ -1406,6 +1412,8 @@ qemuDomainAttachHostPCIDevice(virQEMUDriverPtr driver,
         goto error;
     if (backend != VIR_DOMAIN_HOSTDEV_PCI_BACKEND_VFIO)
         teardownlabel = true;
+    if (qemuProcessFlushUdev(driver) < 0)
+        goto error;
 
     if (qemuAssignDeviceHostdevAlias(vm->def, &hostdev->info->alias, -1) < 0)
         goto error;
@@ -1455,10 +1463,10 @@ qemuDomainAttachHostPCIDevice(virQEMUDriverPtr driver,
     if (teardowncgroup && qemuTeardownHostdevCgroup(vm, hostdev) < 0)
         VIR_WARN("Unable to remove host device cgroup ACL on hotplug fail");
     if (teardownlabel &&
-        virSecurityManagerRestoreHostdevLabel(driver->securityManager,
-                                              vm->def, hostdev, NULL) < 0)
+        (virSecurityManagerRestoreHostdevLabel(driver->securityManager,
+                                               vm->def, hostdev, NULL) < 0 ||
+         qemuProcessFlushUdev(driver) < 0))
         VIR_WARN("Unable to restore host device labelling on hotplug fail");
-
     if (releaseaddr)
         qemuDomainReleaseDeviceAddress(vm, hostdev->info, NULL);
 
@@ -2157,6 +2165,8 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
                                           vm->def, hostdev, NULL) < 0)
         goto cleanup;
     teardownlabel = true;
+    if (qemuProcessFlushUdev(driver) < 0)
+        goto cleanup;
 
     if (qemuAssignDeviceHostdevAlias(vm->def, &hostdev->info->alias, -1) < 0)
         goto cleanup;
@@ -2184,8 +2194,9 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
         if (teardowncgroup && qemuTeardownHostdevCgroup(vm, hostdev) < 0)
             VIR_WARN("Unable to remove host device cgroup ACL on hotplug fail");
         if (teardownlabel &&
-            virSecurityManagerRestoreHostdevLabel(driver->securityManager,
-                                                  vm->def, hostdev, NULL) < 0)
+            (virSecurityManagerRestoreHostdevLabel(driver->securityManager,
+                                                   vm->def, hostdev, NULL) < 0 ||
+             qemuProcessFlushUdev(driver) < 0))
             VIR_WARN("Unable to restore host device labelling on hotplug fail");
         if (added)
             qemuHostdevReAttachUSBDevices(driver, vm->def->name, &hostdev, 1);
@@ -2259,6 +2270,9 @@ qemuDomainAttachHostSCSIDevice(virConnectPtr conn,
         goto cleanup;
     teardownlabel = true;
 
+    if (qemuProcessFlushUdev(driver) < 0)
+        goto cleanup;
+
     if (qemuAssignDeviceHostdevAlias(vm->def, &hostdev->info->alias, -1) < 0)
         goto cleanup;
 
@@ -2302,8 +2316,9 @@ qemuDomainAttachHostSCSIDevice(virConnectPtr conn,
         if (teardowncgroup && qemuTeardownHostdevCgroup(vm, hostdev) < 0)
             VIR_WARN("Unable to remove host device cgroup ACL on hotplug fail");
         if (teardownlabel &&
-            virSecurityManagerRestoreHostdevLabel(driver->securityManager,
-                                                  vm->def, hostdev, NULL) < 0)
+            (virSecurityManagerRestoreHostdevLabel(driver->securityManager,
+                                                   vm->def, hostdev, NULL) < 0 ||
+             qemuProcessFlushUdev(driver) < 0))
             VIR_WARN("Unable to restore host device labelling on hotplug fail");
     }
     VIR_FREE(drivealias);
@@ -3209,6 +3224,9 @@ qemuDomainRemoveDiskDevice(virQEMUDriverPtr driver,
                                            vm->def, disk) < 0)
         VIR_WARN("Unable to restore security label on %s", src);
 
+    if (qemuProcessFlushUdev(driver) < 0)
+        VIR_WARN("Unable to clean up udev rules");
+
     if (qemuTeardownDiskCgroup(vm, disk) < 0)
         VIR_WARN("Failed to tear down cgroup for disk path %s", src);
 
@@ -3386,6 +3404,9 @@ qemuDomainRemoveHostDevice(virQEMUDriverPtr driver,
         virSecurityManagerRestoreHostdevLabel(driver->securityManager,
                                               vm->def, hostdev, NULL) < 0)
         VIR_WARN("Failed to restore host device labelling");
+
+    if (qemuProcessFlushUdev(driver) < 0)
+        VIR_WARN("Unable to clean up udev rules");
 
     if (qemuTeardownHostdevCgroup(vm, hostdev) < 0)
         VIR_WARN("Failed to remove host device cgroup ACL");

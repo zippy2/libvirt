@@ -3864,8 +3864,11 @@ qemuDomainScreenshot(virDomainPtr dom,
 
  endjob:
     VIR_FORCE_CLOSE(tmp_fd);
-    if (unlink_tmp)
+    if (unlink_tmp) {
+        virSecurityManagerRestoreSavedStateLabel(driver->securityManager, vm->def, tmp);
+        qemuProcessFlushUdev(driver);
         unlink(tmp);
+    }
     VIR_FREE(tmp);
 
     qemuDomainObjEndJob(driver, vm);
@@ -6682,6 +6685,7 @@ qemuDomainSaveImageStartVM(virConnectPtr conn,
     if (virSecurityManagerRestoreSavedStateLabel(driver->securityManager,
                                                  vm->def, path) < 0)
         VIR_WARN("failed to restore save state label on %s", path);
+    qemuProcessFlushUdev(driver);
     virObjectUnref(cfg);
     return ret;
 }
@@ -16071,7 +16075,8 @@ qemuDomainBlockPivot(virQEMUDriverPtr driver,
                                      disk) < 0 ||
              qemuSetupDiskCgroup(vm, disk) < 0 ||
              virSecurityManagerSetDiskLabel(driver->securityManager, vm->def,
-                                            disk) < 0))
+                                            disk) < 0 ||
+             qemuProcessFlushUdev(driver) < 0))
             goto cleanup;
 
         disk->src = oldsrc;

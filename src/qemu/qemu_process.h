@@ -191,4 +191,7 @@ int qemuProcessRefreshDisks(virQEMUDriverPtr driver,
                             virDomainObjPtr vm,
                             qemuDomainAsyncJob asyncJob);
 
+char * qemuProcessGetUdevPath(virQEMUDriverPtr driver);
+int qemuProcessFlushUdev(virQEMUDriverPtr driver);
+
 #endif /* __QEMU_PROCESS_H__ */

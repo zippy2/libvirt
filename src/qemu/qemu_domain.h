@@ -710,7 +710,8 @@ int qemuDomainWriteMasterKeyFile(virQEMUDriverPtr driver,
 
 int qemuDomainMasterKeyCreate(virDomainObjPtr vm);
 
-void qemuDomainMasterKeyRemove(qemuDomainObjPrivatePtr priv);
+void qemuDomainMasterKeyRemove(virQEMUDriverPtr driver,
+                               qemuDomainObjPrivatePtr priv);
 
 void qemuDomainSecretDiskDestroy(virDomainDiskDefPtr disk)
     ATTRIBUTE_NONNULL(1);

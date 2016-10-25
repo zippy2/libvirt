@@ -5498,6 +5498,9 @@ qemuProcessLaunch(virConnectPtr conn,
      */
     ret = -2;
 
+    if (qemuProcessFlushUdev(driver) < 0)
+        goto cleanup;
+
     if (incoming && incoming->fd != -1) {
         /* if there's an fd to migrate from, and it's a pipe, put the
          * proper security label on it
@@ -5997,10 +6000,14 @@ void qemuProcessStop(virQEMUDriverPtr driver,
     }
 
     /* Remove the master key */
-    qemuDomainMasterKeyRemove(priv);
+    qemuDomainMasterKeyRemove(driver, priv);
 
     virFileDeleteTree(priv->libDir);
     virFileDeleteTree(priv->channelTargetDir);
+    if (driver->udevMgr) {
+        virUdevMgrRemoveAllLabels(driver->udevMgr, priv->libDir);
+        virUdevMgrRemoveAllLabels(driver->udevMgr, priv->channelTargetDir);
+    }
 
     qemuDomainClearPrivatePaths(vm);
 
@@ -6032,10 +6039,12 @@ void qemuProcessStop(virQEMUDriverPtr driver,
     }
 
     /* Reset Security Labels unless caller don't want us to */
-    if (!(flags & VIR_QEMU_PROCESS_STOP_NO_RELABEL))
+    if (!(flags & VIR_QEMU_PROCESS_STOP_NO_RELABEL)) {
         virSecurityManagerRestoreAllLabel(driver->securityManager,
                                           vm->def,
                                           !!(flags & VIR_QEMU_PROCESS_STOP_MIGRATED));
+        qemuProcessFlushUdev(driver);
+    }
     virSecurityManagerReleaseLabel(driver->securityManager, vm->def);
 
     for (i = 0; i < vm->def->ndisks; i++) {
@@ -6584,5 +6593,39 @@ qemuProcessRefreshDisks(virQEMUDriverPtr driver,
 
  cleanup:
     virHashFree(table);
+    return ret;
+}
+
+
+char *
+qemuProcessGetUdevPath(virQEMUDriverPtr driver)
+{
+    virQEMUDriverConfigPtr cfg = virQEMUDriverGetConfig(driver);
+    char *file;
+
+    ignore_value(virAsprintf(&file, "%s/devices.udev", cfg->stateDir));
+    virObjectUnref(cfg);
+    return file;
+}
+
+
+int
+qemuProcessFlushUdev(virQEMUDriverPtr driver)
+{
+    char *file = NULL;
+    int ret = -1;
+
+    if (!driver->udevMgr)
+        return 0;
+
+    if (!(file = qemuProcessGetUdevPath(driver)))
+        goto cleanup;
+
+    if (virUdevMgrDumpFile(driver->udevMgr, file) < 0)
+        goto cleanup;
+
+    ret = 0;
+ cleanup:
+    VIR_FREE(file);
     return ret;
 }

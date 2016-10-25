@@ -641,13 +641,15 @@ qemuDomainMasterKeyReadFile(qemuDomainObjPrivatePtr priv)
 
 
 /* qemuDomainMasterKeyRemove:
+ * @driver: qemu driver data
  * @priv: Pointer to the domain private object
  *
  * Remove the traces of the master key, clear the heap, clear the file,
  * delete the file.
  */
 void
-qemuDomainMasterKeyRemove(qemuDomainObjPrivatePtr priv)
+qemuDomainMasterKeyRemove(virQEMUDriverPtr driver,
+                          qemuDomainObjPrivatePtr priv)
 {
     char *path = NULL;
 
@@ -660,6 +662,8 @@ qemuDomainMasterKeyRemove(qemuDomainObjPrivatePtr priv)
     /* Delete the master key file */
     path = qemuDomainGetMasterKeyFilePath(priv->libDir);
     unlink(path);
+    if (driver->udevMgr)
+        virUdevMgrRemoveAllLabels(driver->udevMgr, path);
 
     VIR_FREE(path);
 }
@@ -4762,6 +4766,9 @@ qemuDomainDiskChainElementRevoke(virQEMUDriverPtr driver,
                                             vm->def, elem) < 0)
         VIR_WARN("Unable to restore security label on %s", NULLSTR(elem->path));
 
+    if (qemuProcessFlushUdev(driver) < 0)
+        VIR_WARN("Unable to clean up udev rules");
+
     if (qemuTeardownImageCgroup(vm, elem) < 0)
         VIR_WARN("Failed to teardown cgroup for disk path %s",
                  NULLSTR(elem->path));
@@ -4799,6 +4806,9 @@ qemuDomainDiskChainElementPrepare(virQEMUDriverPtr driver,
 
     if (virSecurityManagerSetImageLabel(driver->securityManager, vm->def,
                                         elem) < 0)
+        goto cleanup;
+
+    if (qemuProcessFlushUdev(driver) < 0)
         goto cleanup;
 
     ret = 0;
