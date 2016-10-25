@@ -1630,6 +1630,7 @@ exit 0
 %dir %attr(0700, root, root) %{_localstatedir}/log/libvirt/
 
 %attr(0755, root, root) %{_libexecdir}/libvirt_iohelper
+%attr(0755, root, root) %{_libexecdir}/libvirt_udevhelper
 
 %attr(0755, root, root) %{_sbindir}/libvirtd
 %attr(0755, root, root) %{_sbindir}/virtlogd

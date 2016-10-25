@@ -1007,6 +1007,9 @@ STORAGE_HELPER_DISK_SOURCES =					\
 UTIL_IO_HELPER_SOURCES =					\
 		util/iohelper.c
 
+UTIL_UDEV_HELPER_SOURCES =						\
+		util/udevhelper.c
+
 NETWORK_LEASES_HELPER_SOURCES =                                 \
                network/leaseshelper.c
 
@@ -2857,6 +2860,23 @@ libvirt_iohelper_CFLAGS = \
 		$(AM_CFLAGS) \
 		$(PIE_CFLAGS) \
 		$(NULL)
+
+libexec_PROGRAMS += libvirt_udevhelper
+libvirt_udevhelper_SOURCES = $(UTIL_UDEV_HELPER_SOURCES)
+libvirt_udevhelper_CFLAGS = \
+		$(AM_CFLAGS) \
+		$(PIE_CFLAGS) \
+		$(NULL)
+libvirt_udevhelper_LDFLAGS = \
+		$(AM_LDFLAGS) \
+		$(PIE_LDFLAGS) \
+		$(NULL)
+libvirt_udevhelper_LDADD =		\
+		libvirt_util.la		\
+		../gnulib/lib/libgnu.la
+if WITH_DTRACE_PROBES
+libvirt_udevhelper_LDADD += libvirt_probes.lo
+endif WITH_DTRACE_PROBES
 
 if WITH_NETWORK
 libexec_PROGRAMS += libvirt_leaseshelper
