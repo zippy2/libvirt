@@ -124,6 +124,76 @@ testParse(const void *opaque)
 
 
 static int
+testLookup(const void *opaque)
+{
+    const struct testUdevData *data = opaque;
+    virUdevMgrPtr mgr = NULL;
+    int ret = -1;
+    const char * const *tmp;
+    char *filename = NULL;
+    virSecurityDeviceLabelDefPtr *seclabels = NULL;
+    size_t i, nseclabels = 0;
+
+    if (virAsprintf(&filename, "%s/virudevtestdata/%s.json",
+                    abs_srcdir, data->file) < 0)
+        goto cleanup;
+
+    if (!(mgr = virUdevMgrNewFromFile(filename)))
+        goto cleanup;
+
+    tmp = data->labels;
+    while (*tmp) {
+        const char *device;
+        const char *model;
+        const char *label;
+
+        device = *tmp;
+        if (!++tmp) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s", "Invalid seclabels list");
+            goto cleanup;
+        }
+        model = *tmp;
+        if (!++tmp) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s", "Invalid seclabels list");
+            goto cleanup;
+        }
+        label = *tmp;
+        tmp++;
+
+        if (virUdevMgrLookupLabels(mgr, device, &seclabels, &nseclabels) < 0)
+            goto cleanup;
+
+        for (i = 0; i < nseclabels; i++) {
+            virSecurityDeviceLabelDefPtr seclabel = seclabels[i];
+
+            if (STREQ(seclabel->model, model) &&
+                STREQ(seclabel->label, label))
+                break;
+        }
+
+        if (i == nseclabels) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s", "Label not found");
+            goto cleanup;
+        }
+
+        for (i = 0; i < nseclabels; i++)
+            virSecurityDeviceLabelDefFree(seclabels[i]);
+        VIR_FREE(seclabels);
+        nseclabels = 0;
+    }
+
+    ret = 0;
+ cleanup:
+    for (i = 0; i < nseclabels; i++)
+        virSecurityDeviceLabelDefFree(seclabels[i]);
+    VIR_FREE(seclabels);
+    VIR_FREE(filename);
+    virObjectUnref(mgr);
+    return ret;
+}
+
+
+static int
 mymain(void)
 {
     int ret = 0;
@@ -147,6 +217,16 @@ mymain(void)
             ret = -1;                                               \
     } while (0)
 
+#define DO_TEST_LOOKUP(filename, ...)                               \
+    do {                                                            \
+        const char *labels[] = {__VA_ARGS__, NULL};                 \
+        struct testUdevData data = {                                \
+            .file = filename, .labels = labels,                     \
+        };                                                          \
+        if (virTestRun("Lookup " filename, testLookup, &data) < 0)  \
+            ret = -1;                                               \
+    } while (0)
+
     DO_TEST_DUMP("empty", NULL);
     DO_TEST_DUMP("simple-selinux",
                  "/dev/sda", "selinux", "someSELinuxLabel");
@@ -162,6 +242,17 @@ mymain(void)
     DO_TEST_PARSE("simple-selinux");
     DO_TEST_PARSE("simple-dac");
     DO_TEST_PARSE("complex");
+
+    DO_TEST_LOOKUP("empty", NULL);
+    DO_TEST_LOOKUP("simple-selinux",
+                   "/dev/sda", "selinux", "someSELinuxLabel");
+    DO_TEST_LOOKUP("simple-dac",
+                   "/dev/sda", "dac", "someDACLabel");
+    DO_TEST_LOOKUP("complex",
+                   "/dev/sda", "dac",     "someDACLabel",
+                   "/dev/sda", "selinux", "someSELinuxLabel",
+                   "/dev/sdb", "dac",     "otherDACLabel",
+                   "/dev/sdb", "selinux", "otherSELinuxLabel");
 
     return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

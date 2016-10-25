@@ -37,6 +37,10 @@ int virUdevMgrAddLabel(virUdevMgrPtr mgr,
                        const virSecurityDeviceLabelDef *seclabel);
 int virUdevMgrRemoveAllLabels(virUdevMgrPtr mgr,
                               const char *device);
+int virUdevMgrLookupLabels(virUdevMgrPtr mgr,
+                           const char *device,
+                           virSecurityDeviceLabelDefPtr **seclabels,
+                           size_t *nseclabels);
 
 char *virUdevMgrDumpStr(virUdevMgrPtr mgr);
 

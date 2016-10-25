@@ -2577,6 +2577,7 @@ virTypedParamsValidate;
 virUdevMgrAddLabel;
 virUdevMgrDumpFile;
 virUdevMgrDumpStr;
+virUdevMgrLookupLabels;
 virUdevMgrNew;
 virUdevMgrNewFromFile;
 virUdevMgrNewFromStr;

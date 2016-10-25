@@ -300,6 +300,49 @@ virUdevMgrAddLabel(virUdevMgrPtr mgr,
 
 
 int
+virUdevMgrLookupLabels(virUdevMgrPtr mgr,
+                       const char *device,
+                       virSecurityDeviceLabelDefPtr **seclabels,
+                       size_t *nseclabels)
+{
+    int ret = -1;
+    udevSeclabelPtr list;
+    size_t i;
+
+    virObjectLock(mgr);
+
+    if (!(list = virHashLookup(mgr->labels, device))) {
+        *seclabels = NULL;
+        *nseclabels = 0;
+        ret = 0;
+        goto cleanup;
+    }
+
+    if (VIR_ALLOC_N(*seclabels, list->nseclabels) < 0)
+        goto cleanup;
+
+    *nseclabels = list->nseclabels;
+
+    for (i = 0; i < list->nseclabels; i++) {
+        if (!((*seclabels)[i] = virSecurityDeviceLabelDefCopy(list->seclabels[i])))
+            goto cleanup;
+    }
+
+    ret = 0;
+ cleanup:
+    virObjectUnlock(mgr);
+    if (ret < 0) {
+        if (*seclabels) {
+            for (i = 0; i < *nseclabels; i++)
+                virSecurityDeviceLabelDefFree((*seclabels)[i]);
+            VIR_FREE(*seclabels);
+        }
+    }
+    return ret;
+}
+
+
+int
 virUdevMgrRemoveAllLabels(virUdevMgrPtr mgr,
                           const char *device)
 {
