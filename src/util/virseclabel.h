@@ -22,6 +22,8 @@
 #ifndef __SECLABEL_H
 # define __SECLABEL_H
 
+# include <stdbool.h>
+
 typedef enum {
     VIR_DOMAIN_SECLABEL_DEFAULT,
     VIR_DOMAIN_SECLABEL_NONE,
