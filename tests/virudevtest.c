@@ -29,6 +29,7 @@
 struct testUdevData {
     const char *file;
     const char *const *labels;
+    virUdevMgrFilter filter;
 };
 
 
@@ -48,6 +49,8 @@ testDump(const void *opaque)
 
     if (!(mgr = virUdevMgrNew()))
         goto cleanup;
+
+    virUdevMgrSetFilter(mgr, data->filter, NULL);
 
     tmp = data->labels;
     while (*tmp) {
@@ -194,6 +197,25 @@ testLookup(const void *opaque)
 
 
 static int
+filterAll(const char *device ATTRIBUTE_UNUSED,
+          const virSecurityDeviceLabelDef *seclabel ATTRIBUTE_UNUSED,
+          void *opaque ATTRIBUTE_UNUSED)
+{
+    return 0;
+}
+
+
+static int
+filterAllowSda(const char *device,
+               const virSecurityDeviceLabelDef *seclabel ATTRIBUTE_UNUSED,
+               void *opaque ATTRIBUTE_UNUSED)
+{
+    return STRPREFIX(device, "/dev/sda") ? 1 : 0;
+}
+
+
+
+static int
 mymain(void)
 {
     int ret = 0;
@@ -202,7 +224,7 @@ mymain(void)
     do {                                                            \
         const char *labels[] = {__VA_ARGS__, NULL};                 \
         struct testUdevData data = {                                \
-            .file = filename, .labels = labels,                     \
+            .file = filename, .labels = labels, .filter = NULL,     \
         };                                                          \
         if (virTestRun("Dump " filename, testDump, &data) < 0)      \
             ret = -1;                                               \
@@ -227,6 +249,17 @@ mymain(void)
             ret = -1;                                               \
     } while (0)
 
+#define DO_TEST_FILTER(filename, fltr, ...)                         \
+    do {                                                            \
+        const char *labels[] = {__VA_ARGS__, NULL};                 \
+        struct testUdevData data = {                                \
+            .file = filename, .labels = labels, .filter = fltr,     \
+        };                                                          \
+        if (virTestRun("Filter " filename, testDump, &data) < 0)    \
+            ret = -1;                                               \
+    } while (0)
+
+
     DO_TEST_DUMP("empty", NULL);
     DO_TEST_DUMP("simple-selinux",
                  "/dev/sda", "selinux", "someSELinuxLabel");
@@ -249,6 +282,25 @@ mymain(void)
     DO_TEST_LOOKUP("simple-dac",
                    "/dev/sda", "dac", "someDACLabel");
     DO_TEST_LOOKUP("complex",
+                   "/dev/sda", "dac",     "someDACLabel",
+                   "/dev/sda", "selinux", "someSELinuxLabel",
+                   "/dev/sdb", "dac",     "otherDACLabel",
+                   "/dev/sdb", "selinux", "otherSELinuxLabel");
+
+    DO_TEST_FILTER("empty", filterAll,
+                   "/dev/sda", "dac",     "someDACLabel",
+                   "/dev/sda", "selinux", "someSELinuxLabel",
+                   "/dev/sdb", "dac",     "otherDACLabel",
+                   "/dev/sdb", "selinux", "otherSELinuxLabel");
+    DO_TEST_FILTER("simple-selinux", filterAllowSda,
+                   "/dev/sda", "selinux", "someSELinuxLabel",
+                   "/dev/sdb", "dac",     "otherDACLabel",
+                   "/dev/sdb", "selinux", "otherSELinuxLabel");
+    DO_TEST_FILTER("simple-dac", filterAllowSda,
+                   "/dev/sda", "dac", "someDACLabel",
+                   "/dev/sdb", "dac",     "otherDACLabel",
+                   "/dev/sdb", "selinux", "otherSELinuxLabel");
+    DO_TEST_FILTER("complex", NULL,
                    "/dev/sda", "dac",     "someDACLabel",
                    "/dev/sda", "selinux", "someSELinuxLabel",
                    "/dev/sdb", "dac",     "otherDACLabel",

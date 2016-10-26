@@ -28,6 +28,15 @@
 typedef struct _virUdevMgr virUdevMgr;
 typedef virUdevMgr *virUdevMgrPtr;
 
+/* Filter some devices out in virUdevMgrAddLabel.
+ * Return 0 to NOT record label for device,
+ *        1 to record the label for device,
+ *       -1 on error.
+ */
+typedef int (*virUdevMgrFilter)(const char *device,
+                                const virSecurityDeviceLabelDef *seclabel,
+                                void *opaque);
+
 virUdevMgrPtr virUdevMgrNew(void);
 virUdevMgrPtr virUdevMgrNewFromStr(const char *str);
 virUdevMgrPtr virUdevMgrNewFromFile(const char *filename);
@@ -46,5 +55,9 @@ char *virUdevMgrDumpStr(virUdevMgrPtr mgr);
 
 int virUdevMgrDumpFile(virUdevMgrPtr mgr,
                        const char *filename);
+
+void virUdevMgrSetFilter(virUdevMgrPtr mgr,
+                         virUdevMgrFilter filter,
+                         void *opaque);
 
 #endif

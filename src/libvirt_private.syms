@@ -2584,6 +2584,7 @@ virUdevMgrNew;
 virUdevMgrNewFromFile;
 virUdevMgrNewFromStr;
 virUdevMgrRemoveAllLabels;
+virUdevMgrSetFilter;
 
 
 # util/viruri.h

@@ -36,6 +36,9 @@
 struct _virUdevMgr {
     virObjectLockable parent;
     virHashTablePtr labels;
+
+    virUdevMgrFilter filter;
+    void *opaque;
 };
 
 struct _udevSeclabel {
@@ -273,6 +276,17 @@ virUdevMgrAddLabel(virUdevMgrPtr mgr,
     udevSeclabelPtr list;
 
     virObjectLock(mgr);
+
+    if (mgr->filter) {
+        int rc = mgr->filter(device, seclabel, mgr->opaque);
+        if (rc < 0)
+            goto cleanup;
+        if (rc == 0) {
+            /* Claim success. */
+            ret = 0;
+            goto cleanup;
+        }
+    }
 
     if ((list = virHashLookup(mgr->labels, device))) {
         virSecurityDeviceLabelDefPtr entry = udevSeclabelFindByModel(list, seclabel->model);
@@ -560,4 +574,15 @@ virUdevMgrNewFromFile(const char *filename)
     virObjectUnref(mgr);
     VIR_FREE(state);
     return NULL;
+}
+
+void
+virUdevMgrSetFilter(virUdevMgrPtr mgr,
+                    virUdevMgrFilter filter,
+                    void *opaque)
+{
+    virObjectLock(mgr);
+    mgr->filter = filter;
+    mgr->opaque = opaque;
+    virObjectUnlock(mgr);
 }
