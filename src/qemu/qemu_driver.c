@@ -377,10 +377,20 @@ qemuSecurityInit(virQEMUDriverPtr driver)
     virSecurityManagerPtr stack = NULL;
     virQEMUDriverConfigPtr cfg = virQEMUDriverGetConfig(driver);
     unsigned int flags = 0;
+    char *file = NULL;
 
-    if (cfg->writeUdev &&
-        !(driver->udevMgr = virUdevMgrNew()))
-        goto error;
+    if (cfg->writeUdev) {
+        if (!(file = qemuProcessGetUdevPath(driver)))
+            goto error;
+
+        if (virFileExists(file)) {
+            if (!(driver->udevMgr = virUdevMgrNewFromFile(file)))
+                goto error;
+        } else {
+            if (!(driver->udevMgr = virUdevMgrNew()))
+                goto error;
+        }
+    }
 
     if (cfg->allowDiskFormatProbing)
         flags |= VIR_SECURITY_MANAGER_ALLOW_DISK_PROBE;
@@ -442,12 +452,14 @@ qemuSecurityInit(virQEMUDriverPtr driver)
     }
 
     driver->securityManager = stack;
+    VIR_FREE(file);
     virObjectUnref(cfg);
     return 0;
 
  error:
     virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
                    _("Failed to initialize security drivers"));
+    VIR_FREE(file);
     virObjectUnref(stack);
     virObjectUnref(mgr);
     virObjectUnref(cfg);
