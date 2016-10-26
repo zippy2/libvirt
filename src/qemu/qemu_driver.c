@@ -370,6 +370,15 @@ qemuSecurityChownCallback(virStorageSourcePtr src,
 
 
 static int
+qemuUdevFilter(const char *devpath,
+               const virSecurityDeviceLabelDef *seclabel ATTRIBUTE_UNUSED,
+               void *opaque ATTRIBUTE_UNUSED)
+{
+    return STRPREFIX(devpath, "/dev/") ? 1 : 0;
+}
+
+
+static int
 qemuSecurityInit(virQEMUDriverPtr driver)
 {
     char **names;
@@ -390,6 +399,8 @@ qemuSecurityInit(virQEMUDriverPtr driver)
             if (!(driver->udevMgr = virUdevMgrNew()))
                 goto error;
         }
+
+        virUdevMgrSetFilter(driver->udevMgr, qemuUdevFilter, NULL);
     }
 
     if (cfg->allowDiskFormatProbing)
