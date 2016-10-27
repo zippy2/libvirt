@@ -120,7 +120,7 @@ main(int argc, char *argv[])
     if (argc > 1)
         device = argv[1];
     if (!device)
-        device = virGetEnvBlockSUID("DEVNODE");
+        device = virGetEnvBlockSUID("DEVNAME");
     if (!device || STREQ(device, "-h") || STREQ(device, "--help")) {
         usage(argv[0]);
         if (device)
