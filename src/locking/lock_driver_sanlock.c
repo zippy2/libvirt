@@ -182,6 +182,18 @@ virLockManagerSanlockInitLockspace(virLockManagerSanlockDriverPtr driver,
     const unsigned int lockspaceFlags = 0;
 
     ret = sanlock_write_lockspace(ls, max_hosts, lockspaceFlags, driver->io_timeout);
+    VIR_DEBUG("sanlock_write_lockspace(ls=%p, max_hosts=%d, lockspaceFlags=%x, io_timeout=%u) = %d",
+              ls, max_hosts, lockspaceFlags, driver->io_timeout, ret);
+#else
+    if (driver->io_timeout) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("unable to use io_timeout with this version of sanlock"));
+        return -ENOTSUP;
+    }
+
+    ret = sanlock_init(ls, NULL, 0, 0);
+    VIR_DEBUG("sanlock_init(ls=%p) = %d", ret);
+#endif
     return ret;
 }
 
@@ -259,7 +271,9 @@ virLockManagerSanlockSetupLockspace(virLockManagerSanlockDriverPtr driver)
                 goto error_unlink;
             }
 
-            if ((rv = sanlock_align(&ls.host_id_disk)) < 0) {
+            rv = sanlock_align(&ls.host_id_disk);
+            VIR_DEBUG("sanlock_align(host_id_disk=%p) = %d", &ls.host_id_disk, rv);
+            if (rv < 0) {
                 char *err = NULL;
                 if (virLockManagerSanlockError(rv, &err)) {
                     virReportError(VIR_ERR_INTERNAL_ERROR,
@@ -327,6 +341,12 @@ virLockManagerSanlockSetupLockspace(virLockManagerSanlockDriverPtr driver)
                                  path);
             goto error;
         }
+
+        struct sanlk_lockspace tmp;
+        unsigned int io_timeout = 0;
+        rv = sanlock_read_lockspace(&tmp, 0, &io_timeout);
+        VIR_DEBUG("sanlock_read_lockspace(tmp=%p, io_timeout=%u) = %d",
+                  &tmp, io_timeout, rv);
     }
 
     ls.host_id = driver->hostID;
@@ -338,6 +358,17 @@ virLockManagerSanlockSetupLockspace(virLockManagerSanlockDriverPtr driver)
      */
  retry:
     rv = sanlock_add_lockspace_timeout(&ls, 0, driver->io_timeout);
+    VIR_DEBUG("sanlock_add_lockspace_timeout(ls=%p, io_timeout=%u) = %d",
+              &ls, driver->io_timeout, rv);
+#else
+    if (driver->io_timeout) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("unable to use io_timeout with this version of sanlock"));
+        goto error;
+    }
+    rv = sanlock_add_lockspace(&ls, 0);
+    VIR_DEBUG("sanlock_add_lockspace(ls=%p) = %d", &ls, rv);
+#endif
     if (rv < 0) {
         if (-rv == EINPROGRESS && --retries) {
             /* we have this function which blocks until lockspace change the
@@ -689,7 +720,9 @@ virLockManagerSanlockCreateLease(virLockManagerSanlockDriverPtr driver,
                 goto error_unlink;
             }
 
-            if ((rv = sanlock_init(NULL, res, 0, 0)) < 0) {
+            rv = sanlock_init(NULL, res, 0, 0);
+            VIR_DEBUG("snalock_init(res=%p) = %d", res, rv);
+            if (rv < 0) {
                 char *err = NULL;
                 if (virLockManagerSanlockError(rv, &err)) {
                     virReportError(VIR_ERR_INTERNAL_ERROR,
@@ -834,7 +867,10 @@ virLockManagerSanlockRegisterKillscript(int sock,
         goto cleanup;
     }
 
-    if ((rv = sanlock_killpath(sock, 0, path, args)) < 0) {
+    rv = sanlock_killpath(sock, 0, path, args);
+    VIR_DEBUG("sanlock_killpath(sock=%d, path=%s, args=%s) = %d",
+              sock, path, args, rv);
+    if (rv < 0) {
         char *err = NULL;
         if (virLockManagerSanlockError(rv, &err)) {
             virReportError(VIR_ERR_INTERNAL_ERROR,
@@ -1050,6 +1086,8 @@ static int virLockManagerSanlockRelease(virLockManagerPtr lock,
             }
             return -1;
         }
+        VIR_DEBUG("sanlock_inquire(vm_pid=%d, state=%s) = %d",
+                  priv->vm_pid, *state, rv);
 
         if (STREQ_NULLABLE(*state, ""))
             VIR_FREE(*state);
