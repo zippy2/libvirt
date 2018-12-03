@@ -302,6 +302,7 @@ typedef enum {
     VIR_DOMAIN_START_BYPASS_CACHE = 1 << 2, /* Avoid file system cache pollution */
     VIR_DOMAIN_START_FORCE_BOOT   = 1 << 3, /* Boot, discarding any managed save */
     VIR_DOMAIN_START_VALIDATE     = 1 << 4, /* Validate the XML document against schema */
+    VIR_DOMAIN_START_HUGE_PAGES_AUTO_ALLOC = 1 << 5, /* Automatically allocate hugepages needed for domain */
 } virDomainCreateFlags;
 
 
