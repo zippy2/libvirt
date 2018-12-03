@@ -372,6 +372,7 @@ typedef enum {
     VIR_DOMAIN_START_FORCE_BOOT   = 1 << 3, /* Boot, discarding any managed save (Since: 0.9.5) */
     VIR_DOMAIN_START_VALIDATE     = 1 << 4, /* Validate the XML document against schema (Since: 1.2.12) */
     VIR_DOMAIN_START_RESET_NVRAM  = 1 << 5, /* Re-initialize NVRAM from template (Since: 8.1.0) */
+    VIR_DOMAIN_START_HUGE_PAGES_AUTO_ALLOC = 1 << 6, /* Automatically allocate hugepages needed for domain (Since: 8.4.0) */
 } virDomainCreateFlags;
 
 
