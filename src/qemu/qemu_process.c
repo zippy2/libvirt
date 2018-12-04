@@ -7211,6 +7211,96 @@ qemuProcessPrepareSEVGuestInput(virDomainObj *vm)
 }
 
 
+typedef struct _pages_pool pages_pool;
+struct _pages_pool {
+    size_t npages;
+    unsigned int *pages_size;
+    unsigned long long *pages_avail;
+    unsigned long long *pages_free;
+};
+
+
+static int
+qemuProcessPrepareHugepages(virQEMUDriver *driver G_GNUC_UNUSED,
+                            virDomainObj *vm,
+                            unsigned int flags)
+{
+    virDomainDef *def = vm->def;
+    const long system_page_size = virGetSystemPageSizeKB();
+    ssize_t numa_nodes = 0;
+    pages_pool *pool = NULL;
+    size_t i, j;
+    int ret = -1;
+
+    if (!(flags & VIR_QEMU_PROCESS_START_ALLOC_HP))
+        return 0;
+
+    VIR_DEBUG("Preparing hugepages for guest %s", def->name);
+
+    if (!virNumaIsAvailable()) {
+        virReportError(VIR_ERR_OPERATION_UNSUPPORTED, "%s",
+                       _("no implementation yet"));
+        goto cleanup;
+    }
+
+    if ((numa_nodes = virNumaGetMaxNode()) < 0)
+        goto cleanup;
+
+    pool = g_new0(pages_pool, numa_nodes);
+
+    for (i = 0; i < numa_nodes; i++) {
+        if (!virNumaNodeIsAvailable(i))
+            continue;
+
+        if (virNumaGetPages(i,
+                            &pool->pages_size,
+                            &pool->pages_avail,
+                            &pool->pages_free,
+                            &pool->npages) < 0)
+            goto cleanup;
+    }
+
+    for (i = 0; i < def->mem.nhugepages; i++) {
+        virDomainHugePage *hugepage = &def->mem.hugepages[i];
+        ssize_t n;
+
+        if (hugepage->size == system_page_size)
+            continue;
+
+        if (!hugepage->nodemask ||
+            virBitmapCountBits(hugepage->nodemask) != 1) {
+            virReportError(VIR_ERR_OPERATION_INVALID, "%s",
+                           _("memory has to be pinned on one node exactly"));
+            goto cleanup;
+        }
+
+        if ((n = virBitmapNextSetBit(hugepage->nodemask, -1)) < 0) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("the impossible happened"));
+            goto cleanup;
+        }
+
+        for (j = 0; j < pool[n].npages; j++) {
+            if (pool[n].pages_size[j] != hugepage->size)
+                continue;
+
+            if (pool[n].pages_free[j] < 1)
+                pool[n].pages_avail += 1;
+        }
+    }
+
+    ret = 0;
+ cleanup:
+    for (i = 0; i < numa_nodes; i++) {
+        VIR_FREE(pool->pages_size);
+        VIR_FREE(pool->pages_avail);
+        VIR_FREE(pool->pages_free);
+    }
+    VIR_FREE(pool);
+    return ret;
+}
+
+
 static int
 qemuProcessPrepareLaunchSecurityGuestInput(virDomainObj *vm)
 {
@@ -7867,6 +7957,9 @@ qemuProcessPrepareHost(virQEMUDriver *driver,
         return -1;
 
     if (qemuProcessPreparePstore(vm) < 0)
+        return -1;
+
+    if (qemuProcessPrepareHugepages(driver, vm, flags) < 0)
         return -1;
 
     return 0;
