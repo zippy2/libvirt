@@ -3573,8 +3573,7 @@ qemuProcessRecoverMigrationOut(virQEMUDriverPtr driver,
                                virDomainObjPtr vm,
                                const qemuDomainJobObj *job,
                                virDomainState state,
-                               int reason,
-                               unsigned int *stopFlags)
+                               int reason)
 {
     qemuDomainJobPrivatePtr jobPriv = job->privateData;
     bool postcopy = state == VIR_DOMAIN_PAUSED &&
@@ -3640,7 +3639,6 @@ qemuProcessRecoverMigrationOut(virQEMUDriverPtr driver,
 
     case QEMU_MIGRATION_PHASE_CONFIRM3:
         /* migration completed, we need to kill the domain here */
-        *stopFlags |= VIR_QEMU_PROCESS_STOP_MIGRATED;
         return -1;
     }
 
@@ -3667,8 +3665,7 @@ qemuProcessRecoverMigrationOut(virQEMUDriverPtr driver,
 static int
 qemuProcessRecoverJob(virQEMUDriverPtr driver,
                       virDomainObjPtr vm,
-                      const qemuDomainJobObj *job,
-                      unsigned int *stopFlags)
+                      const qemuDomainJobObj *job)
 {
     qemuDomainObjPrivatePtr priv = vm->privateData;
     virDomainState state;
@@ -3680,7 +3677,7 @@ qemuProcessRecoverJob(virQEMUDriverPtr driver,
     switch (job->asyncJob) {
     case QEMU_ASYNC_JOB_MIGRATION_OUT:
         if (qemuProcessRecoverMigrationOut(driver, vm, job,
-                                           state, reason, stopFlags) < 0)
+                                           state, reason) < 0)
             return -1;
         break;
 
@@ -5623,7 +5620,6 @@ qemuProcessInit(virQEMUDriverPtr driver,
                 unsigned int flags)
 {
     qemuDomainObjPrivatePtr priv = vm->privateData;
-    int stopFlags;
     virCPUDefPtr origCPU = NULL;
     int ret = -1;
 
@@ -5701,10 +5697,8 @@ qemuProcessInit(virQEMUDriverPtr driver,
     return ret;
 
  stop:
-    stopFlags = VIR_QEMU_PROCESS_STOP_NO_RELABEL;
-    if (migration)
-        stopFlags |= VIR_QEMU_PROCESS_STOP_MIGRATED;
-    qemuProcessStop(driver, vm, VIR_DOMAIN_SHUTOFF_FAILED, asyncJob, stopFlags);
+    qemuProcessStop(driver, vm, VIR_DOMAIN_SHUTOFF_FAILED,
+                    asyncJob, VIR_QEMU_PROCESS_STOP_NO_RELABEL);
     goto cleanup;
 }
 
@@ -7437,8 +7431,6 @@ qemuProcessStart(virConnectPtr conn,
     stopFlags = 0;
     if (!relabel)
         stopFlags |= VIR_QEMU_PROCESS_STOP_NO_RELABEL;
-    if (migrateFrom)
-        stopFlags |= VIR_QEMU_PROCESS_STOP_MIGRATED;
     if (priv->mon)
         qemuMonitorSetDomainLog(priv->mon, NULL, NULL, NULL);
     qemuProcessStop(driver, vm, VIR_DOMAIN_SHUTOFF_FAILED, asyncJob, stopFlags);
@@ -7942,12 +7934,8 @@ qemuProcessAutoDestroy(virDomainObjPtr dom,
     virQEMUDriverPtr driver = opaque;
     qemuDomainObjPrivatePtr priv = dom->privateData;
     virObjectEventPtr event = NULL;
-    unsigned int stopFlags = 0;
 
     VIR_DEBUG("vm=%s, conn=%p", dom->def->name, conn);
-
-    if (priv->job.asyncJob == QEMU_ASYNC_JOB_MIGRATION_IN)
-        stopFlags |= VIR_QEMU_PROCESS_STOP_MIGRATED;
 
     if (priv->job.asyncJob) {
         VIR_DEBUG("vm=%s has long-term job active, cancelling",
@@ -7960,8 +7948,9 @@ qemuProcessAutoDestroy(virDomainObjPtr dom,
     if (qemuProcessBeginStopJob(driver, dom, QEMU_JOB_DESTROY, true) < 0)
         return;
 
-    qemuProcessStop(driver, dom, VIR_DOMAIN_SHUTOFF_DESTROYED,
-                    QEMU_ASYNC_JOB_NONE, stopFlags);
+    qemuProcessStop(driver, dom,
+                    VIR_DOMAIN_SHUTOFF_DESTROYED,
+                    QEMU_ASYNC_JOB_NONE, 0);
 
     virDomainAuditStop(dom, "destroyed");
     event = virDomainEventLifecycleNewFromObj(dom,
@@ -8307,7 +8296,6 @@ qemuProcessReconnect(void *opaque)
     int reason;
     g_autoptr(virQEMUDriverConfig) cfg = NULL;
     size_t i;
-    unsigned int stopFlags = 0;
     bool jobStarted = false;
     bool retry = true;
     bool tryMonReconn = false;
@@ -8320,10 +8308,10 @@ qemuProcessReconnect(void *opaque)
     priv = obj->privateData;
 
     qemuDomainObjRestoreJob(obj, &oldjob);
-    if (oldjob.asyncJob == QEMU_ASYNC_JOB_MIGRATION_IN)
-        stopFlags |= VIR_QEMU_PROCESS_STOP_MIGRATED;
+
     if (oldjob.asyncJob == QEMU_ASYNC_JOB_BACKUP && priv->backup)
         priv->backup->apiFlags = oldjob.apiFlags;
+
 
     /* expect that libvirt might have crashed during VM start, so prevent
      * cleanup of transient disks */
@@ -8496,7 +8484,7 @@ qemuProcessReconnect(void *opaque)
     if (qemuProcessRefreshBalloonState(driver, obj, QEMU_ASYNC_JOB_NONE) < 0)
         goto error;
 
-    if (qemuProcessRecoverJob(driver, obj, &oldjob, &stopFlags) < 0)
+    if (qemuProcessRecoverJob(driver, obj, &oldjob) < 0)
         goto error;
 
     if (qemuProcessRefreshBlockjobs(driver, obj) < 0)
@@ -8592,7 +8580,7 @@ qemuProcessReconnect(void *opaque)
          * thread didn't have a chance to start playing with the domain yet
          * (it's all we can do anyway).
          */
-        qemuProcessStop(driver, obj, state, QEMU_ASYNC_JOB_NONE, stopFlags);
+        qemuProcessStop(driver, obj, state, QEMU_ASYNC_JOB_NONE, 0);
     }
     goto cleanup;
 }
