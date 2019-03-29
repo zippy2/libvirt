@@ -3365,7 +3365,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
                            virQEMUDriver *driver)
 {
     int ret = -1;
-    const char *alias = NULL;
+    virObjectEvent *event = NULL;
     g_autoptr(virQEMUDriverConfig) cfg = virQEMUDriverGetConfig(driver);
     struct qemuDomainPrepareChardevSourceData chardevBackendData = { .cfg = cfg,
                                                                      .hotplug = true };
@@ -3380,7 +3380,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
         qemuDomainObjCheckDiskTaint(driver, vm, dev->data.disk, NULL);
         ret = qemuDomainAttachDeviceDiskLive(driver, vm, dev);
         if (!ret) {
-            alias = dev->data.disk->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.disk->info.alias);
             dev->data.disk = NULL;
         }
         break;
@@ -3388,7 +3388,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_CONTROLLER:
         ret = qemuDomainAttachControllerDevice(vm, dev->data.controller);
         if (!ret) {
-            alias = dev->data.controller->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.controller->info.alias);
             dev->data.controller = NULL;
         }
         break;
@@ -3404,7 +3404,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
         qemuDomainObjCheckNetTaint(driver, vm, dev->data.net, NULL);
         ret = qemuDomainAttachNetDevice(driver, vm, dev->data.net);
         if (!ret) {
-            alias = dev->data.net->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.net->info.alias);
             dev->data.net = NULL;
         }
         break;
@@ -3414,7 +3414,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
         ret = qemuDomainAttachHostDevice(driver, vm,
                                          dev->data.hostdev);
         if (!ret) {
-            alias = dev->data.hostdev->info->alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.hostdev->info->alias);
             dev->data.hostdev = NULL;
         }
         break;
@@ -3423,7 +3423,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
         ret = qemuDomainAttachRedirdevDevice(driver, vm,
                                              dev->data.redirdev);
         if (!ret) {
-            alias = dev->data.redirdev->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.redirdev->info.alias);
             dev->data.redirdev = NULL;
         }
         break;
@@ -3431,7 +3431,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_CHR:
         ret = qemuDomainAttachChrDevice(driver, vm, dev);
         if (!ret) {
-            alias = dev->data.chr->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.chr->info.alias);
             dev->data.chr = NULL;
         }
         break;
@@ -3440,7 +3440,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
         ret = qemuDomainAttachRNGDevice(driver, vm,
                                         dev->data.rng);
         if (!ret) {
-            alias = dev->data.rng->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.rng->info.alias);
             dev->data.rng = NULL;
         }
         break;
@@ -3456,7 +3456,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_SHMEM:
         ret = qemuDomainAttachShmemDevice(vm, dev->data.shmem);
         if (!ret) {
-            alias = dev->data.shmem->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.shmem->info.alias);
             dev->data.shmem = NULL;
         }
         break;
@@ -3464,7 +3464,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_WATCHDOG:
         ret = qemuDomainAttachWatchdog(vm, dev->data.watchdog);
         if (!ret) {
-            alias = dev->data.watchdog->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.watchdog->info.alias);
             dev->data.watchdog = NULL;
         }
         break;
@@ -3472,7 +3472,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_INPUT:
         ret = qemuDomainAttachInputDevice(vm, dev->data.input);
         if (ret == 0) {
-            alias = dev->data.input->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.input->info.alias);
             dev->data.input = NULL;
         }
         break;
@@ -3480,7 +3480,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_VSOCK:
         ret = qemuDomainAttachVsockDevice(vm, dev->data.vsock);
         if (ret == 0) {
-            alias = dev->data.vsock->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.vsock->info.alias);
             dev->data.vsock = NULL;
         }
         break;
@@ -3488,7 +3488,7 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_FS:
         ret = qemuDomainAttachFSDevice(driver, vm, dev->data.fs);
         if (ret == 0) {
-            alias = dev->data.fs->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.fs->info.alias);
             dev->data.fs = NULL;
         }
         break;
@@ -3514,14 +3514,8 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
         break;
     }
 
-    if (alias) {
-        /* queue the event before the alias has a chance to get freed
-         * if the domain disappears while qemuDomainUpdateDeviceList
-         * is in monitor */
-        virObjectEvent *event;
-        event = virDomainEventDeviceAddedNewFromObj(vm, alias);
+    if (event)
         virObjectEventStateQueue(driver->domainEventState, event);
-    }
 
     if (ret == 0)
         ret = qemuDomainUpdateDeviceList(vm, VIR_ASYNC_JOB_NONE);
