@@ -4034,6 +4034,16 @@ struct remote_domain_announce_interface_args {
     unsigned int flags;
 };
 
+struct remote_domain_event_lease_change_msg {
+    int callbackID;
+    remote_nonnull_domain dom;
+    int action;
+    remote_nonnull_string locspace;
+    remote_nonnull_string key;
+    remote_nonnull_string path;
+    unsigned hyper offset;
+};
+
 /*----- Protocol. -----*/
 
 /* Define the program number, protocol version and procedure numbers here. */
@@ -7163,5 +7173,11 @@ enum remote_procedure {
      * @generate: both
      * @acl: domain:write
      */
-    REMOTE_PROC_DOMAIN_ANNOUNCE_INTERFACE = 456
+    REMOTE_PROC_DOMAIN_ANNOUNCE_INTERFACE = 456,
+
+    /**
+     * @generate: both
+     * @acl: none
+     */
+    REMOTE_PROC_DOMAIN_EVENT_LEASE_CHANGE = 457
 };

@@ -427,6 +427,12 @@ static void
 remoteDomainBuildEventMemoryDeviceSizeChange(virNetClientProgram *prog,
                                              virNetClient *client,
                                              void *evdata, void *opaque);
+
+static void
+remoteDomainBuildEventLeaseChange(virNetClientProgram *prog,
+                                  virNetClient *client,
+                                  void *evdata, void *opaque);
+
 static void
 remoteDomainBuildEventVcpuRemoved(virNetClientProgram *prog,
                                   virNetClient *client,
@@ -676,6 +682,10 @@ static virNetClientProgramEvent remoteEvents[] = {
       remoteDomainBuildEventCallbackChannelLifecycle,
       sizeof(remote_domain_event_callback_channel_lifecycle_msg),
       (xdrproc_t)xdr_remote_domain_event_callback_channel_lifecycle_msg },
+    { REMOTE_PROC_DOMAIN_EVENT_LEASE_CHANGE,
+      remoteDomainBuildEventLeaseChange,
+      sizeof(remote_domain_event_lease_change_msg),
+      (xdrproc_t)xdr_remote_domain_event_lease_change_msg },
 };
 
 static void
@@ -5216,6 +5226,32 @@ remoteDomainBuildEventNICMACChange(virNetClientProgram *prog G_GNUC_UNUSED,
                                                  msg->alias,
                                                  msg->oldMAC,
                                                  msg->newMAC);
+
+    virObjectUnref(dom);
+
+    virObjectEventStateQueueRemote(priv->eventState, event, msg->callbackID);
+}
+
+static void
+remoteDomainBuildEventLeaseChange(virNetClientProgram *prog G_GNUC_UNUSED,
+                                  virNetClient *client G_GNUC_UNUSED,
+                                  void *evdata, void *opaque)
+{
+    virConnectPtr conn = opaque;
+    remote_domain_event_lease_change_msg *msg = evdata;
+    struct private_data *priv = conn->privateData;
+    virDomainPtr dom;
+    virObjectEvent *event = NULL;
+
+    if (!(dom = get_nonnull_domain(conn, msg->dom)))
+        return;
+
+    event = virDomainEventLeaseChangeNewFromDom(dom,
+                                                msg->action,
+                                                msg->locspace,
+                                                msg->key,
+                                                msg->path,
+                                                msg->offset);
 
     virObjectUnref(dom);
 
