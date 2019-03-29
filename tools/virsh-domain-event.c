@@ -783,6 +783,36 @@ virshEventMemoryDeviceSizeChangePrint(virConnectPtr conn G_GNUC_UNUSED,
 }
 
 
+VIR_ENUM_DECL(virshEventLeaseChangeAction);
+VIR_ENUM_IMPL(virshEventLeaseChangeAction,
+              VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_LAST,
+              N_("unknown"),
+              N_("attach"),
+              N_("detach"));
+
+
+static void
+virshEventLeaseChangePrint(virConnectPtr conn G_GNUC_UNUSED,
+                           virDomainPtr dom,
+                           int action,
+                           const char *lockspace,
+                           const char *key,
+                           const char *path,
+                           unsigned long long offset,
+                           void *opaque)
+{
+    virBuffer buf = VIR_BUFFER_INITIALIZER;
+
+    virBufferAsprintf(&buf,
+                      _("event 'lease-change' for domain %1$s: action: %2$s lockspace: %3$s key: %4$s path %5$s offset: %6$llu\n"),
+                      virDomainGetName(dom),
+                      UNKNOWNSTR(virshEventLeaseChangeActionTypeToString(action)),
+                      lockspace, key, path, offset);
+
+    virshEventPrint(opaque, &buf);
+}
+
+
 virshDomainEventCallback virshDomainEventCallbacks[] = {
     { "lifecycle",
       VIR_DOMAIN_EVENT_CALLBACK(virshEventLifecyclePrint), },
@@ -836,6 +866,8 @@ virshDomainEventCallback virshDomainEventCallbacks[] = {
       VIR_DOMAIN_EVENT_CALLBACK(virshEventMemoryFailurePrint), },
     { "memory-device-size-change",
       VIR_DOMAIN_EVENT_CALLBACK(virshEventMemoryDeviceSizeChangePrint), },
+    { "lease-change",
+      VIR_DOMAIN_EVENT_CALLBACK(virshEventLeaseChangePrint), },
 };
 G_STATIC_ASSERT(VIR_DOMAIN_EVENT_ID_LAST == G_N_ELEMENTS(virshDomainEventCallbacks));
 
