@@ -754,6 +754,8 @@ virDomainEventIOErrorReasonNewFromDom;
 virDomainEventIOErrorReasonNewFromObj;
 virDomainEventJobCompletedNewFromDom;
 virDomainEventJobCompletedNewFromObj;
+virDomainEventLeaseChangeNewFromDom;
+virDomainEventLeaseChangeNewFromObj;
 virDomainEventLifecycleNew;
 virDomainEventLifecycleNewFromDef;
 virDomainEventLifecycleNewFromDom;
