@@ -277,6 +277,22 @@ virDomainEventMemoryDeviceSizeChangeNewFromDom(virDomainPtr dom,
                                                const char *alias,
                                                unsigned long long size);
 
+virObjectEvent *
+virDomainEventLeaseChangeNewFromObj(virDomainObj *obj,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset);
+
+virObjectEvent *
+virDomainEventLeaseChangeNewFromDom(virDomainPtr dom,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset);
+
 int
 virDomainEventStateRegister(virConnectPtr conn,
                             virObjectEventState *state,
