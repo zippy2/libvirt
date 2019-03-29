@@ -6953,8 +6953,15 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
     case VIR_DOMAIN_DEVICE_LEASE:
         ret = qemuDomainAttachLease(driver, vm,
                                     dev->data.lease);
-        if (ret == 0)
+        if (ret == 0) {
+            event = virDomainEventLeaseChangeNewFromObj(vm,
+                                                        VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_ATTACH,
+                                                        dev->data.lease->lockspace,
+                                                        dev->data.lease->key,
+                                                        dev->data.lease->path,
+                                                        dev->data.lease->offset);
             dev->data.lease = NULL;
+        }
         break;
 
     case VIR_DOMAIN_DEVICE_NET:
