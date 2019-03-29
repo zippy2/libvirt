@@ -58,6 +58,7 @@ static virClass *virDomainEventBlockThresholdClass;
 static virClass *virDomainEventMemoryFailureClass;
 static virClass *virDomainEventMemoryDeviceSizeChangeClass;
 static virClass *virDomainEventNICMACChangeClass;
+static virClass *virDomainEventLeaseChangeClass;
 
 static void virDomainEventDispose(void *obj);
 static void virDomainEventLifecycleDispose(void *obj);
@@ -83,6 +84,7 @@ static void virDomainEventBlockThresholdDispose(void *obj);
 static void virDomainEventMemoryFailureDispose(void *obj);
 static void virDomainEventMemoryDeviceSizeChangeDispose(void *obj);
 static void virDomainEventNICMACChangeDispose(void *obj);
+static void virDomainEventLeaseChangeDispose(void *obj);
 
 static void
 virDomainEventDispatchDefaultFunc(virConnectPtr conn,
@@ -296,6 +298,18 @@ struct _virDomainEventNICMACChange {
 };
 typedef struct _virDomainEventNICMACChange virDomainEventNICMACChange;
 
+struct _virDomainEventLeaseChange {
+    virDomainEvent parent;
+
+    int action;
+
+    char *lockspace;
+    char *key;
+    char *path;
+    unsigned long long offset;
+};
+typedef struct _virDomainEventLeaseChange virDomainEventLeaseChange;
+
 static int
 virDomainEventsOnceInit(void)
 {
@@ -346,6 +360,8 @@ virDomainEventsOnceInit(void)
     if (!VIR_CLASS_NEW(virDomainEventMemoryDeviceSizeChange, virDomainEventClass))
         return -1;
     if (!VIR_CLASS_NEW(virDomainEventNICMACChange, virDomainEventClass))
+        return -1;
+    if (!VIR_CLASS_NEW(virDomainEventLeaseChange, virDomainEventClass))
         return -1;
     return 0;
 }
@@ -580,6 +596,16 @@ virDomainEventNICMACChangeDispose(void *obj)
     g_free(event->alias);
     g_free(event->oldMAC);
     g_free(event->newMAC);
+}
+
+static void
+virDomainEventLeaseChangeDispose(void *obj)
+{
+    virDomainEventLeaseChangePtr event = obj;
+    VIR_DEBUG("obj=%p", event);
+
+    VIR_FREE(event->lockspace);
+    VIR_FREE(event->key);
 }
 
 static void *
@@ -1680,9 +1706,9 @@ virDomainEventMemoryFailureNew(int id,
     ev->recipient = recipient;
     ev->action = action;
     ev->flags = flags;
-
     return (virObjectEvent *)ev;
 }
+
 
 virObjectEvent *
 virDomainEventMemoryFailureNewFromObj(virDomainObj *obj,
@@ -1782,7 +1808,6 @@ virDomainEventNICMACChangeNew(int id,
     return (virObjectEvent *)ev;
 }
 
-
 virObjectEvent *
 virDomainEventNICMACChangeNewFromObj(virDomainObj *obj,
                                      const char *alias,
@@ -1811,6 +1836,60 @@ virDomainEventNICMACChangeNewFromDom(virDomainPtr dom,
                                          newMAC);
 
 }
+
+static virObjectEvent *
+virDomainEventLeaseChangeNew(int id,
+                             const char *name,
+                             unsigned char *uuid,
+                             int action,
+                             const char *lockspace,
+                             const char *key,
+                             const char *path,
+                             unsigned long long offset)
+{
+    virDomainEventLeaseChangePtr ev;
+    if (!(ev = virDomainEventNew(virDomainEventLeaseChangeClass,
+                                 VIR_DOMAIN_EVENT_ID_LEASE_CHANGE,
+                                 id, name, uuid)))
+        return NULL;
+
+    ev->action = action;
+    ev->lockspace = g_strdup(lockspace);
+    ev->key = g_strdup(key);
+    ev->path = g_strdup(path);
+    ev->offset = offset;
+
+    return (virObjectEvent *)ev;
+}
+
+virObjectEvent *
+virDomainEventLeaseChangeNewFromObj(virDomainObj *obj,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset)
+{
+    return virDomainEventLeaseChangeNew(obj->def->id, obj->def->name,
+                                        obj->def->uuid, action, lockspace,
+                                        key, path, offset);
+}
+
+
+virObjectEvent *
+virDomainEventLeaseChangeNewFromDom(virDomainPtr dom,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset)
+{
+    return virDomainEventLeaseChangeNew(dom->id, dom->name, dom->uuid,
+                                        action, lockspace, key,
+                                        path, offset);
+}
+
+>>>>>>> 95248467e4 (Introduce VIR_DOMAIN_EVENT_ID_LEASE_CHANGE)
 
 static void
 virDomainEventDispatchDefaultFunc(virConnectPtr conn,
@@ -2095,6 +2174,7 @@ virDomainEventDispatchDefaultFunc(virConnectPtr conn,
                                                               cbopaque);
             goto cleanup;
         }
+
     case VIR_DOMAIN_EVENT_ID_MEMORY_FAILURE:
         {
             virDomainEventMemoryFailure *memoryFailureEvent;
@@ -2130,7 +2210,20 @@ virDomainEventDispatchDefaultFunc(virConnectPtr conn,
                                                             nicMacChangeEvent->oldMAC,
                                                             nicMacChangeEvent->newMAC,
                                                             cbopaque);
+            goto cleanup;
 
+    case VIR_DOMAIN_EVENT_ID_LEASE_CHANGE:
+        {
+            virDomainEventLeaseChange *leaseChangeEvent;
+
+            leaseChangeEvent = (virDomainEventLeaseChange *)event;
+            ((virConnectDomainEventLeaseChangeCallback)cb)(conn, dom,
+                                                           leaseChangeEvent->action,
+                                                           leaseChangeEvent->lockspace,
+                                                           leaseChangeEvent->key,
+                                                           leaseChangeEvent->path,
+                                                           leaseChangeEvent->offset,
+                                                           cbopaque);
             goto cleanup;
         }
 
