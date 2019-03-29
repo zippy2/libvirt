@@ -1317,6 +1317,9 @@ remoteRelayDomainEventMemoryFailure(virConnectPtr conn,
         !remoteRelayDomainEventCheckACL(callback->client, conn, dom))
         return -1;
 
+    VIR_DEBUG("Relaying domain memory failure event %s %d %d %d %x, callback %d",
+              dom->name, dom->id, recipient, action, flags, callback->callbackID);
+
     /* build return data */
     memset(&data, 0, sizeof(data));
     data.callbackID = callback->callbackID;
@@ -1329,6 +1332,42 @@ remoteRelayDomainEventMemoryFailure(virConnectPtr conn,
                                   REMOTE_PROC_DOMAIN_EVENT_MEMORY_FAILURE,
                                   (xdrproc_t)xdr_remote_domain_event_memory_failure_msg, &data);
 
+    return 0;
+}
+
+
+static int
+remoteRelayDomainEventLeaseChange(virConnectPtr conn,
+                                  virDomainPtr dom,
+                                  int action,
+                                  const char *lockspace,
+                                  const char *key,
+                                  const char *path,
+                                  unsigned long long offset,
+                                  void *opaque)
+{
+    daemonClientEventCallbackPtr callback = opaque;
+    remote_domain_event_lease_change_msg data;
+
+    if (callback->callbackID < 0 ||
+        !remoteRelayDomainEventCheckACL(callback->client, conn, dom))
+        return -1;
+
+    VIR_DEBUG("Relaying domain lease change event %s %d %d %s %s, callback %d",
+              dom->name, dom->id, action, lockspace, key, callback->callbackID);
+
+    memset(&data, 0, sizeof(data));
+    data.callbackID = callback->callbackID;
+    data.action = action;
+    data.locspace = g_strdup(lockspace);
+    data.key = g_strdup(key);
+    data.path = g_strdup(path);
+    data.offset = offset;
+    make_nonnull_domain(&data.dom, dom);
+
+    remoteDispatchObjectEventSend(callback->client, remoteProgram,
+                                  REMOTE_PROC_DOMAIN_EVENT_LEASE_CHANGE,
+                                  (xdrproc_t)xdr_remote_domain_event_lease_change_msg, &data);
     return 0;
 }
 
@@ -1360,6 +1399,7 @@ static virConnectDomainEventGenericCallback domainEventCallbacks[] = {
     VIR_DOMAIN_EVENT_CALLBACK(remoteRelayDomainEventMetadataChange),
     VIR_DOMAIN_EVENT_CALLBACK(remoteRelayDomainEventBlockThreshold),
     VIR_DOMAIN_EVENT_CALLBACK(remoteRelayDomainEventMemoryFailure),
+    VIR_DOMAIN_EVENT_CALLBACK(remoteRelayDomainEventLeaseChange),
 };
 
 G_STATIC_ASSERT(G_N_ELEMENTS(domainEventCallbacks) == VIR_DOMAIN_EVENT_ID_LAST);

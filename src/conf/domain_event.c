@@ -58,6 +58,7 @@ static virClassPtr virDomainEventDeviceRemovalFailedClass;
 static virClassPtr virDomainEventMetadataChangeClass;
 static virClassPtr virDomainEventBlockThresholdClass;
 static virClassPtr virDomainEventMemoryFailureClass;
+static virClassPtr virDomainEventLeaseChangeClass;
 
 static void virDomainEventDispose(void *obj);
 static void virDomainEventLifecycleDispose(void *obj);
@@ -81,6 +82,7 @@ static void virDomainEventDeviceRemovalFailedDispose(void *obj);
 static void virDomainEventMetadataChangeDispose(void *obj);
 static void virDomainEventBlockThresholdDispose(void *obj);
 static void virDomainEventMemoryFailureDispose(void *obj);
+static void virDomainEventLeaseChangeDispose(void *obj);
 
 static void
 virDomainEventDispatchDefaultFunc(virConnectPtr conn,
@@ -299,6 +301,19 @@ struct _virDomainEventMemoryFailure {
 typedef struct _virDomainEventMemoryFailure virDomainEventMemoryFailure;
 typedef virDomainEventMemoryFailure *virDomainEventMemoryFailurePtr;
 
+struct _virDomainEventLeaseChange {
+    virDomainEvent parent;
+
+    int action;
+
+    char *lockspace;
+    char *key;
+    char *path;
+    unsigned long long offset;
+};
+typedef struct _virDomainEventLeaseChange virDomainEventLeaseChange;
+typedef virDomainEventLeaseChange *virDomainEventLeaseChangePtr;
+
 static int
 virDomainEventsOnceInit(void)
 {
@@ -345,6 +360,8 @@ virDomainEventsOnceInit(void)
     if (!VIR_CLASS_NEW(virDomainEventBlockThreshold, virDomainEventClass))
         return -1;
     if (!VIR_CLASS_NEW(virDomainEventMemoryFailure, virDomainEventClass))
+        return -1;
+    if (!VIR_CLASS_NEW(virDomainEventLeaseChange, virDomainEventClass))
         return -1;
     return 0;
 }
@@ -560,6 +577,17 @@ virDomainEventMemoryFailureDispose(void *obj)
 {
     virDomainEventMemoryFailurePtr event = obj;
     VIR_DEBUG("obj=%p", event);
+}
+
+
+static void
+virDomainEventLeaseChangeDispose(void *obj)
+{
+    virDomainEventLeaseChangePtr event = obj;
+    VIR_DEBUG("obj=%p", event);
+
+    VIR_FREE(event->lockspace);
+    VIR_FREE(event->key);
 }
 
 
@@ -1661,6 +1689,31 @@ virDomainEventMemoryFailureNew(int id,
     ev->recipient = recipient;
     ev->action = action;
     ev->flags = flags;
+    return (virObjectEventPtr)ev;
+}
+
+
+static virObjectEventPtr
+virDomainEventLeaseChangeNew(int id,
+                             const char *name,
+                             unsigned char *uuid,
+                             int action,
+                             const char *lockspace,
+                             const char *key,
+                             const char *path,
+                             unsigned long long offset)
+{
+    virDomainEventLeaseChangePtr ev;
+    if (!(ev = virDomainEventNew(virDomainEventLeaseChangeClass,
+                                 VIR_DOMAIN_EVENT_ID_LEASE_CHANGE,
+                                 id, name, uuid)))
+        return NULL;
+
+    ev->action = action;
+    ev->lockspace = g_strdup(lockspace);
+    ev->key = g_strdup(key);
+    ev->path = g_strdup(path);
+    ev->offset = offset;
 
     return (virObjectEventPtr)ev;
 }
@@ -1685,6 +1738,33 @@ virDomainEventMemoryFailureNewFromDom(virDomainPtr dom,
     return virDomainEventMemoryFailureNew(dom->id, dom->name, dom->uuid,
                                           recipient, action, flags);
 }
+
+virObjectEventPtr
+virDomainEventLeaseChangeNewFromObj(virDomainObjPtr obj,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset)
+{
+    return virDomainEventLeaseChangeNew(obj->def->id, obj->def->name,
+                                        obj->def->uuid, action, lockspace,
+                                        key, path, offset);
+}
+
+virObjectEventPtr
+virDomainEventLeaseChangeNewFromDom(virDomainPtr dom,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset)
+{
+    return virDomainEventLeaseChangeNew(dom->id, dom->name, dom->uuid,
+                                        action, lockspace, key,
+                                        path, offset);
+}
+
 
 static void
 virDomainEventDispatchDefaultFunc(virConnectPtr conn,
@@ -1969,6 +2049,7 @@ virDomainEventDispatchDefaultFunc(virConnectPtr conn,
                                                               cbopaque);
             goto cleanup;
         }
+
     case VIR_DOMAIN_EVENT_ID_MEMORY_FAILURE:
         {
             virDomainEventMemoryFailurePtr memoryFailureEvent;
@@ -1979,6 +2060,21 @@ virDomainEventDispatchDefaultFunc(virConnectPtr conn,
                                                              memoryFailureEvent->action,
                                                              memoryFailureEvent->flags,
                                                              cbopaque);
+            goto cleanup;
+        }
+
+    case VIR_DOMAIN_EVENT_ID_LEASE_CHANGE:
+        {
+            virDomainEventLeaseChangePtr leaseChangeEvent;
+
+            leaseChangeEvent = (virDomainEventLeaseChangePtr)event;
+            ((virConnectDomainEventLeaseChangeCallback)cb)(conn, dom,
+                                                           leaseChangeEvent->action,
+                                                           leaseChangeEvent->lockspace,
+                                                           leaseChangeEvent->key,
+                                                           leaseChangeEvent->path,
+                                                           leaseChangeEvent->offset,
+                                                           cbopaque);
             goto cleanup;
         }
 

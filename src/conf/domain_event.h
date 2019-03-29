@@ -267,6 +267,22 @@ virDomainEventMemoryFailureNewFromDom(virDomainPtr dom,
                                       int action,
                                       unsigned int flags);
 
+virObjectEventPtr
+virDomainEventLeaseChangeNewFromObj(virDomainObjPtr obj,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset);
+
+virObjectEventPtr
+virDomainEventLeaseChangeNewFromDom(virDomainPtr dom,
+                                    int action,
+                                    const char *lockspace,
+                                    const char *key,
+                                    const char *path,
+                                    unsigned long long offset);
+
 int
 virDomainEventStateRegister(virConnectPtr conn,
                             virObjectEventStatePtr state,

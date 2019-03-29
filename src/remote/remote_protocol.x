@@ -3812,6 +3812,16 @@ struct remote_domain_get_messages_ret {
 };
 
 
+struct remote_domain_event_lease_change_msg {
+    int callbackID;
+    remote_nonnull_domain dom;
+    int action;
+    remote_nonnull_string locspace;
+    remote_nonnull_string key;
+    remote_nonnull_string path;
+    unsigned hyper offset;
+};
+
 /*----- Protocol. -----*/
 
 /* Define the program number, protocol version and procedure numbers here. */
@@ -6733,5 +6743,11 @@ enum remote_procedure {
      * @generate: none
      * @acl: domain:read
      */
-    REMOTE_PROC_DOMAIN_GET_MESSAGES = 426
+    REMOTE_PROC_DOMAIN_GET_MESSAGES = 426,
+
+    /**
+     * @generate: both
+     * @acl: none
+     */
+    REMOTE_PROC_DOMAIN_EVENT_LEASE_CHANGE = 427
 };

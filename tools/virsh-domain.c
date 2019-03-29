@@ -13493,6 +13493,37 @@ virshEventMemoryFailurePrint(virConnectPtr conn G_GNUC_UNUSED,
     virshEventPrint(opaque, &buf);
 }
 
+VIR_ENUM_DECL(virshEventLeaseChangeAction);
+VIR_ENUM_IMPL(virshEventLeaseChangeAction,
+              VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_LAST,
+              N_("unknown"),
+              N_("attach"),
+              N_("detach"));
+
+
+static void
+virshEventLeaseChangePrint(virConnectPtr conn G_GNUC_UNUSED,
+                           virDomainPtr dom,
+                           int action,
+                           const char *lockspace,
+                           const char *key,
+                           const char *path,
+                           unsigned long long offset,
+                           void *opaque)
+{
+    virBuffer buf = VIR_BUFFER_INITIALIZER;
+
+    virBufferAsprintf(&buf,
+                      _("event 'lease-change' for domain %s: "
+                        "action: %s lockspace: %s key: %s "
+                        "path %s offset: %llu\n"),
+                      virDomainGetName(dom),
+                      UNKNOWNSTR(virshEventLeaseChangeActionTypeToString(action)),
+                      lockspace, key, path, offset);
+
+    virshEventPrint(opaque, &buf);
+}
+
 
 virshDomainEventCallback virshDomainEventCallbacks[] = {
     { "lifecycle",
@@ -13545,6 +13576,8 @@ virshDomainEventCallback virshDomainEventCallbacks[] = {
       VIR_DOMAIN_EVENT_CALLBACK(virshEventBlockThresholdPrint), },
     { "memory-failure",
       VIR_DOMAIN_EVENT_CALLBACK(virshEventMemoryFailurePrint), },
+    { "lease-change",
+      VIR_DOMAIN_EVENT_CALLBACK(virshEventLeaseChangePrint), },
 };
 G_STATIC_ASSERT(VIR_DOMAIN_EVENT_ID_LAST == G_N_ELEMENTS(virshDomainEventCallbacks));
 

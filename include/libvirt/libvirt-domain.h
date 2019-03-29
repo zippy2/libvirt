@@ -3258,6 +3258,16 @@ typedef enum {
 } virDomainMemoryFailureFlags;
 
 
+typedef enum {
+    VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_ATTACH = 1, /* lease attached */
+    VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_DETACH = 2, /* lease detached */
+
+# ifdef VIR_ENUM_SENTINELS
+    VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_LAST
+# endif
+} virConnectDomainEventLeaseAction;
+
+
 /**
  * virConnectDomainEventCallback:
  * @conn: virConnect connection
@@ -4627,6 +4637,8 @@ typedef void (*virConnectDomainEventBlockThresholdCallback)(virConnectPtr conn,
                                                             unsigned long long excess,
                                                             void *opaque);
 
+
+
 /**
  * virConnectDomainEventMemoryFailureCallback:
  * @conn: connection object
@@ -4651,6 +4663,30 @@ typedef void (*virConnectDomainEventMemoryFailureCallback)(virConnectPtr conn,
                                                            unsigned int flags,
                                                            void *opaque);
 
+/**
+ * virConnectDomainEventLeaseChangeCallback:
+ * @conn: connection object
+ * @dom: domain on which the event occurred
+ * @action: action which occurred, one of virConnectDomainEventLeaseAction
+ * @lockspace: string identifying within which lockspace @key is held
+ * @key: unique key
+ * @path: fully qualified path of the file associated with the lockspace
+ * @offset: offset within @path, may be 0 if the lock manager doesn't support offsets
+ * @opaque: application specified data
+ *
+ * The callback occurs on lease attach or detach.
+ *
+ * The callback signature to use when registering for an event of type
+ * VIR_DOMAIN_EVENT_ID_LEASE_CHANGE with virConnectDomainEventRegisterAny()
+ */
+typedef void (*virConnectDomainEventLeaseChangeCallback)(virConnectPtr conn,
+                                                         virDomainPtr dom,
+                                                         int action,
+                                                         const char *lockspace,
+                                                         const char *key,
+                                                         const char *path,
+                                                         unsigned long long offset,
+                                                         void *opaque);
 
 /**
  * VIR_DOMAIN_EVENT_CALLBACK:
@@ -4695,6 +4731,7 @@ typedef enum {
     VIR_DOMAIN_EVENT_ID_METADATA_CHANGE = 23, /* virConnectDomainEventMetadataChangeCallback */
     VIR_DOMAIN_EVENT_ID_BLOCK_THRESHOLD = 24, /* virConnectDomainEventBlockThresholdCallback */
     VIR_DOMAIN_EVENT_ID_MEMORY_FAILURE = 25,  /* virConnectDomainEventMemoryFailureCallback */
+    VIR_DOMAIN_EVENT_ID_LEASE_CHANGE = 26,    /* virConnectDomainEventLeaseChangeCallback */
 
 # ifdef VIR_ENUM_SENTINELS
     VIR_DOMAIN_EVENT_ID_LAST
