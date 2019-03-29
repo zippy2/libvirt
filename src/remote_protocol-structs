@@ -3306,6 +3306,15 @@ struct remote_domain_fd_associate_args {
         remote_nonnull_string      name;
         u_int                      flags;
 };
+struct remote_domain_event_lease_change_msg {
+        int                        callbackID;
+        remote_nonnull_domain      dom;
+        int                        action;
+        remote_nonnull_string      locspace;
+        remote_nonnull_string      key;
+        remote_nonnull_string      path;
+        uint64_t                   offset;
+};
 enum remote_procedure {
         REMOTE_PROC_CONNECT_OPEN = 1,
         REMOTE_PROC_CONNECT_CLOSE = 2,
@@ -3755,4 +3764,5 @@ enum remote_procedure {
         REMOTE_PROC_NETWORK_EVENT_CALLBACK_METADATA_CHANGE = 446,
         REMOTE_PROC_NODE_DEVICE_UPDATE = 447,
         REMOTE_PROC_DOMAIN_GRAPHICS_RELOAD = 448,
+        REMOTE_PROC_DOMAIN_EVENT_LEASE_CHANGE = 449,
 };
