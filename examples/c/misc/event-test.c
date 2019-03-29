@@ -969,6 +969,42 @@ myDomainEventBlockThresholdCallback(virConnectPtr conn G_GNUC_UNUSED,
 }
 
 
+static const char *
+leaseActionTypeToStr(int action)
+{
+    switch ((virConnectDomainEventLeaseAction) action) {
+    case VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_ATTACH:
+        return "attach";
+
+    case VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_DETACH:
+        return "detach";
+
+    case VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_LAST:
+        break;
+    }
+
+    return "unknown";
+}
+
+
+static int
+myDomainEventLeaseChangeCallback(virConnectPtr conn G_GNUC_UNUSED,
+                                 virDomainPtr dom,
+                                 int action,
+                                 const char *lockspace,
+                                 const char *key,
+                                 const char *path,
+                                 unsigned long long offset,
+                                 void *opaque G_GNUC_UNUSED)
+{
+    printf("%s EVENT domain %s(%d) lease change: action %s lockspace %s key %s "
+           "path %s offset %llu",
+           __func__, virDomainGetName(dom), virDomainGetID(dom),
+           leaseActionTypeToStr(action), lockspace, key, path, offset);
+    return 0;
+}
+
+
 static int
 myDomainEventMemoryFailureCallback(virConnectPtr conn G_GNUC_UNUSED,
                                    virDomainPtr dom,
@@ -1183,6 +1219,7 @@ struct domainEventData domainEvents[] = {
     DOMAIN_EVENT(VIR_DOMAIN_EVENT_ID_MEMORY_FAILURE, myDomainEventMemoryFailureCallback),
     DOMAIN_EVENT(VIR_DOMAIN_EVENT_ID_MEMORY_DEVICE_SIZE_CHANGE, myDomainEventMemoryDeviceSizeChangeCallback),
     DOMAIN_EVENT(VIR_DOMAIN_EVENT_ID_NIC_MAC_CHANGE, myDomainEventNICMACChangeCallback),
+    DOMAIN_EVENT(VIR_DOMAIN_EVENT_ID_LEASE_CHANGE, myDomainEventLeaseChangeCallback),
 };
 
 struct storagePoolEventData {
