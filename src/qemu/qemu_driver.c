@@ -6929,15 +6929,15 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
                            virDomainDeviceDefPtr dev,
                            virQEMUDriverPtr driver)
 {
+    virObjectEventPtr event = NULL;
     int ret = -1;
-    const char *alias = NULL;
 
     switch ((virDomainDeviceType)dev->type) {
     case VIR_DOMAIN_DEVICE_DISK:
         qemuDomainObjCheckDiskTaint(driver, vm, dev->data.disk, NULL);
         ret = qemuDomainAttachDeviceDiskLive(driver, vm, dev);
         if (!ret) {
-            alias = dev->data.disk->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.disk->info.alias);
             dev->data.disk = NULL;
         }
         break;
@@ -6945,7 +6945,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
     case VIR_DOMAIN_DEVICE_CONTROLLER:
         ret = qemuDomainAttachControllerDevice(driver, vm, dev->data.controller);
         if (!ret) {
-            alias = dev->data.controller->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.controller->info.alias);
             dev->data.controller = NULL;
         }
         break;
@@ -6961,7 +6961,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         qemuDomainObjCheckNetTaint(driver, vm, dev->data.net, NULL);
         ret = qemuDomainAttachNetDevice(driver, vm, dev->data.net);
         if (!ret) {
-            alias = dev->data.net->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.net->info.alias);
             dev->data.net = NULL;
         }
         break;
@@ -6971,7 +6971,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         ret = qemuDomainAttachHostDevice(driver, vm,
                                          dev->data.hostdev);
         if (!ret) {
-            alias = dev->data.hostdev->info->alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.hostdev->info->alias);
             dev->data.hostdev = NULL;
         }
         break;
@@ -6980,7 +6980,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         ret = qemuDomainAttachRedirdevDevice(driver, vm,
                                              dev->data.redirdev);
         if (!ret) {
-            alias = dev->data.redirdev->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.redirdev->info.alias);
             dev->data.redirdev = NULL;
         }
         break;
@@ -6989,7 +6989,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         ret = qemuDomainAttachChrDevice(driver, vm,
                                         dev->data.chr);
         if (!ret) {
-            alias = dev->data.chr->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.chr->info.alias);
             dev->data.chr = NULL;
         }
         break;
@@ -6998,7 +6998,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         ret = qemuDomainAttachRNGDevice(driver, vm,
                                         dev->data.rng);
         if (!ret) {
-            alias = dev->data.rng->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.rng->info.alias);
             dev->data.rng = NULL;
         }
         break;
@@ -7015,7 +7015,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         ret = qemuDomainAttachShmemDevice(driver, vm,
                                           dev->data.shmem);
         if (!ret) {
-            alias = dev->data.shmem->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.shmem->info.alias);
             dev->data.shmem = NULL;
         }
         break;
@@ -7024,7 +7024,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         ret = qemuDomainAttachWatchdog(driver, vm,
                                        dev->data.watchdog);
         if (!ret) {
-            alias = dev->data.watchdog->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.watchdog->info.alias);
             dev->data.watchdog = NULL;
         }
         break;
@@ -7032,7 +7032,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
     case VIR_DOMAIN_DEVICE_INPUT:
         ret = qemuDomainAttachInputDevice(driver, vm, dev->data.input);
         if (ret == 0) {
-            alias = dev->data.input->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.input->info.alias);
             dev->data.input = NULL;
         }
         break;
@@ -7040,7 +7040,7 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
     case VIR_DOMAIN_DEVICE_VSOCK:
         ret = qemuDomainAttachVsockDevice(driver, vm, dev->data.vsock);
         if (ret == 0) {
-            alias = dev->data.vsock->info.alias;
+            event = virDomainEventDeviceAddedNewFromObj(vm, dev->data.vsock->info.alias);
             dev->data.vsock = NULL;
         }
         break;
@@ -7065,14 +7065,10 @@ qemuDomainAttachDeviceLive(virDomainObjPtr vm,
         break;
     }
 
-    if (alias) {
-        /* queue the event before the alias has a chance to get freed
-         * if the domain disappears while qemuDomainUpdateDeviceList
-         * is in monitor */
-        virObjectEventPtr event;
-        event = virDomainEventDeviceAddedNewFromObj(vm, alias);
-        virObjectEventStateQueue(driver->domainEventState, event);
-    }
+    /* queue the event before the alias has a chance to get freed
+     * if the domain disappears while qemuDomainUpdateDeviceList
+     * is in monitor */
+    virObjectEventStateQueue(driver->domainEventState, event);
 
     if (ret == 0)
         ret = qemuDomainUpdateDeviceList(driver, vm, QEMU_ASYNC_JOB_NONE);
