@@ -4001,12 +4001,23 @@ struct remote_domain_set_autostart_once_args {
     int autostart;
 };
 
+<<<<<<< HEAD
 struct remote_domain_event_nic_mac_change_msg {
     int callbackID;
     remote_nonnull_domain dom;
     remote_nonnull_string alias;
     remote_nonnull_string oldMAC;
     remote_nonnull_string newMAC;
+=======
+struct remote_domain_event_lease_change_msg {
+    int callbackID;
+    remote_nonnull_domain dom;
+    int action;
+    remote_nonnull_string locspace;
+    remote_nonnull_string key;
+    remote_nonnull_string path;
+    unsigned hyper offset;
+>>>>>>> 95248467e4 (Introduce VIR_DOMAIN_EVENT_ID_LEASE_CHANGE)
 };
 
 /*----- Protocol. -----*/
@@ -7120,5 +7131,9 @@ enum remote_procedure {
      * @generate: both
      * @acl: none
      */
+<<<<<<< HEAD
     REMOTE_PROC_DOMAIN_EVENT_NIC_MAC_CHANGE = 453
+=======
+    REMOTE_PROC_DOMAIN_EVENT_LEASE_CHANGE = 453
+>>>>>>> 95248467e4 (Introduce VIR_DOMAIN_EVENT_ID_LEASE_CHANGE)
 };
