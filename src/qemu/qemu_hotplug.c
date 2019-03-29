@@ -3344,8 +3344,15 @@ qemuDomainAttachDeviceLive(virDomainObj *vm,
     case VIR_DOMAIN_DEVICE_LEASE:
         ret = qemuDomainAttachLease(driver, vm,
                                     dev->data.lease);
-        if (ret == 0)
+        if (ret == 0) {
+            event = virDomainEventLeaseChangeNewFromObj(vm,
+                                                        VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_ATTACH,
+                                                        dev->data.lease->lockspace,
+                                                        dev->data.lease->key,
+                                                        dev->data.lease->path,
+                                                        dev->data.lease->offset);
             dev->data.lease = NULL;
+        }
         break;
 
     case VIR_DOMAIN_DEVICE_NET:
@@ -6096,6 +6103,7 @@ qemuDomainDetachDeviceLease(virQEMUDriver *driver,
                             virDomainLeaseDef *lease)
 {
     virDomainLeaseDef *det_lease;
+    virObjectEvent *event = NULL;
     int idx;
 
     if ((idx = virDomainLeaseIndex(vm->def, lease)) < 0) {
@@ -6107,6 +6115,14 @@ qemuDomainDetachDeviceLease(virQEMUDriver *driver,
 
     if (virDomainLockLeaseDetach(driver->lockManager, vm, lease) < 0)
         return -1;
+
+    event = virDomainEventLeaseChangeNewFromObj(vm,
+                                                VIR_CONNECT_DOMAIN_EVENT_LEASE_ACTION_DETACH,
+                                                lease->lockspace,
+                                                lease->key,
+                                                lease->path,
+                                                lease->offset);
+    virObjectEventStateQueue(driver->domainEventState, event);
 
     det_lease = virDomainLeaseRemoveAt(vm->def, idx);
     virDomainLeaseDefFree(det_lease);
