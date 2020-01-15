@@ -759,12 +759,6 @@ int virTestMain(int argc,
     size_t npreloads = 0;
     g_autofree char *mock = NULL;
 
-    if (getenv("VIR_TEST_FILE_ACCESS")) {
-        preloads = g_renew(const char *, preloads, npreloads + 2);
-        preloads[npreloads++] = VIR_TEST_MOCK("virtest");
-        preloads[npreloads] = NULL;
-    }
-
     g_setenv("HOME", "/bad-test-used-env-home", TRUE);
     g_setenv("XDG_RUNTIME_DIR", "/bad-test-used-env-xdg-runtime-dir", TRUE);
 
@@ -781,6 +775,12 @@ int virTestMain(int argc,
         preloads[npreloads] = NULL;
     }
     va_end(ap);
+
+    if (getenv("VIR_TEST_FILE_ACCESS")) {
+        preloads = g_renew(const char *, preloads, npreloads + 2);
+        preloads[npreloads++] = VIR_TEST_MOCK("virtest");
+        preloads[npreloads] = NULL;
+    }
 
     if (preloads) {
         mock = g_strjoinv(":", (char **)preloads);
