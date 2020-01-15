@@ -875,6 +875,12 @@ int virTestMain(int argc,
     }
     va_end(ap);
 
+    if (getenv("VIR_TEST_FILE_ACCESS")) {
+        preloads = g_renew(const char *, preloads, npreloads + 2);
+        preloads[npreloads++] = VIR_TEST_MOCK("virtest");
+        preloads[npreloads] = NULL;
+    }
+
     if (preloads) {
         mock = g_strjoinv(":", (char **)preloads);
         VIR_TEST_PRELOAD(mock);
