@@ -36,7 +36,9 @@ static int (*real_access)(const char *path, int mode);
 static int (*real_connect)(int fd, const struct sockaddr *addr, socklen_t addrlen);
 
 static const char *progname;
-const char *output;
+static const char *output;
+static const char *canon_abs_top_srcdir;
+static const char *canon_abs_top_builddir;
 
 #define VIR_FILE_ACCESS_DEFAULT abs_builddir "/test_file_access.txt"
 
@@ -49,6 +51,9 @@ static void init_syms(void)
     VIR_MOCK_REAL_INIT(fopen);
     VIR_MOCK_REAL_INIT(access);
     VIR_MOCK_REAL_INIT(connect);
+
+    canon_abs_top_srcdir = virFileCanonicalizePath(abs_top_srcdir);
+    canon_abs_top_builddir = virFileCanonicalizePath(abs_top_builddir);
 }
 
 static void
@@ -125,8 +130,10 @@ checkPath(const char *path,
     }
 
 
-    if (!STRPREFIX(path, abs_top_srcdir) &&
-        !STRPREFIX(path, abs_top_builddir)) {
+    if ((canon_abs_top_srcdir &&
+         !STRPREFIX(path, canon_abs_top_srcdir)) &&
+        (canon_abs_top_builddir &&
+         !STRPREFIX(path, canon_abs_top_builddir))) {
         printFile(path, func);
     }
 
