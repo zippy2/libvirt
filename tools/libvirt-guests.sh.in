@@ -39,11 +39,11 @@ START_DELAY=0
 BYPASS_CACHE=0
 SYNC_TIME=0
 
-test -f "$initconfdir"/libvirt-guests &&
-    . "$initconfdir"/libvirt-guests
+test -f "$sysconfdir"/libvirt/libvirt-guests.conf &&
+    . "$sysconfdir"/libvirt/libvirt-guests.conf
 
 LISTFILE="$localstatedir"/lib/libvirt/libvirt-guests
-VAR_SUBSYS_LIBVIRT_GUESTS="$localstatedir"/lock/subsys/libvirt-guests
+VAR_SUBSYS_LIBVIRT_GUESTS="$localstatedir"/lock/libvirt-guests
 
 RETVAL=0
 
