@@ -40,8 +40,8 @@ BYPASS_CACHE=0
 SYNC_TIME=0
 PERSISTENT_ONLY="default"
 
-test -f "$initconfdir"/libvirt-guests &&
-    . "$initconfdir"/libvirt-guests
+test -f "$sysconfdir"/libvirt/libvirt-guests.conf &&
+    . "$sysconfdir"/libvirt/libvirt-guests.conf
 
 LISTFILE="$localstatedir"/lib/libvirt/libvirt-guests
 VAR_SUBSYS_LIBVIRT_GUESTS="$localstatedir"/lock/libvirt-guests
