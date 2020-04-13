@@ -42,15 +42,6 @@ struct virLXCMeminfo {
 };
 typedef struct virLXCMeminfo *virLXCMeminfoPtr;
 
-struct virLXCFuse {
-    virDomainDefPtr def;
-    virThread thread;
-    char *mountpoint;
-    struct fuse *fuse;
-    struct fuse_chan *ch;
-    virMutex lock;
-};
-typedef struct virLXCFuse virLXCFuse;
 typedef struct virLXCFuse *virLXCFusePtr;
 
 int lxcSetupFuse(virLXCFusePtr *f, virDomainDefPtr def);
