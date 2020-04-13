@@ -35,6 +35,15 @@
 
 #define VIR_FROM_THIS VIR_FROM_LXC
 
+struct virLXCFuse {
+    virDomainDefPtr def;
+    virThread thread;
+    char *mountpoint;
+    struct fuse *fuse;
+    struct fuse_chan *ch;
+    virMutex lock;
+};
+
 #if WITH_FUSE
 
 static const char *fuse_meminfo_path = "/meminfo";
