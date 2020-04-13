@@ -53,6 +53,18 @@ struct virLXCFuse {
 
 static const char *fuse_meminfo_path = "/meminfo";
 
+
+# if FUSE_USE_VERSION >= 35
+static void *
+lxcProcInit(struct fuse_conn_info *conn G_GNUC_UNUSED,
+            struct fuse_config *cfg)
+{
+    cfg->direct_io = 1;
+    return NULL;
+}
+# endif
+
+
 static int
 lxcProcGetattrImpl(const char *path,
                    struct stat *stbuf)
@@ -303,6 +315,9 @@ static int lxcProcRead(const char *path G_GNUC_UNUSED,
 }
 
 static struct fuse_operations lxcProcOper = {
+# if FUSE_USE_VERSION >= 35
+    .init    = lxcProcInit,
+# endif
     .getattr = lxcProcGetattr,
     .readdir = lxcProcReaddir,
     .open    = lxcProcOpen,
