@@ -46,6 +46,10 @@ struct virLXCFuse {
 
 #if WITH_FUSE
 
+# define FUSE_USE_VERSION 26
+# include <fuse.h>
+
+
 static const char *fuse_meminfo_path = "/meminfo";
 
 static int lxcProcGetattr(const char *path, struct stat *stbuf)
