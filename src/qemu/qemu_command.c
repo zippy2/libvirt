@@ -7406,6 +7406,31 @@ qemuBuildNumaHMATCommandLine(virCommandPtr cmd,
 
 
 static int
+qemuBuildNumaOldCPUs(virBufferPtr buf,
+                     virBitmapPtr cpu)
+{
+    g_autofree char *cpumask = NULL;
+    char *tmpmask = NULL;
+    char *next = NULL;
+
+    if (!cpu)
+        return 0;
+
+    if (!(cpumask = virBitmapFormat(cpu)))
+        return -1;
+
+    for (tmpmask = cpumask; tmpmask; tmpmask = next) {
+        if ((next = strchr(tmpmask, ',')))
+            *(next++) = '\0';
+        virBufferAddLit(buf, ",cpus=");
+        virBufferAdd(buf, tmpmask, -1);
+    }
+
+    return 0;
+}
+
+
+static int
 qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
                          virDomainDefPtr def,
                          virCommandPtr cmd,
@@ -7471,7 +7496,6 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     }
 
     for (i = 0; i < ncells; i++) {
-        virBitmapPtr cpumask = virDomainNumaGetNodeCpumask(def->numa, i);
         ssize_t initiator = virDomainNumaGetNodeInitiator(def->numa, i);
 
         if (needBackend) {
@@ -7482,21 +7506,8 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
         virCommandAddArg(cmd, "-numa");
         virBufferAsprintf(&buf, "node,nodeid=%zu", i);
 
-        if (cpumask) {
-            g_autofree char *cpumaskStr = NULL;
-            char *next = NULL;
-            char *tmpmask;
-
-            if (!(cpumaskStr = virBitmapFormat(cpumask)))
-                goto cleanup;
-
-            for (tmpmask = cpumaskStr; tmpmask; tmpmask = next) {
-                if ((next = strchr(tmpmask, ',')))
-                    *(next++) = '\0';
-                virBufferAddLit(&buf, ",cpus=");
-                virBufferAdd(&buf, tmpmask, -1);
-            }
-        }
+        if (qemuBuildNumaOldCPUs(&buf, virDomainNumaGetNodeCpumask(def->numa, i)) < 0)
+            goto cleanup;
 
         if (hmat) {
             if (initiator < 0)
