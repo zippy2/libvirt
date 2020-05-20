@@ -7414,7 +7414,7 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     size_t i, j;
     virQEMUCapsPtr qemuCaps = priv->qemuCaps;
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
-    virBufferPtr nodeBackends = NULL;
+    g_autofree virBufferPtr nodeBackends = NULL;
     bool needBackend = false;
     bool hmat = false;
     int ret = -1;
@@ -7422,7 +7422,7 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     ssize_t masterInitiator = -1;
 
     if (!virDomainNumatuneNodesetIsAvailable(def->numa, priv->autoNodeset))
-        goto cleanup;
+        return -1;
 
     if (!virQEMUCapsGetMachineNumaMemSupported(qemuCaps,
                                                def->virtType,
@@ -7545,12 +7545,8 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     ret = 0;
 
  cleanup:
-    if (nodeBackends) {
-        for (i = 0; i < ncells; i++)
-            virBufferFreeAndReset(&nodeBackends[i]);
-
-        VIR_FREE(nodeBackends);
-    }
+    for (i = 0; i < ncells; i++)
+        virBufferFreeAndReset(&nodeBackends[i]);
 
     return ret;
 }
