@@ -7414,11 +7414,9 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     size_t i, j;
     virQEMUCapsPtr qemuCaps = priv->qemuCaps;
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
-    char *next = NULL;
     virBufferPtr nodeBackends = NULL;
     bool needBackend = false;
     bool hmat = false;
-    int rc;
     int ret = -1;
     size_t ncells = virDomainNumaGetNodeCount(def->numa);
     ssize_t masterInitiator = -1;
@@ -7443,6 +7441,7 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     if (virQEMUCapsGet(qemuCaps, QEMU_CAPS_OBJECT_MEMORY_RAM) ||
         virQEMUCapsGet(qemuCaps, QEMU_CAPS_OBJECT_MEMORY_FILE) ||
         virQEMUCapsGet(qemuCaps, QEMU_CAPS_OBJECT_MEMORY_MEMFD)) {
+        int rc;
 
         for (i = 0; i < ncells; i++) {
             if ((rc = qemuBuildMemoryCellBackendStr(def, cfg, i, priv,
@@ -7485,6 +7484,7 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
 
         if (cpumask) {
             g_autofree char *cpumaskStr = NULL;
+            char *next = NULL;
             char *tmpmask;
 
             if (!(cpumaskStr = virBitmapFormat(cpumask)))
