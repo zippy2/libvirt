@@ -17,7 +17,8 @@ file=/tmp/lib/domain--1-QEMUGuest1/master-key.aes \
 -overcommit mem-lock=off \
 -smp 1,sockets=1,cores=1,threads=1 \
 -object memory-backend-memfd,id=ram-node0,share=on,size=224395264 \
--numa node,nodeid=0,cpus=0,memdev=ram-node0 \
+-numa node,nodeid=0,memdev=ram-node0 \
+-numa cpu,node-id=0,socket-id=0,core-id=0,thread-id=0 \
 -uuid c7a5fdbd-edaf-9455-926a-d65c16db1809 \
 -display none \
 -no-user-config \

@@ -7430,6 +7430,94 @@ qemuBuildNumaOldCPUs(virBufferPtr buf,
 }
 
 
+/**
+ * qemuTranlsatevCPUID:
+ *
+ * For given vCPU @id and vCPU topology (@cpu) compute corresponding
+ * @socket, @die, @core and @thread). This assumes linear topology,
+ * that is every [socket, die, core, thread] combination is valid vCPU
+ * ID and there are no 'holes'. This is ensured by
+ * qemuValidateDomainDef() if QEMU_CAPS_QUERY_HOTPLUGGABLE_CPUS is
+ * set.
+ *
+ * Moreover, if @diesSupported is false (QEMU lacks
+ * QEMU_CAPS_SMP_DIES) then @die is set to zero and @socket is
+ * computed without taking numbed of dies into account.
+ *
+ * The algorithm is shamelessly copied over from QEMU's
+ * x86_topo_ids_from_idx() and its history (before introducing dies).
+ */
+static void
+qemuTranlsatevCPUID(unsigned int id,
+                    bool diesSupported,
+                    virCPUDefPtr cpu,
+                    unsigned int *socket,
+                    unsigned int *die,
+                    unsigned int *core,
+                    unsigned int *thread)
+{
+    if (cpu && cpu->sockets) {
+        *thread = id % cpu->threads;
+        *core = id / cpu->threads % cpu->cores;
+        if (diesSupported) {
+            *die = id / (cpu->cores * cpu->threads) % cpu->dies;
+            *socket = id / (cpu->dies * cpu->cores * cpu->threads);
+        } else {
+            *die = 0;
+            *socket = id / (cpu->cores * cpu->threads) % cpu->sockets;
+        }
+    } else {
+        /* If no topology was provided, then qemuBuildSmpCommandLine()
+         * puts all vCPUs into a separate socket. */
+        *thread = 0;
+        *core = 0;
+        *die = 0;
+        *socket = id;
+    }
+}
+
+
+static void
+qemuBuildNumaNewCPUs(virCommandPtr cmd,
+                     virCPUDefPtr cpu,
+                     virBitmapPtr cpumask,
+                     size_t nodeid,
+                     virQEMUCapsPtr qemuCaps)
+{
+    const bool diesSupported = virQEMUCapsGet(qemuCaps, QEMU_CAPS_SMP_DIES);
+    ssize_t vcpuid = -1;
+
+    if (!cpumask)
+        return;
+
+    while ((vcpuid = virBitmapNextSetBit(cpumask, vcpuid)) >= 0) {
+        unsigned int socket;
+        unsigned int die;
+        unsigned int core;
+        unsigned int thread;
+
+        qemuTranlsatevCPUID(vcpuid, diesSupported, cpu,
+                            &socket, &die, &core, &thread);
+
+        virCommandAddArg(cmd, "-numa");
+
+        /* The simple fact that dies are supported by QEMU doesn't mean we can
+         * put it onto command line. QEMU will accept die-id only if -smp dies
+         * was set to a value greater than 1. On the other hand, this allows us
+         * to generate shorter command line. */
+        if (diesSupported && cpu && cpu->dies > 1) {
+            virCommandAddArgFormat(cmd,
+                                   "cpu,node-id=%zu,socket-id=%u,die-id=%u,core-id=%u,thread-id=%u",
+                                   nodeid, socket, die, core, thread);
+        } else {
+            virCommandAddArgFormat(cmd,
+                                   "cpu,node-id=%zu,socket-id=%u,core-id=%u,thread-id=%u",
+                                   nodeid, socket, core, thread);
+        }
+    }
+}
+
+
 static int
 qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
                          virDomainDefPtr def,
@@ -7442,6 +7530,7 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     g_autofree virBufferPtr nodeBackends = NULL;
     bool needBackend = false;
     bool hmat = false;
+    bool newCpus = false;
     int ret = -1;
     size_t ncells = virDomainNumaGetNodeCount(def->numa);
     ssize_t masterInitiator = -1;
@@ -7482,6 +7571,18 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
         qemuBuildMemPathStr(def, cmd, priv) < 0)
         goto cleanup;
 
+    /* Use modern style of specifying vCPU topology only if:
+     * -numa cpu is available, introduced in the same time as -numa
+     *           dist, hence slightly misleading capability test, and
+     * query-hotpluggable-cpus is avialable, because then
+     *                         qemuValidateDomainDef() ensures that if
+     *                         topology is specified it matches max vCPU
+     *                         count and we can make some shortcuts in
+     *                         qemuTranlsatevCPUID().
+     */
+    newCpus = virQEMUCapsGet(qemuCaps, QEMU_CAPS_NUMA_DIST) &&
+              virQEMUCapsGet(qemuCaps, QEMU_CAPS_QUERY_HOTPLUGGABLE_CPUS);
+
     for (i = 0; i < ncells; i++) {
         if (virDomainNumaGetNodeCpumask(def->numa, i)) {
             masterInitiator = i;
@@ -7496,6 +7597,7 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
     }
 
     for (i = 0; i < ncells; i++) {
+        virBitmapPtr cpu = virDomainNumaGetNodeCpumask(def->numa, i);
         ssize_t initiator = virDomainNumaGetNodeInitiator(def->numa, i);
 
         if (needBackend) {
@@ -7506,7 +7608,9 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
         virCommandAddArg(cmd, "-numa");
         virBufferAsprintf(&buf, "node,nodeid=%zu", i);
 
-        if (qemuBuildNumaOldCPUs(&buf, virDomainNumaGetNodeCpumask(def->numa, i)) < 0)
+        /* -numa cpu is supported from the same release as -numa dist */
+        if (!newCpus &&
+            qemuBuildNumaOldCPUs(&buf, cpu) < 0)
             goto cleanup;
 
         if (hmat) {
@@ -7523,6 +7627,9 @@ qemuBuildNumaCommandLine(virQEMUDriverConfigPtr cfg,
                               virDomainNumaGetNodeMemorySize(def->numa, i) / 1024);
 
         virCommandAddArgBuffer(cmd, &buf);
+
+        if (newCpus)
+            qemuBuildNumaNewCPUs(cmd, def->cpu, cpu, i, qemuCaps);
     }
 
     /* If NUMA node distance is specified for at least one pair

@@ -19,7 +19,9 @@ file=/tmp/lib/domain--1-QEMUGuest1/master-key.aes \
 -object memory-backend-file,id=ram-node0,\
 mem-path=/dev/hugepages2M/libvirt/qemu/-1-QEMUGuest1,share=on,prealloc=on,\
 size=1073741824 \
--numa node,nodeid=0,cpus=0-1,memdev=ram-node0 \
+-numa node,nodeid=0,memdev=ram-node0 \
+-numa cpu,node-id=0,socket-id=0,core-id=0,thread-id=0 \
+-numa cpu,node-id=0,socket-id=1,core-id=0,thread-id=0 \
 -object memory-backend-file,id=memnvdimm0,mem-path=/tmp/nvdimm,share=on,\
 prealloc=on,size=536870912 \
 -device nvdimm,node=0,memdev=memnvdimm0,id=nvdimm0,slot=0 \
