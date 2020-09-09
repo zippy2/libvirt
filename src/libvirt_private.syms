@@ -3449,6 +3449,7 @@ virUSBDeviceListGet;
 virUSBDeviceListNew;
 virUSBDeviceListSteal;
 virUSBDeviceNew;
+virUSBDeviceOpen;
 virUSBDeviceSetUsedBy;
 
 

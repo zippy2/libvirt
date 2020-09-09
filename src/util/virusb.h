@@ -84,6 +84,10 @@ int virUSBDeviceFileIterate(virUSBDevicePtr dev,
                             virUSBDeviceFileActor actor,
                             void *opaque);
 
+int virUSBDeviceOpen(unsigned int bus,
+                     unsigned int devno,
+                     const char *vroot);
+
 virUSBDeviceListPtr virUSBDeviceListNew(void);
 int virUSBDeviceListAdd(virUSBDeviceListPtr list,
                         virUSBDevicePtr *dev);

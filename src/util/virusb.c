@@ -411,6 +411,31 @@ int virUSBDeviceFileIterate(virUSBDevicePtr dev,
     return (actor)(dev, dev->path, opaque);
 }
 
+int
+virUSBDeviceOpen(unsigned int bus,
+                 unsigned int devno,
+                 const char *vroot)
+{
+    g_autoptr(virUSBDevice) dev = NULL;
+    int fd;
+
+    if (!(dev = virUSBDeviceNew(bus, devno, vroot)))
+        return -1;
+
+    VIR_DEBUG("Opening USB device (bus: %.3u device: %.3u) path: %s",
+              bus, devno, dev->path);
+
+    if ((fd = open(dev->path, O_RDWR)) < 0) {
+        virReportSystemError(errno,
+                             _("Unable to open %s"),
+                             dev->path);
+        return -1;
+    }
+
+    return fd;
+}
+
+
 virUSBDeviceListPtr
 virUSBDeviceListNew(void)
 {
