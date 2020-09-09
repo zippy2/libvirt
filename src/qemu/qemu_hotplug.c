@@ -2538,6 +2538,8 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
 {
     qemuDomainObjPrivatePtr priv = vm->privateData;
     g_autofree char *devstr = NULL;
+    g_autofree char *fdName = NULL;
+    VIR_AUTOCLOSE fd = -1;
     bool added = false;
     bool teardowncgroup = false;
     bool teardownlabel = false;
@@ -2566,14 +2568,26 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
 
     if (qemuAssignDeviceHostdevAlias(vm->def, &hostdev->info->alias, -1) < 0)
         goto cleanup;
-    if (!(devstr = qemuBuildUSBHostdevDevStr(vm->def, hostdev, priv->qemuCaps)))
+
+    if (!hostdev->missing &&
+        virQEMUCapsGet(priv->qemuCaps, QEMU_CAPS_USB_HOST_HOSTDEVICE)) {
+        /* FD passing can be used. */
+        virDomainHostdevSubsysUSBPtr usbsrc = &hostdev->source.subsys.u.usb;
+
+        if ((fd = virUSBDeviceOpen(usbsrc->bus, usbsrc->device, NULL)) < 0)
+            goto cleanup;
+
+        fdName = g_strdup_printf("usb_host-%d", fd);
+    }
+
+    if (!(devstr = qemuBuildUSBHostdevDevStr(vm->def, hostdev, priv->qemuCaps, fdName)))
         goto cleanup;
 
     if (VIR_REALLOC_N(vm->def->hostdevs, vm->def->nhostdevs+1) < 0)
         goto cleanup;
 
     qemuDomainObjEnterMonitor(driver, vm);
-    ret = qemuMonitorAddDevice(priv->mon, devstr);
+    ret = qemuMonitorAddDeviceWithFd(priv->mon, devstr, fd, fdName);
     if (qemuDomainObjExitMonitor(driver, vm) < 0) {
         ret = -1;
         goto cleanup;

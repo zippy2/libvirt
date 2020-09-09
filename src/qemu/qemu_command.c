@@ -4522,7 +4522,8 @@ qemuBuildPCIHostdevDevStr(const virDomainDef *def,
 char *
 qemuBuildUSBHostdevDevStr(const virDomainDef *def,
                           virDomainHostdevDefPtr dev,
-                          virQEMUCapsPtr qemuCaps)
+                          virQEMUCapsPtr qemuCaps,
+                          const char *fdName)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
     virDomainHostdevSubsysUSBPtr usbsrc = &dev->source.subsys.u.usb;
@@ -4535,10 +4536,12 @@ qemuBuildUSBHostdevDevStr(const virDomainDef *def,
             return NULL;
         }
 
-        if (virQEMUCapsGet(qemuCaps, QEMU_CAPS_USB_HOST_HOSTDEVICE)) {
-            virBufferAsprintf(&buf, ",hostdevice=/dev/bus/usb/%03d/%03d",
-                              usbsrc->bus, usbsrc->device);
+        if (fdName &&
+            virQEMUCapsGet(qemuCaps, QEMU_CAPS_USB_HOST_HOSTDEVICE)) {
+            /* FD passing can be used. */
+            virBufferAsprintf(&buf, ",hostdevice=%s", fdName);
         } else {
+            /* We can't use FD passing. */
             virBufferAsprintf(&buf, ",hostbus=%d,hostaddr=%d",
                               usbsrc->bus, usbsrc->device);
         }
@@ -5225,8 +5228,10 @@ qemuBuildHostdevCommandLine(virCommandPtr cmd,
         virDomainHostdevSubsysMediatedDevPtr mdevsrc = &subsys->u.mdev;
         g_autofree char *devstr = NULL;
         g_autofree char *vhostfdName = NULL;
+        g_autofree char *usbfdName = NULL;
         unsigned int bootIndex = hostdev->info->bootIndex;
         int vhostfd = -1;
+        int usbfd = -1;
 
         if (hostdev->mode != VIR_DOMAIN_HOSTDEV_MODE_SUBSYS)
             continue;
@@ -5234,9 +5239,23 @@ qemuBuildHostdevCommandLine(virCommandPtr cmd,
         switch ((virDomainHostdevSubsysType) subsys->type) {
         /* USB */
         case VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_USB:
+            if (!hostdev->missing &&
+                virQEMUCapsGet(qemuCaps, QEMU_CAPS_USB_HOST_HOSTDEVICE)) {
+                /* FD passing can be used. */
+                virDomainHostdevSubsysUSBPtr usbsrc = &hostdev->source.subsys.u.usb;
+
+                if ((usbfd = virUSBDeviceOpen(usbsrc->bus, usbsrc->device, NULL)) < 0)
+                    return -1;
+
+                usbfdName = g_strdup_printf("usb_host-%d", usbfd);
+
+                virCommandPassFD(cmd, usbfd,
+                                 VIR_COMMAND_PASS_FD_CLOSE_PARENT);
+            }
+
             virCommandAddArg(cmd, "-device");
-            if (!(devstr =
-                  qemuBuildUSBHostdevDevStr(def, hostdev, qemuCaps)))
+
+            if (!(devstr = qemuBuildUSBHostdevDevStr(def, hostdev, qemuCaps, usbfdName)))
                 return -1;
             virCommandAddArg(cmd, devstr);
 
