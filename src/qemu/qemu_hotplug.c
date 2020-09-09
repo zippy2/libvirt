@@ -2577,7 +2577,7 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
         if ((fd = virUSBDeviceOpen(usbsrc->bus, usbsrc->device, NULL)) < 0)
             goto cleanup;
 
-        fdName = g_strdup_printf("usb_host-%d", fd);
+        fdName = g_strdup_printf("/dev/fdset/%d", fd);
     }
 
     if (!(devstr = qemuBuildUSBHostdevDevStr(vm->def, hostdev, priv->qemuCaps, fdName)))

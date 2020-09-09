@@ -4523,7 +4523,7 @@ char *
 qemuBuildUSBHostdevDevStr(const virDomainDef *def,
                           virDomainHostdevDefPtr dev,
                           virQEMUCapsPtr qemuCaps,
-                          const char *fdName)
+                          const char *fdpath)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
     virDomainHostdevSubsysUSBPtr usbsrc = &dev->source.subsys.u.usb;
@@ -4536,10 +4536,10 @@ qemuBuildUSBHostdevDevStr(const virDomainDef *def,
             return NULL;
         }
 
-        if (fdName &&
+        if (fdpath &&
             virQEMUCapsGet(qemuCaps, QEMU_CAPS_USB_HOST_HOSTDEVICE)) {
             /* FD passing can be used. */
-            virBufferAsprintf(&buf, ",hostdevice=%s", fdName);
+            virBufferAsprintf(&buf, ",hostdevice=%s", fdpath);
         } else {
             /* We can't use FD passing. */
             virBufferAsprintf(&buf, ",hostbus=%d,hostaddr=%d",
@@ -5228,7 +5228,8 @@ qemuBuildHostdevCommandLine(virCommandPtr cmd,
         virDomainHostdevSubsysMediatedDevPtr mdevsrc = &subsys->u.mdev;
         g_autofree char *devstr = NULL;
         g_autofree char *vhostfdName = NULL;
-        g_autofree char *usbfdName = NULL;
+        g_autofree char *usbfdset = NULL;
+        g_autofree char *usbfdpath = NULL;
         unsigned int bootIndex = hostdev->info->bootIndex;
         int vhostfd = -1;
         int usbfd = -1;
@@ -5247,15 +5248,21 @@ qemuBuildHostdevCommandLine(virCommandPtr cmd,
                 if ((usbfd = virUSBDeviceOpen(usbsrc->bus, usbsrc->device, NULL)) < 0)
                     return -1;
 
-                usbfdName = g_strdup_printf("usb_host-%d", usbfd);
+                virCommandPassFD(cmd, usbfd, VIR_COMMAND_PASS_FD_CLOSE_PARENT);
 
-                virCommandPassFD(cmd, usbfd,
-                                 VIR_COMMAND_PASS_FD_CLOSE_PARENT);
+                if (!(usbfdset = qemuVirCommandGetFDSet(cmd, usbfd)))
+                    return -1;
+
+                virCommandAddArg(cmd, "-add-fd");
+                virCommandAddArg(cmd, usbfdset);
+
+                if (!(usbfdpath = qemuVirCommandGetDevSet(cmd, usbfd)))
+                    return -1;
             }
 
             virCommandAddArg(cmd, "-device");
 
-            if (!(devstr = qemuBuildUSBHostdevDevStr(def, hostdev, qemuCaps, usbfdName)))
+            if (!(devstr = qemuBuildUSBHostdevDevStr(def, hostdev, qemuCaps, usbfdpath)))
                 return -1;
             virCommandAddArg(cmd, devstr);
 

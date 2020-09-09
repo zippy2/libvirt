@@ -185,7 +185,7 @@ int qemuBuildRNGBackendProps(virDomainRNGDefPtr rng,
 char *qemuBuildUSBHostdevDevStr(const virDomainDef *def,
                                 virDomainHostdevDefPtr dev,
                                 virQEMUCapsPtr qemuCaps,
-                                const char *fdName);
+                                const char *fdpame);
 
 char *qemuBuildSCSIHostdevDevStr(const virDomainDef *def,
                                  virDomainHostdevDefPtr dev,
