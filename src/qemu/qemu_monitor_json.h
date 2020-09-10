@@ -221,11 +221,12 @@ int qemuMonitorJSONCloseFileHandle(qemuMonitorPtr mon,
 
 int qemuMonitorJSONAddFDSet(qemuMonitorPtr mon,
                             const char *fdname,
-                            int fd,
+                            int *fd,
                             int *fdset);
 
 int qemuMonitorJSONRemoveFDSet(qemuMonitorPtr mon,
-                               int fdset);
+                               int fdset,
+                               int fd);
 
 int qemuMonitorJSONAddNetdev(qemuMonitorPtr mon,
                              virJSONValuePtr *props);

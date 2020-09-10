@@ -4167,43 +4167,65 @@ int qemuMonitorJSONCloseFileHandle(qemuMonitorPtr mon,
 
 int qemuMonitorJSONAddFDSet(qemuMonitorPtr mon,
                             const char *fdname,
-                            int fd,
+                            int *fd,
                             int *fdset)
 {
-    virJSONValuePtr ret = NULL;
     g_autoptr(virJSONValue) reply = NULL;
-    g_autoptr(virJSONValue) cmd = qemuMonitorJSONMakeCommand("add-fd",
-                                                             "S:opaque", fdname,
-                                                             NULL);
+    g_autoptr(virJSONValue) cmd = NULL;
+    virJSONValuePtr ret = NULL;
+
+    if (*fdset >= 0) {
+        cmd = qemuMonitorJSONMakeCommand("add-fd",
+                                         "i:fdset-id", *fdset,
+                                         "S:opaque", fdname,
+                                         NULL);
+    } else {
+        cmd = qemuMonitorJSONMakeCommand("add-fd",
+                                         "S:opaque", fdname,
+                                         NULL);
+    }
+
     if (!cmd)
         return -1;
 
-    if (qemuMonitorJSONCommandWithFd(mon, cmd, fd, &reply) < 0)
+    if (qemuMonitorJSONCommandWithFd(mon, cmd, *fd, &reply) < 0)
         return -1;
 
     if (qemuMonitorJSONCheckError(cmd, reply) < 0)
         return -1;
 
     if (!(ret = virJSONValueObjectGetObject(reply, "return")) ||
-        virJSONValueObjectGetNumberInt(ret, "fdset-id", fdset) < 0) {
+        virJSONValueObjectGetNumberInt(ret, "fdset-id", fdset) < 0 ||
+        virJSONValueObjectGetNumberInt(ret, "fd", fd) < 0) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
-                       _("JSON reply is missing fdset-id attribute"));
+                       _("JSON reply is missing fdset-id or fd attribute"));
         return -1;
     }
 
-    VIR_DEBUG("fdset-id: %d", *fdset);
+    VIR_DEBUG("fdset-id: %d fd: %d", *fdset, *fd);
 
     return 0;
 }
 
 
 int qemuMonitorJSONRemoveFDSet(qemuMonitorPtr mon,
-                               int fdset)
+                               int fdset,
+                               int fd)
 {
     g_autoptr(virJSONValue) reply = NULL;
-    g_autoptr(virJSONValue) cmd = qemuMonitorJSONMakeCommand("remove-fd",
-                                                             "i:fdset-id", fdset,
-                                                             NULL);
+    g_autoptr(virJSONValue) cmd  = NULL;
+
+    if (fd >= 0) {
+        cmd = qemuMonitorJSONMakeCommand("remove-fd",
+                                         "i:fdset-id", fdset,
+                                         "i:fd", fd,
+                                         NULL);
+    } else {
+        cmd = qemuMonitorJSONMakeCommand("remove-fd",
+                                         "i:fdset-id", fdset,
+                                         NULL);
+    }
+
     if (!cmd)
         return -1;
 

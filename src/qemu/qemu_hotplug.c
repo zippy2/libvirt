@@ -2544,6 +2544,9 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
     bool teardowncgroup = false;
     bool teardownlabel = false;
     bool teardowndevice = false;
+    int qemufd = -1;
+    int fdset = -1;
+    int rc;
     int ret = -1;
 
     if (virDomainUSBAddressEnsure(priv->usbaddrs, hostdev->info) < 0)
@@ -2577,7 +2580,17 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
         if ((fd = virUSBDeviceOpen(usbsrc->bus, usbsrc->device, NULL)) < 0)
             goto cleanup;
 
-        fdName = g_strdup_printf("/dev/fdset/%d", fd);
+        qemufd = fd;
+
+        qemuDomainObjEnterMonitor(driver, vm);
+        rc = qemuMonitorAddFDSet(priv->mon, "ble", &qemufd, &fdset);
+        if (qemuDomainObjExitMonitor(driver, vm) < 0)
+            goto cleanup;
+
+        if (rc < 0)
+            goto cleanup;
+
+        fdName = g_strdup_printf("/dev/fdset/%d", fdset);
     }
 
     if (!(devstr = qemuBuildUSBHostdevDevStr(vm->def, hostdev, priv->qemuCaps, fdName)))
@@ -2587,13 +2600,11 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
         goto cleanup;
 
     qemuDomainObjEnterMonitor(driver, vm);
-    ret = qemuMonitorAddDeviceWithFd(priv->mon, devstr, fd, fdName);
-    if (qemuDomainObjExitMonitor(driver, vm) < 0) {
-        ret = -1;
+    rc = qemuMonitorAddDevice(priv->mon, devstr);
+    if (qemuDomainObjExitMonitor(driver, vm) < 0)
         goto cleanup;
-    }
-    virDomainAuditHostdev(vm, hostdev, "attach", ret == 0);
-    if (ret < 0)
+    virDomainAuditHostdev(vm, hostdev, "attach", rc == 0);
+    if (rc < 0)
         goto cleanup;
 
     vm->def->hostdevs[vm->def->nhostdevs++] = hostdev;
@@ -2601,6 +2612,13 @@ qemuDomainAttachHostUSBDevice(virQEMUDriverPtr driver,
     ret = 0;
  cleanup:
     if (ret < 0) {
+        if (fdset >= 0 && virDomainObjIsActive(vm)) {
+            qemuDomainObjEnterMonitor(driver, vm);
+            rc = qemuMonitorRemoveFDSet(priv->mon, fdset, -1);
+            ignore_value(qemuDomainObjExitMonitor(driver, vm));
+            if (rc < 0)
+                VIR_WARN("Unable to close FD set %d", fdset);
+        }
         if (teardowncgroup && qemuTeardownHostdevCgroup(vm, hostdev) < 0)
             VIR_WARN("Unable to remove host device cgroup ACL on hotplug fail");
         if (teardownlabel &&

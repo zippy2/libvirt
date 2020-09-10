@@ -2809,17 +2809,16 @@ qemuMonitorCloseFileHandle(qemuMonitorPtr mon,
 /**
  * qemuMonitorAddFDSet:
  * @mon: monitor object
- * @fdname: a free-form string describing @fd (can be NULL)
+ * @fdname: a optional free-form string describing @fd (can be NULL)
  * @fd: file descriptor to pass
- * @fdset: the ID of the FD set that @fd was added to
+ * @fdset: the ID of the FD set that @fd is to be added to
  *
  * Pass a file descriptor to QEMU via SCM rights and add it to an
- * FD set. The ID of the set is assigned by QEMU and returned in
- * @fdset and can be used later by constructing the following
- * path: "/dev/fdset/$fdset"
+ * FD set. If @fdset is negative on input then new FD set is
+ * created and its ID is stored into @fdset.
  *
- * While QEMU allows multiple FDs for the same FD set, this is
- * not implemented because for now we don't need it.
+ * The FD set can then be used instead of regular path if the
+ * following path is constructed: "/dev/fdset/$fdset".
  *
  * Returns: 0 on success,
  *         -1 otherwise (error reported).
@@ -2827,14 +2826,14 @@ qemuMonitorCloseFileHandle(qemuMonitorPtr mon,
 int
 qemuMonitorAddFDSet(qemuMonitorPtr mon,
                     const char *fdname,
-                    int fd,
+                    int *fd,
                     int *fdset)
 {
-    VIR_DEBUG("fdname=%s fd=%d", fdname, fd);
+    VIR_DEBUG("fdname=%s fd=%d fdset=%d", fdname, *fd, *fdset);
 
     QEMU_CHECK_MONITOR(mon);
 
-    if (fd < 0) {
+    if (*fd < 0) {
         virReportError(VIR_ERR_INVALID_ARG, "%s",
                        _("fd must be valid"));
         return -1;
@@ -2848,8 +2847,10 @@ qemuMonitorAddFDSet(qemuMonitorPtr mon,
  * qemuMonitorRemoveFDSet:
  * @mon: monitor object
  * @fdset: the ID of the FD set to remove
+ * @fd: file descriptor to remove (pass -1 to remove all)
  *
- * Remove FD set previously created via qemuMonitorAddFDSet().
+ * Either remove a specific FD from given FD set (if @fd is
+ * non-negative), or remove whole FD set (if @fd is negative).
  *
  * This function preserves previous error and only set their own
  * error if no error was set before.
@@ -2859,7 +2860,8 @@ qemuMonitorAddFDSet(qemuMonitorPtr mon,
  */
 int
 qemuMonitorRemoveFDSet(qemuMonitorPtr mon,
-                       int fdset)
+                       int fdset,
+                       int fd)
 {
     int ret = -1;
     virErrorPtr error;
@@ -2870,7 +2872,7 @@ qemuMonitorRemoveFDSet(qemuMonitorPtr mon,
 
     QEMU_CHECK_MONITOR_GOTO(mon, cleanup);
 
-    ret = qemuMonitorJSONRemoveFDSet(mon, fdset);
+    ret = qemuMonitorJSONRemoveFDSet(mon, fdset, fd);
  cleanup:
     virErrorRestore(&error);
     return ret;
