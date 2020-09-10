@@ -4165,6 +4165,55 @@ int qemuMonitorJSONCloseFileHandle(qemuMonitorPtr mon,
 }
 
 
+int qemuMonitorJSONAddFDSet(qemuMonitorPtr mon,
+                            const char *fdname,
+                            int fd,
+                            int *fdset)
+{
+    virJSONValuePtr ret = NULL;
+    g_autoptr(virJSONValue) reply = NULL;
+    g_autoptr(virJSONValue) cmd = qemuMonitorJSONMakeCommand("add-fd",
+                                                             "S:opaque", fdname,
+                                                             NULL);
+    if (!cmd)
+        return -1;
+
+    if (qemuMonitorJSONCommandWithFd(mon, cmd, fd, &reply) < 0)
+        return -1;
+
+    if (qemuMonitorJSONCheckError(cmd, reply) < 0)
+        return -1;
+
+    if (!(ret = virJSONValueObjectGetObject(reply, "return")) ||
+        virJSONValueObjectGetNumberInt(ret, "fdset-id", fdset) < 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("JSON reply is missing fdset-id attribute"));
+        return -1;
+    }
+
+    VIR_DEBUG("fdset-id: %d", *fdset);
+
+    return 0;
+}
+
+
+int qemuMonitorJSONRemoveFDSet(qemuMonitorPtr mon,
+                               int fdset)
+{
+    g_autoptr(virJSONValue) reply = NULL;
+    g_autoptr(virJSONValue) cmd = qemuMonitorJSONMakeCommand("remove-fd",
+                                                             "i:fdset-id", fdset,
+                                                             NULL);
+    if (!cmd)
+        return -1;
+
+    if (qemuMonitorJSONCommand(mon, cmd, &reply) < 0)
+        return -1;
+
+    return qemuMonitorJSONCheckError(cmd, reply);
+}
+
+
 int
 qemuMonitorJSONAddNetdev(qemuMonitorPtr mon,
                          virJSONValuePtr *props)

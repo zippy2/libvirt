@@ -2806,6 +2806,77 @@ qemuMonitorCloseFileHandle(qemuMonitorPtr mon,
 }
 
 
+/**
+ * qemuMonitorAddFDSet:
+ * @mon: monitor object
+ * @fdname: a free-form string describing @fd (can be NULL)
+ * @fd: file descriptor to pass
+ * @fdset: the ID of the FD set that @fd was added to
+ *
+ * Pass a file descriptor to QEMU via SCM rights and add it to an
+ * FD set. The ID of the set is assigned by QEMU and returned in
+ * @fdset and can be used later by constructing the following
+ * path: "/dev/fdset/$fdset"
+ *
+ * While QEMU allows multiple FDs for the same FD set, this is
+ * not implemented because for now we don't need it.
+ *
+ * Returns: 0 on success,
+ *         -1 otherwise (error reported).
+ */
+int
+qemuMonitorAddFDSet(qemuMonitorPtr mon,
+                    const char *fdname,
+                    int fd,
+                    int *fdset)
+{
+    VIR_DEBUG("fdname=%s fd=%d", fdname, fd);
+
+    QEMU_CHECK_MONITOR(mon);
+
+    if (fd < 0) {
+        virReportError(VIR_ERR_INVALID_ARG, "%s",
+                       _("fd must be valid"));
+        return -1;
+    }
+
+    return qemuMonitorJSONAddFDSet(mon, fdname, fd, fdset);
+}
+
+
+/**
+ * qemuMonitorRemoveFDSet:
+ * @mon: monitor object
+ * @fdset: the ID of the FD set to remove
+ *
+ * Remove FD set previously created via qemuMonitorAddFDSet().
+ *
+ * This function preserves previous error and only set their own
+ * error if no error was set before.
+ *
+ * Returns: 0 on success,
+ *         -1 otherwise.
+ */
+int
+qemuMonitorRemoveFDSet(qemuMonitorPtr mon,
+                       int fdset)
+{
+    int ret = -1;
+    virErrorPtr error;
+
+    VIR_DEBUG("fdset=%d", fdset);
+
+    virErrorPreserveLast(&error);
+
+    QEMU_CHECK_MONITOR_GOTO(mon, cleanup);
+
+    ret = qemuMonitorJSONRemoveFDSet(mon, fdset);
+ cleanup:
+    virErrorRestore(&error);
+    return ret;
+}
+
+
 int
 qemuMonitorAddNetdev(qemuMonitorPtr mon,
                      virJSONValuePtr *props,

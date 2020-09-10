@@ -219,6 +219,14 @@ int qemuMonitorJSONSendFileHandle(qemuMonitorPtr mon,
 int qemuMonitorJSONCloseFileHandle(qemuMonitorPtr mon,
                                    const char *fdname);
 
+int qemuMonitorJSONAddFDSet(qemuMonitorPtr mon,
+                            const char *fdname,
+                            int fd,
+                            int *fdset);
+
+int qemuMonitorJSONRemoveFDSet(qemuMonitorPtr mon,
+                               int fdset);
+
 int qemuMonitorJSONAddNetdev(qemuMonitorPtr mon,
                              virJSONValuePtr *props);
 

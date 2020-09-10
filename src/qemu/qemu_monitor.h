@@ -967,6 +967,18 @@ int qemuMonitorSendFileHandle(qemuMonitorPtr mon,
 int qemuMonitorCloseFileHandle(qemuMonitorPtr mon,
                                const char *fdname);
 
+int qemuMonitorAddFDSet(qemuMonitorPtr mon,
+                        const char *fdname,
+                        int fd,
+                        int *fdset);
+
+/* This function preserves previous error and only set their own
+ * error if no error was set before.
+ */
+int qemuMonitorRemoveFDSet(qemuMonitorPtr mon,
+                           int fdset);
+
+
 int qemuMonitorAddNetdev(qemuMonitorPtr mon,
                          virJSONValuePtr *props,
                          int *tapfd, char **tapfdName, int tapfdSize,
