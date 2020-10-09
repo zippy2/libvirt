@@ -157,6 +157,18 @@ virNetworkDHCPHostDefClear(virNetworkDHCPHostDefPtr def)
 
 
 static void
+virNetworkDHCPBootpDefFree(virNetworkDHCPBootpDefPtr bootp)
+{
+    if (!bootp)
+        return;
+
+    VIR_FREE(bootp->bootfile);
+    VIR_FREE(bootp);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(virNetworkDHCPBootpDef, virNetworkDHCPBootpDefFree);
+
+
+static void
 virNetworkIPDefClear(virNetworkIPDefPtr def)
 {
     VIR_FREE(def->family);
@@ -168,9 +180,10 @@ virNetworkIPDefClear(virNetworkIPDefPtr def)
     while (def->nhosts)
         virNetworkDHCPHostDefClear(&def->hosts[--def->nhosts]);
 
+    virNetworkDHCPBootpDefFree(def->bootp);
+
     VIR_FREE(def->hosts);
     VIR_FREE(def->tftproot);
-    VIR_FREE(def->bootfile);
 }
 
 
@@ -679,8 +692,9 @@ virNetworkDHCPDefParseXML(const char *networkName,
                 goto cleanup;
             }
 
-            def->bootfile = g_steal_pointer(&file);
-            def->bootserver = inaddr;
+            def->bootp = g_new0(virNetworkDHCPBootpDef, 1);
+            def->bootp->bootfile = g_steal_pointer(&file);
+            def->bootp->bootserver = inaddr;
         }
 
         cur = cur->next;
@@ -2364,11 +2378,12 @@ virNetworkIPDefFormat(virBufferPtr buf,
                 virBufferAddLit(buf, "/>\n");
             }
         }
-        if (def->bootfile) {
-            virBufferEscapeString(buf, "<bootp file='%s'",
-                                  def->bootfile);
-            if (VIR_SOCKET_ADDR_VALID(&def->bootserver)) {
-                g_autofree char *ipaddr = virSocketAddrFormat(&def->bootserver);
+        if (def->bootp) {
+            virNetworkDHCPBootpDefPtr bootp = def->bootp;
+
+            virBufferEscapeString(buf, "<bootp file='%s'", bootp->bootfile);
+            if (VIR_SOCKET_ADDR_VALID(&bootp->bootserver)) {
+                g_autofree char *ipaddr = virSocketAddrFormat(&bootp->bootserver);
                 if (!ipaddr)
                     return -1;
 

@@ -128,6 +128,13 @@ struct _virNetworkDHCPHostDef {
     virNetworkDHCPLeaseTimeDefPtr lease;
 };
 
+typedef struct _virNetworkDHCPBootpDef virNetworkDHCPBootpDef;
+typedef virNetworkDHCPBootpDef *virNetworkDHCPBootpDefPtr;
+struct _virNetworkDHCPBootpDef {
+    char *bootfile;
+    virSocketAddr bootserver;
+};
+
 typedef struct _virNetworkDNSTxtDef virNetworkDNSTxtDef;
 typedef virNetworkDNSTxtDef *virNetworkDNSTxtDefPtr;
 struct _virNetworkDNSTxtDef {
@@ -201,9 +208,9 @@ struct _virNetworkIPDef {
     size_t nhosts;              /* Zero or more dhcp hosts */
     virNetworkDHCPHostDefPtr hosts;
 
+    virNetworkDHCPBootpDefPtr bootp; /* Bootp definition */
+
     char *tftproot;
-    char *bootfile;
-    virSocketAddr bootserver;
    };
 
 typedef struct _virNetworkForwardIfDef virNetworkForwardIfDef;

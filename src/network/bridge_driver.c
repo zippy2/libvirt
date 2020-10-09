@@ -1457,16 +1457,20 @@ networkDnsmasqConfContents(virNetworkObjPtr obj,
                 virBufferAsprintf(&configbuf, "tftp-root=%s\n", ipdef->tftproot);
             }
 
-            if (ipdef->bootfile) {
-                if (VIR_SOCKET_ADDR_VALID(&ipdef->bootserver)) {
-                    g_autofree char *bootserver = virSocketAddrFormat(&ipdef->bootserver);
+            if (ipdef->bootp) {
+                virNetworkDHCPBootpDefPtr bootp = ipdef->bootp;
 
-                    if (!bootserver)
-                        return -1;
-                    virBufferAsprintf(&configbuf, "dhcp-boot=%s%s%s\n",
-                                      ipdef->bootfile, ",,", bootserver);
-                } else {
-                    virBufferAsprintf(&configbuf, "dhcp-boot=%s\n", ipdef->bootfile);
+                if (bootp->bootfile) {
+                    if (VIR_SOCKET_ADDR_VALID(&bootp->bootserver)) {
+                        g_autofree char *bootserver = virSocketAddrFormat(&bootp->bootserver);
+
+                        if (!bootserver)
+                            return -1;
+                        virBufferAsprintf(&configbuf, "dhcp-boot=%s%s%s\n",
+                                          bootp->bootfile, ",,", bootserver);
+                    } else {
+                        virBufferAsprintf(&configbuf, "dhcp-boot=%s\n", bootp->bootfile);
+                    }
                 }
             }
         }
