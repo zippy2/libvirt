@@ -132,7 +132,7 @@ typedef struct _virNetworkDHCPBootpDef virNetworkDHCPBootpDef;
 typedef virNetworkDHCPBootpDef *virNetworkDHCPBootpDefPtr;
 struct _virNetworkDHCPBootpDef {
     char *bootfile;
-    virSocketAddr bootserver;
+    virSocketAddr *bootserver;
 };
 
 typedef struct _virNetworkDNSTxtDef virNetworkDNSTxtDef;

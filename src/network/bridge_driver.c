@@ -1461,8 +1461,8 @@ networkDnsmasqConfContents(virNetworkObjPtr obj,
                 virNetworkDHCPBootpDefPtr bootp = ipdef->bootp;
 
                 if (bootp->bootfile) {
-                    if (VIR_SOCKET_ADDR_VALID(&bootp->bootserver)) {
-                        g_autofree char *bootserver = virSocketAddrFormat(&bootp->bootserver);
+                    if (bootp->bootserver) {
+                        g_autofree char *bootserver = virSocketAddrFormat(bootp->bootserver);
 
                         if (!bootserver)
                             return -1;
