@@ -644,6 +644,34 @@ virNetworkDHCPHostDefParseXML(const char *networkName,
 
 
 static int
+virNetworkDHCPBootpDefParseXML(virNetworkDHCPBootpDefPtr *bootp,
+                               xmlNodePtr node)
+{
+    g_autofree char *file = NULL;
+    g_autofree char *server = NULL;
+    g_autofree virSocketAddr *inaddr = NULL;
+
+    if (!(file = virXMLPropString(node, "file"))) {
+        virReportError(VIR_ERR_XML_ERROR, "%s",
+                       _("Missing required 'file' attribute for bootp element"));
+        return -1;
+    }
+
+    if ((server = virXMLPropString(node, "server"))) {
+        inaddr = g_new0(virSocketAddr, 1);
+
+        if (virSocketAddrParse(inaddr, server, AF_UNSPEC) < 0)
+            return -1;
+    }
+
+    *bootp = g_new0(virNetworkDHCPBootpDef, 1);
+    (*bootp)->bootfile = g_steal_pointer(&file);
+    (*bootp)->bootserver = g_steal_pointer(&inaddr);
+    return 0;
+}
+
+
+static int
 virNetworkDHCPDefParseXML(const char *networkName,
                           xmlNodePtr node,
                           virNetworkIPDefPtr def)
@@ -677,26 +705,9 @@ virNetworkDHCPDefParseXML(const char *networkName,
         } else if (VIR_SOCKET_ADDR_IS_FAMILY(&def->address, AF_INET) &&
                    cur->type == XML_ELEMENT_NODE &&
                    virXMLNodeNameEqual(cur, "bootp")) {
-            g_autofree char *file = NULL;
-            g_autofree char *server = NULL;
-            g_autofree virSocketAddr *inaddr = NULL;
 
-            if (!(file = virXMLPropString(cur, "file"))) {
-                virReportError(VIR_ERR_XML_ERROR, "%s",
-                               _("Missing required 'file' attribute for bootp element"));
+            if (virNetworkDHCPBootpDefParseXML(&def->bootp, cur) < 0)
                 goto cleanup;
-            }
-
-            if ((server = virXMLPropString(cur, "server"))) {
-                inaddr = g_new0(virSocketAddr, 1);
-
-                if (virSocketAddrParse(inaddr, server, AF_UNSPEC) < 0)
-                    goto cleanup;
-            }
-
-            def->bootp = g_new0(virNetworkDHCPBootpDef, 1);
-            def->bootp->bootfile = g_steal_pointer(&file);
-            def->bootp->bootserver = g_steal_pointer(&inaddr);
         }
 
         cur = cur->next;
