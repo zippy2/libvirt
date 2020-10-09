@@ -1460,18 +1460,18 @@ networkDnsmasqConfContents(virNetworkObjPtr obj,
             if (ipdef->bootp) {
                 virNetworkDHCPBootpDefPtr bootp = ipdef->bootp;
 
-                if (bootp->bootfile) {
-                    if (bootp->bootserver) {
-                        g_autofree char *bootserver = virSocketAddrFormat(bootp->bootserver);
+                virBufferAsprintf(&configbuf, "dhcp-boot=%s", bootp->bootfile);
 
-                        if (!bootserver)
-                            return -1;
-                        virBufferAsprintf(&configbuf, "dhcp-boot=%s%s%s\n",
-                                          bootp->bootfile, ",,", bootserver);
-                    } else {
-                        virBufferAsprintf(&configbuf, "dhcp-boot=%s\n", bootp->bootfile);
-                    }
+                if (bootp->bootserver) {
+                    g_autofree char *bootserver = virSocketAddrFormat(bootp->bootserver);
+
+                    if (!bootserver)
+                        return -1;
+
+                    virBufferAsprintf(&configbuf, ",,%s", bootserver);
                 }
+
+                virBufferAddChar(&configbuf, '\n');
             }
         }
         ipdef = (ipdef == ipv6def) ? NULL : ipv6def;
