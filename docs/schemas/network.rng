@@ -421,6 +421,19 @@
                         <optional>
                           <attribute name="server"><ref name="dnsName"/></attribute>
                         </optional>
+                        <optional>
+                          <attribute name="firmware">
+                            <choice>
+                              <value>bios</value>
+                              <value>efi</value>
+                            </choice>
+                          </attribute>
+                        </optional>
+                        <!--
+                        <optional>
+                          <attribute name="arch"><ref name="archnames"/></attribute>
+                        </optional>
+                        -->
                       </element>
                   </zeroOrMore>
                   </interleave>

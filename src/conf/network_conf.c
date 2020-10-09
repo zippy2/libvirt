@@ -77,6 +77,15 @@ VIR_ENUM_IMPL(virNetworkDHCPLeaseTimeUnit,
               "hours",
 );
 
+VIR_ENUM_DECL(virNetworkDHCPBootpFW);
+VIR_ENUM_IMPL(virNetworkDHCPBootpFW,
+              VIR_NETWORK_DHCP_BOOTP_FW_LAST,
+              "default",
+              "bios",
+              "efi",
+);
+
+
 static virClassPtr virNetworkXMLOptionClass;
 
 static void
@@ -652,6 +661,8 @@ virNetworkDHCPBootpDefParseXML(virNetworkDHCPBootpDefPtr *bootp,
     g_autofree char *file = NULL;
     g_autofree char *server = NULL;
     g_autofree virSocketAddr *inaddr = NULL;
+    g_autofree char *firmwareStr = NULL;
+    int firmware = VIR_NETWORK_DHCP_BOOTP_FW_DEFAULT;
 
     if (!(file = virXMLPropString(node, "file"))) {
         virReportError(VIR_ERR_XML_ERROR, "%s",
@@ -666,9 +677,48 @@ virNetworkDHCPBootpDefParseXML(virNetworkDHCPBootpDefPtr *bootp,
             return -1;
     }
 
+    if ((firmwareStr = virXMLPropString(node, "firmware")) &&
+        (firmware = virNetworkDHCPBootpFWTypeFromString(firmwareStr)) <= 0) {
+        virReportError(VIR_ERR_XML_ERROR,
+                       _("Uknown firmware value: %s"),
+                       firmwareStr);
+        return -1;
+    }
+
     *bootp = g_new0(virNetworkDHCPBootpDef, 1);
     (*bootp)->bootfile = g_steal_pointer(&file);
     (*bootp)->bootserver = g_steal_pointer(&inaddr);
+    (*bootp)->fw = firmware;
+    return 0;
+}
+
+
+static int
+virNetworkDHCPBootpDefValidate(const virNetworkIPDef *def)
+{
+    g_autoptr(virBitmap) seen_fw = NULL;
+    GSList *next;
+
+    if (!def->bootps)
+        return 0;
+
+    seen_fw = virBitmapNew(VIR_NETWORK_DHCP_BOOTP_FW_LAST);
+
+    next = def->bootps;
+    while (next) {
+        const virNetworkDHCPBootpDef *bootp = next->data;
+
+        if (virBitmapIsBitSet(seen_fw, bootp->fw)) {
+            virReportError(VIR_ERR_XML_ERROR,
+                           _("Multiple definition of bootp for firmware '%s'"),
+                           virNetworkDHCPBootpFWTypeToString(bootp->fw));
+            return -1;
+        }
+
+        ignore_value(virBitmapSetBit(seen_fw, bootp->fw));
+        next = g_slist_next(next);
+    }
+
     return 0;
 }
 
@@ -717,6 +767,10 @@ virNetworkDHCPDefParseXML(const char *networkName,
 
         cur = cur->next;
     }
+
+    /* Validate bootp */
+    if (virNetworkDHCPBootpDefValidate(def) < 0)
+        goto cleanup;
 
     ret = 0;
  cleanup:
@@ -2321,6 +2375,12 @@ virNetworkDHCPBootpDefFormat(void *data,
 
         virBufferEscapeString(cbData->buf, " server='%s'", ipaddr);
     }
+
+    if (bootp->fw != VIR_NETWORK_DHCP_BOOTP_FW_DEFAULT) {
+        virBufferAsprintf(cbData->buf, " firmware='%s'",
+                          virNetworkDHCPBootpFWTypeToString(bootp->fw));
+    }
+
     virBufferAddLit(cbData->buf, "/>\n");
 }
 

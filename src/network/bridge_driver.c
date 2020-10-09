@@ -1050,6 +1050,34 @@ networkDnsmasqConfLocalPTRs(virBufferPtr buf,
 }
 
 
+const struct {
+    const char *tag;
+    virNetworkDHCPBootpFW fw_type;
+
+    /* CAS stands for Client System Architecture per RFC4578 and RFC5970 */
+    struct {
+        const char *name; /* as defined in the dnsmasq manpage */
+        unsigned int type; /* as defined in the RFCs */
+    } cas;
+
+} networkCSAs[] = {
+    /* This is IANA list taken from here:
+     * https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
+     */
+    {"x86", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"x86PC", 0}},
+    {"pc98", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"PC98", 1}},
+    {"ia64_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"IA64_EFI", 2}},
+    {"alpha", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"Alpha", 3}},
+    {"arc", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"Arc_x86", 4}},
+    {"intel_lean_client", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"Intel_Lean_Client", 5}},
+    {"ia32_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"IA32_EFI", 6}},
+    {"bc_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"BC_EFI", 7}},
+    {"xscale_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"Xscale_EFI", 8}},
+    {"x86_64_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"X86-64_EFI", 9}},
+    {"arm32_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"ARM32_EFI", 10}},
+    {"arm64_efi", VIR_NETWORK_DHCP_BOOTP_FW_EFI, {"ARM64_EFI", 11}},
+};
+
 struct networkDnsmasqConfDHCPBootpData {
     virBufferPtr buf;
     bool err;
@@ -1062,24 +1090,39 @@ networkDnsmasqConfDHCPBootp(void *data,
 {
     struct networkDnsmasqConfDHCPBootpData *cbData = user_data;
     virNetworkDHCPBootpDefPtr bootp = data;
+    g_autofree char *bootserver = NULL;
 
     if (cbData->err)
         return;
 
-    virBufferAsprintf(cbData->buf, "dhcp-boot=%s", bootp->bootfile);
-
-    if (bootp->bootserver) {
-        g_autofree char *bootserver = virSocketAddrFormat(bootp->bootserver);
-
-        if (!bootserver) {
-            cbData->err = true;
-            return;
-        }
-
-        virBufferAsprintf(cbData->buf, ",,%s", bootserver);
+    if (bootp->bootserver &&
+        !(bootserver = virSocketAddrFormat(bootp->bootserver))) {
+        cbData->err = true;
+        return;
     }
 
-    virBufferAddChar(cbData->buf, '\n');
+    if (bootp->fw == VIR_NETWORK_DHCP_BOOTP_FW_DEFAULT) {
+        virBufferAsprintf(cbData->buf, "dhcp-boot=%s", bootp->bootfile);
+        if (bootserver)
+            virBufferAsprintf(cbData->buf, ",,%s", bootserver);
+        virBufferAddChar(cbData->buf, '\n');
+    } else {
+        size_t i;
+
+        for (i = 0; i < G_N_ELEMENTS(networkCSAs); i++) {
+            if (bootp->fw != networkCSAs[i].fw_type)
+                continue;
+
+            virBufferAsprintf(cbData->buf, "dhcp-match=set:%s,option:client-arch,%u\n",
+                              networkCSAs[i].tag, networkCSAs[i].cas.type);
+            virBufferAsprintf(cbData->buf, "dhcp-boot=tag:%s,%s",
+                              networkCSAs[i].tag, bootp->bootfile);
+
+            if (bootserver)
+                virBufferAsprintf(cbData->buf, ",,%s", bootserver);
+            virBufferAddChar(cbData->buf, '\n');
+        }
+    }
 }
 
 

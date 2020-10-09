@@ -128,11 +128,20 @@ struct _virNetworkDHCPHostDef {
     virNetworkDHCPLeaseTimeDefPtr lease;
 };
 
+typedef enum {
+    VIR_NETWORK_DHCP_BOOTP_FW_DEFAULT = 0,
+    VIR_NETWORK_DHCP_BOOTP_FW_BIOS,
+    VIR_NETWORK_DHCP_BOOTP_FW_EFI,
+
+    VIR_NETWORK_DHCP_BOOTP_FW_LAST
+} virNetworkDHCPBootpFW;
+
 typedef struct _virNetworkDHCPBootpDef virNetworkDHCPBootpDef;
 typedef virNetworkDHCPBootpDef *virNetworkDHCPBootpDefPtr;
 struct _virNetworkDHCPBootpDef {
     char *bootfile;
     virSocketAddr *bootserver;
+    virNetworkDHCPBootpFW fw;
 };
 
 typedef struct _virNetworkDNSTxtDef virNetworkDNSTxtDef;
