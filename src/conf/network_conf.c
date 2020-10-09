@@ -682,8 +682,9 @@ virNetworkDHCPDefParseXML(const char *networkName,
             g_autofree virSocketAddr *inaddr = NULL;
 
             if (!(file = virXMLPropString(cur, "file"))) {
-                cur = cur->next;
-                continue;
+                virReportError(VIR_ERR_XML_ERROR, "%s",
+                               _("Missing required 'file' attribute for bootp element"));
+                goto cleanup;
             }
 
             if ((server = virXMLPropString(cur, "server"))) {
