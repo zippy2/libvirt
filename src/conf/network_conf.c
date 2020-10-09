@@ -157,8 +157,10 @@ virNetworkDHCPHostDefClear(virNetworkDHCPHostDefPtr def)
 
 
 static void
-virNetworkDHCPBootpDefFree(virNetworkDHCPBootpDefPtr bootp)
+virNetworkDHCPBootpDefFree(void *opaque)
 {
+    virNetworkDHCPBootpDefPtr bootp = opaque;
+
     if (!bootp)
         return;
 
@@ -181,7 +183,7 @@ virNetworkIPDefClear(virNetworkIPDefPtr def)
     while (def->nhosts)
         virNetworkDHCPHostDefClear(&def->hosts[--def->nhosts]);
 
-    virNetworkDHCPBootpDefFree(def->bootp);
+    g_clear_slist(&def->bootps, virNetworkDHCPBootpDefFree);
 
     VIR_FREE(def->hosts);
     VIR_FREE(def->tftproot);
@@ -705,9 +707,12 @@ virNetworkDHCPDefParseXML(const char *networkName,
         } else if (VIR_SOCKET_ADDR_IS_FAMILY(&def->address, AF_INET) &&
                    cur->type == XML_ELEMENT_NODE &&
                    virXMLNodeNameEqual(cur, "bootp")) {
+            g_autoptr(virNetworkDHCPBootpDef) bootp = NULL;
 
-            if (virNetworkDHCPBootpDefParseXML(&def->bootp, cur) < 0)
+            if (virNetworkDHCPBootpDefParseXML(&bootp, cur) < 0)
                 goto cleanup;
+
+            def->bootps = g_slist_append(def->bootps, g_steal_pointer(&bootp));
         }
 
         cur = cur->next;
@@ -2289,6 +2294,37 @@ virNetworkDNSDefFormat(virBufferPtr buf,
 }
 
 
+struct virNetworkDHCPBootpDefFormatData {
+    virBufferPtr buf;
+    bool err;
+};
+
+
+static void
+virNetworkDHCPBootpDefFormat(void *data,
+                             void *user_data)
+{
+    struct virNetworkDHCPBootpDefFormatData *cbData = user_data;
+    virNetworkDHCPBootpDefPtr bootp = data;
+
+    if (cbData->err)
+        return;
+
+    virBufferEscapeString(cbData->buf, "<bootp file='%s'", bootp->bootfile);
+    if (bootp->bootserver) {
+        g_autofree char *ipaddr = virSocketAddrFormat(bootp->bootserver);
+
+        if (!ipaddr) {
+            cbData->err = true;
+            return;
+        }
+
+        virBufferEscapeString(cbData->buf, " server='%s'", ipaddr);
+    }
+    virBufferAddLit(cbData->buf, "/>\n");
+}
+
+
 static int
 virNetworkIPDefFormat(virBufferPtr buf,
                       const virNetworkIPDef *def)
@@ -2391,20 +2427,18 @@ virNetworkIPDefFormat(virBufferPtr buf,
                 virBufferAddLit(buf, "/>\n");
             }
         }
-        if (def->bootp) {
-            virNetworkDHCPBootpDefPtr bootp = def->bootp;
 
-            virBufferEscapeString(buf, "<bootp file='%s'", bootp->bootfile);
-            if (bootp->bootserver) {
-                g_autofree char *ipaddr = virSocketAddrFormat(bootp->bootserver);
-                if (!ipaddr)
-                    return -1;
+        if (def->bootps) {
+            struct virNetworkDHCPBootpDefFormatData cbData = {.buf = buf, .err = false };
 
-                virBufferEscapeString(buf, " server='%s'", ipaddr);
+            g_slist_foreach(def->bootps, virNetworkDHCPBootpDefFormat, &cbData);
+
+            if (cbData.err) {
+                /* Error reported by callback */
+                return -1;
             }
-            virBufferAddLit(buf, "/>\n");
-
         }
+
         virBufferAdjustIndent(buf, -2);
         virBufferAddLit(buf, "</dhcp>\n");
     }

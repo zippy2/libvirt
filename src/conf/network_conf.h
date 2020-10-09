@@ -208,7 +208,8 @@ struct _virNetworkIPDef {
     size_t nhosts;              /* Zero or more dhcp hosts */
     virNetworkDHCPHostDefPtr hosts;
 
-    virNetworkDHCPBootpDefPtr bootp; /* Bootp definition */
+    GSList *bootps; /* Zero or more bootp definitions, an item is type of
+                       virNetworkDHCPBootpDefPtr */
 
     char *tftproot;
    };

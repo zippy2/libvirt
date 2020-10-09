@@ -1050,6 +1050,39 @@ networkDnsmasqConfLocalPTRs(virBufferPtr buf,
 }
 
 
+struct networkDnsmasqConfDHCPBootpData {
+    virBufferPtr buf;
+    bool err;
+};
+
+
+static void
+networkDnsmasqConfDHCPBootp(void *data,
+                            void *user_data)
+{
+    struct networkDnsmasqConfDHCPBootpData *cbData = user_data;
+    virNetworkDHCPBootpDefPtr bootp = data;
+
+    if (cbData->err)
+        return;
+
+    virBufferAsprintf(cbData->buf, "dhcp-boot=%s", bootp->bootfile);
+
+    if (bootp->bootserver) {
+        g_autofree char *bootserver = virSocketAddrFormat(bootp->bootserver);
+
+        if (!bootserver) {
+            cbData->err = true;
+            return;
+        }
+
+        virBufferAsprintf(cbData->buf, ",,%s", bootserver);
+    }
+
+    virBufferAddChar(cbData->buf, '\n');
+}
+
+
 int
 networkDnsmasqConfContents(virNetworkObjPtr obj,
                            const char *pidfile,
@@ -1457,21 +1490,15 @@ networkDnsmasqConfContents(virNetworkObjPtr obj,
                 virBufferAsprintf(&configbuf, "tftp-root=%s\n", ipdef->tftproot);
             }
 
-            if (ipdef->bootp) {
-                virNetworkDHCPBootpDefPtr bootp = ipdef->bootp;
+            if (ipdef->bootps) {
+                struct networkDnsmasqConfDHCPBootpData cbData = {.buf = &configbuf, .err = false};
 
-                virBufferAsprintf(&configbuf, "dhcp-boot=%s", bootp->bootfile);
+                g_slist_foreach(ipdef->bootps, networkDnsmasqConfDHCPBootp, &cbData);
 
-                if (bootp->bootserver) {
-                    g_autofree char *bootserver = virSocketAddrFormat(bootp->bootserver);
-
-                    if (!bootserver)
-                        return -1;
-
-                    virBufferAsprintf(&configbuf, ",,%s", bootserver);
+                if (cbData.err) {
+                    /* Error reported by callback */
+                    return -1;
                 }
-
-                virBufferAddChar(&configbuf, '\n');
             }
         }
         ipdef = (ipdef == ipv6def) ? NULL : ipv6def;

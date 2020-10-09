@@ -415,14 +415,14 @@
                         </interleave>
                       </element>
                     </zeroOrMore>
-                    <optional>
+                    <zeroOrMore>
                       <element name="bootp">
                         <attribute name="file"><ref name="filePath"/></attribute>
                         <optional>
                           <attribute name="server"><ref name="dnsName"/></attribute>
                         </optional>
                       </element>
-                    </optional>
+                  </zeroOrMore>
                   </interleave>
                 </element>
               </optional>
