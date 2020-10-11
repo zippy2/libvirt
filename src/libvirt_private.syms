@@ -1732,6 +1732,7 @@ virStorageSourceUpdatePhysicalSize;
 
 # util/glibcompat.h
 vir_g_canonicalize_filename;
+vir_g_clear_slist;
 vir_g_fsync;
 vir_g_strdup_printf;
 vir_g_strdup_vprintf;

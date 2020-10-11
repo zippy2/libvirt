@@ -213,34 +213,17 @@ vir_g_strdup_vprintf(const char *msg, va_list args)
 }
 
 
-/*
- * If the last reference to a GSource is released in a non-main
- * thread we're exposed to a race condition that causes a
- * crash:
+/**
+ * vir_g_clear_slist:
+ * @slist: a GSList to free
+ * @destroy: function to free individual items (can be NULL)
  *
- *    https://gitlab.gnome.org/GNOME/glib/-/merge_requests/1358
- *
- * Thus we're using an idle func to release our ref...
- *
- * ...but this imposes a significant performance penalty on
- * I/O intensive workloads which are sensitive to the iterations
- * of the event loop, so avoid the workaround if we know we have
- * new enough glib.
- *
- * The function below is used from a header file definition.
- *
- * Drop when min glib >= 2.64.0
+ * Clears a pointer to a GSList, freeing it and, optionally, freeing its
+ * elements using @destroy.
  */
-#if GLIB_CHECK_VERSION(2, 64, 0) != TRUE
-
-gboolean
-virEventGLibSourceUnrefIdle(gpointer data)
+void
+vir_g_clear_slist(GSList **slist,
+                  GDestroyNotify destroy)
 {
-    GSource *src = data;
-
-    g_source_unref(src);
-
-    return FALSE;
+    g_slist_free_full(g_steal_pointer(slist), destroy);
 }
-
-#endif

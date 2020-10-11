@@ -21,6 +21,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib-object.h>
+#include <glib/gslist.h>
 
 #if GLIB_CHECK_VERSION(2, 67, 0)
 
@@ -85,13 +86,8 @@ char *vir_g_strdup_vprintf(const char *msg, va_list args)
 #undef g_fsync
 #define g_fsync vir_g_fsync
 
-/* Drop when min glib >= 2.64.0 */
-#if GLIB_CHECK_VERSION(2, 64, 0)
-# define g_vir_source_unref_safe(source) g_source_unref(source)
-#else
-# define g_vir_source_unref_safe(source) g_idle_add(virEventGLibSourceUnrefIdle, source)
+void vir_g_clear_slist(GSList **slist_ptr,
+                       GDestroyNotify destroy);
 
-gboolean
-virEventGLibSourceUnrefIdle(gpointer data);
-
-#endif
+#undef g_clear_slist
+#define g_clear_slist vir_g_clear_slist
