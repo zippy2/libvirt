@@ -663,6 +663,7 @@ virNetworkDHCPBootpDefParseXML(virNetworkDHCPBootpDefPtr *bootp,
     g_autofree virSocketAddr *inaddr = NULL;
     g_autofree char *firmwareStr = NULL;
     int firmware = VIR_NETWORK_DHCP_BOOTP_FW_DEFAULT;
+    int arch = VIR_ARCH_NONE;
 
     if (!(file = virXMLPropString(node, "file"))) {
         virReportError(VIR_ERR_XML_ERROR, "%s",
@@ -677,18 +678,30 @@ virNetworkDHCPBootpDefParseXML(virNetworkDHCPBootpDefPtr *bootp,
             return -1;
     }
 
-    if ((firmwareStr = virXMLPropString(node, "firmware")) &&
-        (firmware = virNetworkDHCPBootpFWTypeFromString(firmwareStr)) <= 0) {
-        virReportError(VIR_ERR_XML_ERROR,
-                       _("Uknown firmware value: %s"),
-                       firmwareStr);
-        return -1;
+    if ((firmwareStr = virXMLPropString(node, "firmware"))) {
+        g_autofree char *archStr = NULL;
+
+        if ((firmware = virNetworkDHCPBootpFWTypeFromString(firmwareStr)) <= 0) {
+            virReportError(VIR_ERR_XML_ERROR,
+                           _("Uknown firmware value: %s"),
+                           firmwareStr);
+            return -1;
+        }
+
+        if ((archStr = virXMLPropString(node, "arch")) &&
+            ((arch = virArchFromString(archStr)) == VIR_ARCH_NONE)) {
+            virReportError(VIR_ERR_XML_ERROR,
+                           _("Uknown architecture: %s"),
+                           archStr);
+            return -1;
+        }
     }
 
     *bootp = g_new0(virNetworkDHCPBootpDef, 1);
     (*bootp)->bootfile = g_steal_pointer(&file);
     (*bootp)->bootserver = g_steal_pointer(&inaddr);
     (*bootp)->fw = firmware;
+    (*bootp)->arch = arch;
     return 0;
 }
 
@@ -702,20 +715,30 @@ virNetworkDHCPBootpDefValidate(const virNetworkIPDef *def)
     if (!def->bootps)
         return 0;
 
-    seen_fw = virBitmapNew(VIR_NETWORK_DHCP_BOOTP_FW_LAST);
+    /* "Multi dimensional" bitmap. Arch is index, fw is displacement. */
+    seen_fw = virBitmapNew(VIR_NETWORK_DHCP_BOOTP_FW_LAST * VIR_ARCH_LAST);
 
     next = def->bootps;
     while (next) {
         const virNetworkDHCPBootpDef *bootp = next->data;
+        const size_t bit = bootp->fw + bootp->arch * VIR_NETWORK_DHCP_BOOTP_FW_LAST;
 
-        if (virBitmapIsBitSet(seen_fw, bootp->fw)) {
-            virReportError(VIR_ERR_XML_ERROR,
-                           _("Multiple definition of bootp for firmware '%s'"),
-                           virNetworkDHCPBootpFWTypeToString(bootp->fw));
+        if (virBitmapIsBitSet(seen_fw, bit)) {
+            if (bootp->arch == VIR_ARCH_NONE) {
+                virReportError(VIR_ERR_XML_ERROR,
+                               _("Multiple definition of bootp for firmware '%s'"),
+                               virNetworkDHCPBootpFWTypeToString(bootp->fw));
+            } else {
+                virReportError(VIR_ERR_XML_ERROR,
+                               _("Multiple definitions of bootp for firmware '%s' "
+                                 "and arch '%s'"),
+                               virNetworkDHCPBootpFWTypeToString(bootp->fw),
+                               virArchToString(bootp->arch));
+            }
             return -1;
         }
 
-        ignore_value(virBitmapSetBit(seen_fw, bootp->fw));
+        ignore_value(virBitmapSetBit(seen_fw, bit));
         next = g_slist_next(next);
     }
 
@@ -2379,6 +2402,11 @@ virNetworkDHCPBootpDefFormat(void *data,
     if (bootp->fw != VIR_NETWORK_DHCP_BOOTP_FW_DEFAULT) {
         virBufferAsprintf(cbData->buf, " firmware='%s'",
                           virNetworkDHCPBootpFWTypeToString(bootp->fw));
+    }
+
+    if (bootp->arch != VIR_ARCH_NONE) {
+        virBufferAsprintf(cbData->buf, " arch='%s'",
+                          virArchToString(bootp->arch));
     }
 
     virBufferAddLit(cbData->buf, "/>\n");

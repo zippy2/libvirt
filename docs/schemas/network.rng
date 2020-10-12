@@ -428,12 +428,10 @@
                               <value>efi</value>
                             </choice>
                           </attribute>
+                          <optional>
+                            <attribute name="arch"><ref name="archnames"/></attribute>
+                          </optional>
                         </optional>
-                        <!--
-                        <optional>
-                          <attribute name="arch"><ref name="archnames"/></attribute>
-                        </optional>
-                        -->
                       </element>
                   </zeroOrMore>
                   </interleave>

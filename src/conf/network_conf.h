@@ -37,6 +37,7 @@
 #include "virmacmap.h"
 #include "virenum.h"
 #include "virxml.h"
+#include "virarch.h"
 
 struct _virNetworkXMLOption {
     virObject parent;
@@ -142,6 +143,7 @@ struct _virNetworkDHCPBootpDef {
     char *bootfile;
     virSocketAddr *bootserver;
     virNetworkDHCPBootpFW fw;
+    virArch arch;
 };
 
 typedef struct _virNetworkDNSTxtDef virNetworkDNSTxtDef;

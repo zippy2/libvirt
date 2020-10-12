@@ -63,12 +63,12 @@ testCompareXMLToXMLFiles(const char *inxml, const char *outxml,
             VIR_TEST_DEBUG("Got expected failure code=%d msg=%s",
                            result, virGetLastErrorMessage());
         }
+        virResetLastError();
     } else {
         ret = -1;
         VIR_TEST_DEBUG("Expected result code=%d but received code=%d",
                        expectResult, result);
     }
-    virResetLastError();
 
     VIR_FREE(actual);
     virNetworkDefFree(dev);

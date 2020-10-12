@@ -1062,7 +1062,10 @@ const struct {
 
 } networkCSAs[] = {
     /* This is IANA list taken from here:
+     *
      * https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#processor-architecture
+     *
+     * Only the items mentioned in the dnsmasq manpage are copied though.
      */
     {"x86", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"x86PC", 0}},
     {"pc98", VIR_NETWORK_DHCP_BOOTP_FW_BIOS, {"PC98", 1}},

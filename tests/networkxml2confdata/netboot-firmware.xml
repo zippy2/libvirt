@@ -10,6 +10,8 @@
       <range start='192.168.122.2' end='192.168.122.254'/>
       <bootp file='pxeboot.img' firmware='bios'/>
       <bootp file='pxeboot_efi.img' firmware='efi'/>
+      <bootp file='pxeboot_efi.img' firmware='efi' arch='x86_64'/>
+      <bootp file='pxeboot_efi.img' firmware='efi' arch='i686'/>
     </dhcp>
   </ip>
 </network>
