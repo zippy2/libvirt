@@ -23,6 +23,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <linux/dm-ioctl.h>
 
 #include <libdevmapper.h>
 
