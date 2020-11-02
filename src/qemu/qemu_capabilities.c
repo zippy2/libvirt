@@ -622,6 +622,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               /* 395 */
               "vnc-power-control",
               "audiodev",
+              "virtio-mem-pci",
     );
 
 
@@ -1343,6 +1344,7 @@ struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
     { "am53c974", QEMU_CAPS_SCSI_AM53C974 },
     { "virtio-pmem-pci", QEMU_CAPS_DEVICE_VIRTIO_PMEM_PCI },
     { "vhost-user-blk", QEMU_CAPS_DEVICE_VHOST_USER_BLK },
+    { "virtio-mem-pci", QEMU_CAPS_DEVICE_VIRTIO_MEM_PCI },
 };
 
 
