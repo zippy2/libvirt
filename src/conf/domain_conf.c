@@ -17813,6 +17813,42 @@ virDomainMemoryFindInactiveByDef(virDomainDefPtr def,
 
 
 /**
+ * virDomainMemoryFindByDeviceInfo:
+ * @def: domain defintion
+ * @info: device info to match
+ *
+ * For given domain definition @def find <memory/> device with
+ * matching address and matching device alias (if set in @info,
+ * otherwise ignored).
+ *
+ * Returns: device if found,
+ *          NULL otherwise.
+ */
+virDomainMemoryDefPtr
+virDomainMemoryFindByDeviceInfo(virDomainDefPtr def,
+                                virDomainDeviceInfoPtr info)
+{
+    size_t i;
+
+    for (i = 0; i < def->nmems; i++) {
+        virDomainMemoryDefPtr tmp = def->mems[i];
+
+        if (!virDomainDeviceInfoAddressIsEqual(&tmp->info, info))
+            continue;
+
+        /* alias, if present */
+        if (info->alias &&
+            STRNEQ_NULLABLE(tmp->info.alias, info->alias))
+            continue;
+
+        return tmp;
+    }
+
+    return NULL;
+}
+
+
+/**
  * virDomainMemoryInsert:
  *
  * Inserts a memory device definition into the domain definition. This helper
