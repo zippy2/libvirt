@@ -6714,3 +6714,21 @@ qemuDomainSetVcpuInternal(virQEMUDriverPtr driver,
     virBitmapFree(livevcpus);
     return ret;
 }
+
+
+int
+qemuDomainChangeMemoryRequestedSize(virQEMUDriverPtr driver,
+                                    virDomainObjPtr vm,
+                                    const char *alias,
+                                    unsigned long long requestedsize)
+{
+    qemuDomainObjPrivatePtr priv = vm->privateData;
+    int rc;
+
+    qemuDomainObjEnterMonitor(driver, vm);
+    rc = qemuMonitorChangeMemoryRequestedSize(priv->mon, alias, requestedsize);
+    if (qemuDomainObjExitMonitor(driver, vm) < 0)
+        return -1;
+
+    return rc;
+}
