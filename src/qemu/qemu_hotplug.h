@@ -160,3 +160,8 @@ int qemuHotplugAttachDBusVMState(virQEMUDriverPtr driver,
 int qemuHotplugRemoveDBusVMState(virQEMUDriverPtr driver,
                                  virDomainObjPtr vm,
                                  qemuDomainAsyncJob asyncJob);
+
+int qemuDomainChangeMemoryRequestedSize(virQEMUDriverPtr driver,
+                                        virDomainObjPtr vm,
+                                        const char *alias,
+                                        unsigned long long requestedsize);
