@@ -4341,6 +4341,9 @@ processMemoryDeviceSizeChange(virQEMUDriverPtr driver,
     mem = vm->def->mems[idx];
     mem->actualsize = VIR_DIV_UP(info->size, 1024);
 
+    /* fix the balloon size */
+    ignore_value(qemuProcessRefreshBalloonState(driver, vm, QEMU_ASYNC_JOB_NONE));
+
  endjob:
     qemuDomainObjEndJob(driver, vm);
 }

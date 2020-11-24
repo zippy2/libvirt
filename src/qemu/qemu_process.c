@@ -1253,9 +1253,30 @@ qemuProcessHandleBalloonChange(qemuMonitorPtr mon G_GNUC_UNUSED,
     virQEMUDriverPtr driver = opaque;
     virObjectEventPtr event = NULL;
     g_autoptr(virQEMUDriverConfig) cfg = virQEMUDriverGetConfig(driver);
+    size_t i;
 
     virObjectLock(vm);
     event = virDomainEventBalloonChangeNewFromObj(vm, actual);
+
+    VIR_DEBUG("New balloon size before fixup: %lld", actual);
+
+    for (i = 0; i < vm->def->nmems; i++) {
+        virDomainMemoryDefPtr mem = vm->def->mems[i];
+
+        switch (mem->model) {
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+            actual += mem->actualsize;
+            break;
+
+        case VIR_DOMAIN_MEMORY_MODEL_NONE:
+        case VIR_DOMAIN_MEMORY_MODEL_DIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_NVDIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_LAST:
+            /* nada */
+            break;
+        }
+    }
 
     VIR_DEBUG("Updating balloon from %lld to %lld kb",
               vm->def->mem.cur_balloon, actual);
@@ -2450,21 +2471,37 @@ qemuProcessRefreshBalloonState(virQEMUDriverPtr driver,
                                int asyncJob)
 {
     unsigned long long balloon;
+    size_t i;
     int rc;
 
-    /* if no ballooning is available, the current size equals to the current
-     * full memory size */
-    if (!virDomainDefHasMemballoon(vm->def)) {
-        vm->def->mem.cur_balloon = virDomainDefGetMemoryTotal(vm->def);
-        return 0;
+    if (virDomainDefHasMemballoon(vm->def)) {
+        if (qemuDomainObjEnterMonitorAsync(driver, vm, asyncJob) < 0)
+            return -1;
+
+        rc = qemuMonitorGetBalloonInfo(qemuDomainGetMonitor(vm), &balloon);
+        if (qemuDomainObjExitMonitor(driver, vm) < 0 || rc < 0)
+            return -1;
+    } else {
+        balloon = virDomainDefGetMemoryTotal(vm->def);
     }
 
-    if (qemuDomainObjEnterMonitorAsync(driver, vm, asyncJob) < 0)
-        return -1;
+    for (i = 0; i < vm->def->nmems; i++) {
+        virDomainMemoryDefPtr mem = vm->def->mems[i];
 
-    rc = qemuMonitorGetBalloonInfo(qemuDomainGetMonitor(vm), &balloon);
-    if (qemuDomainObjExitMonitor(driver, vm) < 0 || rc < 0)
-        return -1;
+        switch (mem->model) {
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+            balloon += mem->actualsize;
+            break;
+
+        case VIR_DOMAIN_MEMORY_MODEL_NONE:
+        case VIR_DOMAIN_MEMORY_MODEL_DIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_NVDIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_LAST:
+            /* nada */
+            break;
+        }
+    }
 
     vm->def->mem.cur_balloon = balloon;
 
