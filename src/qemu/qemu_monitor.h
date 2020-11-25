@@ -1396,10 +1396,13 @@ typedef struct _qemuMonitorMemoryDeviceInfo qemuMonitorMemoryDeviceInfo;
 typedef qemuMonitorMemoryDeviceInfo *qemuMonitorMemoryDeviceInfoPtr;
 
 struct _qemuMonitorMemoryDeviceInfo {
+    /* For pc-dimm */
     unsigned long long address;
     unsigned int slot;
     bool hotplugged;
     bool hotpluggable;
+    /* For virtio-mem */
+    unsigned long long size; /* in bytes */
 };
 
 int qemuMonitorGetMemoryDeviceInfo(qemuMonitorPtr mon,

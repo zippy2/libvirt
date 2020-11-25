@@ -8542,6 +8542,9 @@ qemuProcessReconnect(void *opaque)
 
     qemuDomainVcpuPersistOrder(obj->def);
 
+    if (qemuDomainUpdateMemoryDeviceInfo(driver, obj, QEMU_ASYNC_JOB_NONE) < 0)
+        goto error;
+
     if (qemuProcessDetectIOThreadPIDs(driver, obj, QEMU_ASYNC_JOB_NONE) < 0)
         goto error;
 
