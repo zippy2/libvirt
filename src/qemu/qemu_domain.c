@@ -8283,9 +8283,21 @@ qemuDomainUpdateMemoryDeviceInfo(virQEMUDriverPtr driver,
         return -1;
     }
 
-    /* if qemu doesn't support the info request, just carry on */
-    if (rc == -2)
+    /* If qemu doesn't support the info request, just carry on, unless we
+     * really need it. */
+    if (rc == -2) {
+        for (i = 0; i < vm->def->nmems; i++) {
+            virDomainMemoryDefPtr mem = vm->def->mems[i];
+
+            if (mem->model == VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM) {
+                virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                               _("qemu did not return info on vitio-mem device"));
+                return -1;
+            }
+        }
+
         return 0;
+    }
 
     if (rc < 0)
         return -1;
@@ -8300,9 +8312,24 @@ qemuDomainUpdateMemoryDeviceInfo(virQEMUDriverPtr driver,
         if (!(dimm = virHashLookup(meminfo, mem->info.alias)))
             continue;
 
-        mem->info.type = VIR_DOMAIN_DEVICE_ADDRESS_TYPE_DIMM;
-        mem->info.addr.dimm.slot = dimm->slot;
-        mem->info.addr.dimm.base = dimm->address;
+        switch (mem->model) {
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+            mem->actualsize = VIR_DIV_UP(dimm->size, 1024);
+            break;
+
+        case VIR_DOMAIN_MEMORY_MODEL_DIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_NVDIMM:
+            mem->info.type = VIR_DOMAIN_DEVICE_ADDRESS_TYPE_DIMM;
+            mem->info.addr.dimm.slot = dimm->slot;
+            mem->info.addr.dimm.base = dimm->address;
+            break;
+
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_NONE:
+        case VIR_DOMAIN_MEMORY_MODEL_LAST:
+            /* nada */
+            break;
+        }
     }
 
     virHashFree(meminfo);
