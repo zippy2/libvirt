@@ -62,6 +62,13 @@ v7.1.0 (2021-03-01)
     Introduces support for QEMU vhost-user-blk device that can be used
     to access storage exported via the vhost-user protocol by daemons such
     as the ``qemu-storage-daemon``.
+=======
+  * Introduce virtio-mem ``<memory/>`` model
+
+    New virtio-mem model is introduced for ``<memory/>`` device which is a
+    paravirtualized mechanism of adding/removing memory to/from a VM. Use
+    ``virDomainUpdateDeviceFlags()`` API to adjust amount of memory or ``virsh
+    update-memory-device`` for convenience.
 
 * **Bug fixes**
 
