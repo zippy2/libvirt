@@ -3863,10 +3863,21 @@ qemuDomainDefAddDefaultDevices(virQEMUDriverPtr driver,
     }
 
     if (addDefaultMemballoon && !def->memballoon) {
-        virDomainMemballoonDefPtr memballoon;
-        memballoon = g_new0(virDomainMemballoonDef, 1);
+        virDomainMemballoonDefPtr memballoon = g_new0(virDomainMemballoonDef, 1);
+        size_t i;
 
-        memballoon->model = VIR_DOMAIN_MEMBALLOON_MODEL_VIRTIO;
+        /* To simplify virtio-mem implementation, memballoon has to be turned
+         * off if domain has a virtio-mem device. See
+         * qemuValidateDomainDeviceDefMemory() for more details. */
+        for (i = 0; i < def->nmems; i++) {
+            if (def->mems[i]->model == VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM)
+                break;
+        }
+
+        if (i == def->nmems)
+            memballoon->model = VIR_DOMAIN_MEMBALLOON_MODEL_VIRTIO;
+        else
+            memballoon->model = VIR_DOMAIN_MEMBALLOON_MODEL_NONE;
         def->memballoon = memballoon;
     }
 
@@ -8960,6 +8971,16 @@ qemuDomainDefValidateMemoryHotplugDevice(const virDomainMemoryDef *mem,
 
         /* virtio-pmem doesn't have .node attribute. */
         needsNuma = false;
+        break;
+
+    case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+        if (mem->info.type != VIR_DOMAIN_DEVICE_ADDRESS_TYPE_PCI &&
+            mem->info.type != VIR_DOMAIN_DEVICE_ADDRESS_TYPE_NONE) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+                           _("only 'pci' addresses are supported for the %s device"),
+                           virDomainMemoryModelTypeToString(mem->model));
+            return -1;
+        }
         break;
 
     case VIR_DOMAIN_MEMORY_MODEL_NONE:
