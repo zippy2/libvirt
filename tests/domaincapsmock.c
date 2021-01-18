@@ -17,6 +17,7 @@
 #include <config.h>
 
 #include "virhostcpu.h"
+#include "virhostmem.h"
 #ifdef WITH_LIBXL
 # include "libxl/libxl_capabilities.h"
 #endif
@@ -38,5 +39,13 @@ virHostCPUGetKVMMaxVCPUs(void)
 unsigned int
 virHostCPUGetMicrocodeVersion(virArch hostArch G_GNUC_UNUSED)
 {
+    return 0;
+}
+
+int
+virHostMemGetTHPSize(unsigned long long *size)
+{
+    /* Pretend Transparent Huge Page size is 2MiB. */
+    *size = 2048;
     return 0;
 }

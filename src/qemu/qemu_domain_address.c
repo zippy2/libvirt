@@ -380,9 +380,18 @@ qemuDomainPrimeVirtioDeviceAddresses(virDomainDefPtr def,
     }
 
     for (i = 0; i < def->nmems; i++) {
-        if (def->mems[i]->model == VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM &&
-            def->mems[i]->info.type == VIR_DOMAIN_DEVICE_ADDRESS_TYPE_NONE)
-            def->mems[i]->info.type = type;
+        switch (def->mems[i]->model) {
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+            if (def->mems[i]->info.type == VIR_DOMAIN_DEVICE_ADDRESS_TYPE_NONE)
+                def->mems[i]->info.type = type;
+            break;
+        case VIR_DOMAIN_MEMORY_MODEL_NONE:
+        case VIR_DOMAIN_MEMORY_MODEL_DIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_NVDIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_LAST:
+            break;
+        }
     }
 
     if (type == VIR_DOMAIN_DEVICE_ADDRESS_TYPE_CCW) {
@@ -1011,6 +1020,7 @@ qemuDomainDeviceCalculatePCIConnectFlags(virDomainDeviceDefPtr dev,
     case VIR_DOMAIN_DEVICE_MEMORY:
         switch (dev->data.memory->model) {
         case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
             return virtioFlags;
 
         case VIR_DOMAIN_MEMORY_MODEL_NONE:
@@ -2438,12 +2448,19 @@ qemuDomainAssignDevicePCISlots(virDomainDefPtr def,
     for (i = 0; i < def->nmems; i++) {
         virDomainMemoryDefPtr mem = def->mems[i];
 
-        if (mem->model != VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM ||
-            !virDeviceInfoPCIAddressIsWanted(&mem->info))
-            continue;
-
-        if (qemuDomainPCIAddressReserveNextAddr(addrs, &mem->info) < 0)
-            return -1;
+        switch (mem->model) {
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+            if (virDeviceInfoPCIAddressIsWanted(&mem->info) &&
+                qemuDomainPCIAddressReserveNextAddr(addrs, &mem->info) < 0)
+                return -1;
+            break;
+        case VIR_DOMAIN_MEMORY_MODEL_NONE:
+        case VIR_DOMAIN_MEMORY_MODEL_DIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_NVDIMM:
+        case VIR_DOMAIN_MEMORY_MODEL_LAST:
+            break;
+        }
     }
 
     return 0;
@@ -3110,6 +3127,7 @@ qemuDomainAssignMemoryDeviceSlot(virQEMUDriverPtr driver,
         break;
 
     case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+    case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
         return qemuDomainEnsurePCIAddress(vm, &dev, driver);
         break;
 
@@ -3135,6 +3153,7 @@ qemuDomainReleaseMemoryDeviceSlot(virDomainObjPtr vm,
         break;
 
     case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+    case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
         qemuDomainReleaseDeviceAddress(vm, &mem->info);
         break;
 
@@ -3169,6 +3188,7 @@ qemuDomainAssignMemorySlots(virDomainDefPtr def)
             break;
 
         case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+        case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
             /* handled in qemuDomainAssignPCIAddresses() */
             break;
         case VIR_DOMAIN_MEMORY_MODEL_NONE:
