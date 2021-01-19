@@ -3142,7 +3142,9 @@ qemuBuildMemoryBackendProps(virJSONValuePtr *backendProps,
         } else if (useHugepage) {
             if (qemuGetDomainHupageMemPath(priv->driver, def, pagesize, &memPath) < 0)
                 return -1;
-            prealloc = true;
+            /* For virtio-mem backed by hugepages we don't need prealloc. */
+            if (mem->model != VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM)
+                prealloc = true;
         } else {
             /* We can have both pagesize and mem source. If that's the case,
              * prefer hugepages as those are more specific. */
@@ -3371,6 +3373,9 @@ qemuBuildMemoryDeviceStr(const virDomainDef *def,
         break;
 
     case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+        device = "virtio-mem-pci";
+        break;
+
     case VIR_DOMAIN_MEMORY_MODEL_NONE:
     case VIR_DOMAIN_MEMORY_MODEL_LAST:
     default:
@@ -3386,6 +3391,11 @@ qemuBuildMemoryDeviceStr(const virDomainDef *def,
 
     if (mem->labelsize)
         virBufferAsprintf(&buf, "label-size=%llu,", mem->labelsize * 1024);
+
+    if (mem->blocksize) {
+        virBufferAsprintf(&buf, "block-size=%llu,", mem->blocksize * 1024);
+        virBufferAsprintf(&buf, "requested-size=%llu,", mem->requestedsize * 1024);
+    }
 
     if (mem->uuid) {
         char uuidstr[VIR_UUID_STRING_BUFLEN];
