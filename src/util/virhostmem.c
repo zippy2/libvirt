@@ -45,11 +45,14 @@
 #include "virstring.h"
 #include "virnuma.h"
 #include "virlog.h"
+#include "virthread.h"
 
 #define VIR_FROM_THIS VIR_FROM_NONE
 
 VIR_LOG_INIT("util.hostmem");
 
+static unsigned long long virHostTHPPMDSize;
+static virOnceControl virHostMemGetTHPSizeOnce = VIR_ONCE_CONTROL_INITIALIZER;
 
 #ifdef __FreeBSD__
 # define BSD_MEMORY_STATS_ALL 4
@@ -919,4 +922,64 @@ virHostMemAllocPages(unsigned int npages,
     }
 
     return ncounts;
+}
+
+#if defined(__linux__)
+# define HPAGE_PMD_SIZE_PATH "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size"
+static int
+virHostMemGetTHPSizeSysfs(unsigned long long *size)
+{
+    g_autofree char *buf = NULL;
+
+    /* 1KiB limit is more than enough. */
+    if (virFileReadAll(HPAGE_PMD_SIZE_PATH, 1024, &buf) < 0)
+        return -1;
+
+    virStringTrimOptionalNewline(buf);
+    if (virStrToLong_ull(buf, NULL, 10, size) < 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("unable to parse THP PMD size: %s"), buf);
+        return -1;
+    }
+
+    /* Size is now in bytes. Convert to KiB. */
+    *size >>= 10;
+    return 0;
+}
+#endif /* defined(__linux__) */
+
+
+static void
+virHostMemGetTHPSizeOnceInit(void)
+{
+#if defined(__linux__)
+    virHostMemGetTHPSizeSysfs(&virHostTHPPMDSize);
+#else /* !defined(__linux__) */
+    VIR_WARN("Getting THP size not ported yet");
+#endif /* !defined(__linux__) */
+}
+
+
+/**
+ * virHostMemGetTHPSize:
+ * @size: returned size of THP in kibibytes
+ *
+ * Obtain Transparent Huge Page size in kibibytes. The size
+ * depends on host architecture and kernel. Because of virOnce(),
+ * do not rely on errno in case of failure.
+ *
+ * Returns: 0 on success,
+ *         -1 on failure.
+ */
+int
+virHostMemGetTHPSize(unsigned long long *size)
+{
+    if (virOnce(&virHostMemGetTHPSizeOnce, virHostMemGetTHPSizeOnceInit) < 0)
+        return -1;
+
+    if (virHostTHPPMDSize == 0)
+        return -1;
+
+    *size = virHostTHPPMDSize;
+    return 0;
 }
