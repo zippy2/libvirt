@@ -113,6 +113,7 @@ static void qemuMonitorJSONHandleDumpCompleted(qemuMonitorPtr mon, virJSONValueP
 static void qemuMonitorJSONHandlePRManagerStatusChanged(qemuMonitorPtr mon, virJSONValuePtr data);
 static void qemuMonitorJSONHandleRdmaGidStatusChanged(qemuMonitorPtr mon, virJSONValuePtr data);
 static void qemuMonitorJSONHandleMemoryFailure(qemuMonitorPtr mon, virJSONValuePtr data);
+static void qemuMonitorJSONHandleMemoryDeviceSizeChange(qemuMonitorPtr mon, virJSONValuePtr data);
 
 typedef struct {
     const char *type;
@@ -133,6 +134,7 @@ static qemuEventHandler eventHandlers[] = {
     { "GUEST_CRASHLOADED", qemuMonitorJSONHandleGuestCrashloaded, },
     { "GUEST_PANICKED", qemuMonitorJSONHandleGuestPanic, },
     { "JOB_STATUS_CHANGE", qemuMonitorJSONHandleJobStatusChange, },
+    { "MEMORY_DEVICE_SIZE_CHANGE", qemuMonitorJSONHandleMemoryDeviceSizeChange, },
     { "MEMORY_FAILURE", qemuMonitorJSONHandleMemoryFailure, },
     { "MIGRATION", qemuMonitorJSONHandleMigrationStatus, },
     { "MIGRATION_PASS", qemuMonitorJSONHandleMigrationPass, },
@@ -1326,6 +1328,28 @@ qemuMonitorJSONHandleSpiceMigrated(qemuMonitorPtr mon,
                                    virJSONValuePtr data G_GNUC_UNUSED)
 {
     qemuMonitorEmitSpiceMigrated(mon);
+}
+
+
+static void
+qemuMonitorJSONHandleMemoryDeviceSizeChange(qemuMonitorPtr mon,
+                                            virJSONValuePtr data)
+{
+    const char *name;
+    unsigned long long size;
+
+    if (!(name = virJSONValueObjectGetString(data, "id"))) {
+        VIR_WARN("missing device alias in MEMORY_DEVICE_SIZE_CHANGE event");
+        return;
+    }
+
+    if (virJSONValueObjectGetNumberUlong(data, "size", &size) < 0) {
+        VIR_WARN("missing new size for '%s' in MEMORY_DEVICE_SIZE_CHANGE event", name);
+        return;
+    }
+
+
+    qemuMonitorEmitMemoryDeviceSizeChange(mon, name, size);
 }
 
 

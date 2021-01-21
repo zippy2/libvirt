@@ -6503,6 +6503,11 @@
           </element>
         </optional>
         <optional>
+          <element name="actual">
+            <ref name="scaledInteger"/>
+          </element>
+        </optional>
+        <optional>
           <element name="label">
             <element name="size">
               <ref name="scaledInteger"/>
