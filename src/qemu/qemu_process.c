@@ -1940,6 +1940,46 @@ qemuProcessHandleMemoryFailure(qemuMonitorPtr mon G_GNUC_UNUSED,
 }
 
 
+static int
+qemuProcessHandleMemoryDeviceSizeChange(qemuMonitorPtr mon G_GNUC_UNUSED,
+                                        virDomainObjPtr vm,
+                                        const char *devAlias,
+                                        unsigned long long size,
+                                        void *opaque)
+{
+    virQEMUDriverPtr driver = opaque;
+    struct qemuProcessEvent *processEvent = NULL;
+    qemuMonitorMemoryDeviceSizeChangePtr info = NULL;
+    int ret = -1;
+
+    virObjectLock(vm);
+
+    VIR_DEBUG("Memory device '%s' changed size to '%llu' in domain '%s'",
+              devAlias, size, vm->def->name);
+
+    info = g_new0(qemuMonitorMemoryDeviceSizeChange, 1);
+    info->devAlias = g_strdup(devAlias);
+    info->size = size;
+
+    processEvent = g_new0(struct qemuProcessEvent, 1);
+    processEvent->eventType = QEMU_PROCESS_EVENT_MEMORY_DEVICE_SIZE_CHANGE;
+    processEvent->vm = virObjectRef(vm);
+    processEvent->data = g_steal_pointer(&info);
+
+    if (virThreadPoolSendJob(driver->workerPool, 0, processEvent) < 0) {
+        qemuProcessEventFree(processEvent);
+        virObjectUnref(vm);
+        goto cleanup;
+    }
+
+    ret = 0;
+ cleanup:
+    qemuMonitorMemoryDeviceSizeChangeFree(info);
+    virObjectUnlock(vm);
+    return ret;
+}
+
+
 static qemuMonitorCallbacks monitorCallbacks = {
     .eofNotify = qemuProcessHandleMonitorEOF,
     .errorNotify = qemuProcessHandleMonitorError,
@@ -1973,6 +2013,7 @@ static qemuMonitorCallbacks monitorCallbacks = {
     .domainRdmaGidStatusChanged = qemuProcessHandleRdmaGidStatusChanged,
     .domainGuestCrashloaded = qemuProcessHandleGuestCrashloaded,
     .domainMemoryFailure = qemuProcessHandleMemoryFailure,
+    .domainMemoryDeviceSizeChange = qemuProcessHandleMemoryDeviceSizeChange,
 };
 
 static void

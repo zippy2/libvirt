@@ -17835,6 +17835,21 @@ virDomainMemoryFindByDeviceInfo(virDomainDefPtr def,
 }
 
 
+ssize_t
+virDomainMemoryFindByDeviceAlias(virDomainDefPtr def,
+                                 const char *alias)
+{
+    size_t i;
+
+    for (i = 0; i < def->nmems; i++) {
+        if (STREQ_NULLABLE(def->mems[i]->info.alias, alias))
+            return i;
+    }
+
+    return -1;
+}
+
+
 /**
  * virDomainMemoryInsert:
  *
@@ -27314,7 +27329,8 @@ virDomainMemorySourceDefFormat(virBufferPtr buf,
 
 static void
 virDomainMemoryTargetDefFormat(virBufferPtr buf,
-                               virDomainMemoryDefPtr def)
+                               virDomainMemoryDefPtr def,
+                               unsigned int flags)
 {
     g_auto(virBuffer) childBuf = VIR_BUFFER_INIT_CHILD(buf);
 
@@ -27336,6 +27352,10 @@ virDomainMemoryTargetDefFormat(virBufferPtr buf,
 
         virBufferAsprintf(&childBuf, "<requested unit='KiB'>%llu</requested>\n",
                           def->requestedsize);
+        if (!(flags & VIR_DOMAIN_DEF_FORMAT_INACTIVE)) {
+            virBufferAsprintf(&childBuf, "<actual unit='KiB'>%llu</actual>\n",
+                              def->actualsize);
+        }
     }
 
     virXMLFormatElement(buf, "target", NULL, &childBuf);
@@ -27368,7 +27388,7 @@ virDomainMemoryDefFormat(virBufferPtr buf,
     if (virDomainMemorySourceDefFormat(buf, def) < 0)
         return -1;
 
-    virDomainMemoryTargetDefFormat(buf, def);
+    virDomainMemoryTargetDefFormat(buf, def, flags);
 
     virDomainDeviceInfoFormat(buf, &def->info, flags);
 
