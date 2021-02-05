@@ -3863,6 +3863,27 @@ qemuProcessReconnectCheckMemAliasOrderMismatch(virDomainObjPtr vm)
 
 
 static bool
+qemuProcessDomainMemoryDefNeedHugepagesPath(const virDomainMemoryDef *mem,
+                                            const long system_pagesize)
+{
+    switch (mem->model) {
+    case VIR_DOMAIN_MEMORY_MODEL_DIMM:
+        return mem->pagesize &&
+            mem->pagesize != system_pagesize;
+
+    case VIR_DOMAIN_MEMORY_MODEL_NONE:
+    case VIR_DOMAIN_MEMORY_MODEL_NVDIMM:
+    case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_PMEM:
+    case VIR_DOMAIN_MEMORY_MODEL_LAST:
+        /* None of these can be backed by hugepages. */
+        return false;
+    }
+
+    return false;
+}
+
+
+static bool
 qemuProcessNeedHugepagesPath(virDomainDefPtr def,
                              virDomainMemoryDefPtr mem)
 {
@@ -3878,16 +3899,12 @@ qemuProcessNeedHugepagesPath(virDomainDefPtr def,
     }
 
     for (i = 0; i < def->nmems; i++) {
-        if (def->mems[i]->model == VIR_DOMAIN_MEMORY_MODEL_DIMM &&
-            def->mems[i]->pagesize &&
-            def->mems[i]->pagesize != system_pagesize)
+        if (qemuProcessDomainMemoryDefNeedHugepagesPath(def->mems[i], system_pagesize))
             return true;
     }
 
     if (mem &&
-        mem->model == VIR_DOMAIN_MEMORY_MODEL_DIMM &&
-        mem->pagesize &&
-        mem->pagesize != system_pagesize)
+        qemuProcessDomainMemoryDefNeedHugepagesPath(mem, system_pagesize))
         return true;
 
     return false;
