@@ -4322,6 +4322,7 @@ processMemoryDeviceSizeChange(virQEMUDriverPtr driver,
                               qemuMonitorMemoryDeviceSizeChangePtr info)
 {
     virDomainMemoryDefPtr mem = NULL;
+    virObjectEventPtr event = NULL;
 
     if (qemuDomainObjBeginJob(driver, vm, QEMU_JOB_MODIFY) < 0)
         return;
@@ -4339,8 +4340,13 @@ processMemoryDeviceSizeChange(virQEMUDriverPtr driver,
 
     mem->actualsize = VIR_DIV_UP(info->size, 1024);
 
+    event = virDomainEventMemoryDeviceSizeChangeNewFromObj(vm,
+                                                           info->devAlias,
+                                                           mem->actualsize);
+
  endjob:
     qemuDomainObjEndJob(driver, vm);
+    virObjectEventStateQueue(driver->domainEventState, event);
 }
 
 

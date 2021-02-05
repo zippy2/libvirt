@@ -3172,6 +3172,12 @@ struct remote_domain_get_messages_ret {
                 remote_nonnull_string * msgs_val;
         } msgs;
 };
+struct remote_domain_event_memory_device_size_change_msg {
+        int                        callbackID;
+        remote_nonnull_domain      dom;
+        remote_nonnull_string      alias;
+        uint64_t                   size;
+};
 enum remote_procedure {
         REMOTE_PROC_CONNECT_OPEN = 1,
         REMOTE_PROC_CONNECT_CLOSE = 2,
@@ -3599,4 +3605,5 @@ enum remote_procedure {
         REMOTE_PROC_DOMAIN_AUTHORIZED_SSH_KEYS_GET = 424,
         REMOTE_PROC_DOMAIN_AUTHORIZED_SSH_KEYS_SET = 425,
         REMOTE_PROC_DOMAIN_GET_MESSAGES = 426,
+        REMOTE_PROC_DOMAIN_EVENT_MEMORY_DEVICE_SIZE_CHANGE = 427,
 };
