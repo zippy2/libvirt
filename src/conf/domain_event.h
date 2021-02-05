@@ -267,6 +267,16 @@ virDomainEventMemoryFailureNewFromDom(virDomainPtr dom,
                                       int action,
                                       unsigned int flags);
 
+virObjectEventPtr
+virDomainEventMemoryDeviceSizeChangeNewFromObj(virDomainObjPtr obj,
+                                               const char *alias,
+                                               unsigned long long size);
+
+virObjectEventPtr
+virDomainEventMemoryDeviceSizeChangeNewFromDom(virDomainPtr dom,
+                                               const char *alias,
+                                               unsigned long long size);
+
 int
 virDomainEventStateRegister(virConnectPtr conn,
                             virObjectEventStatePtr state,

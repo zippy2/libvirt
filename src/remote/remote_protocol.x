@@ -3812,6 +3812,13 @@ struct remote_domain_get_messages_ret {
 };
 
 
+struct remote_domain_event_memory_device_size_change_msg {
+    int callbackID;
+    remote_nonnull_domain dom;
+    remote_nonnull_string alias;
+    unsigned hyper size;
+};
+
 /*----- Protocol. -----*/
 
 /* Define the program number, protocol version and procedure numbers here. */
@@ -6733,5 +6740,11 @@ enum remote_procedure {
      * @generate: none
      * @acl: domain:read
      */
-    REMOTE_PROC_DOMAIN_GET_MESSAGES = 426
+    REMOTE_PROC_DOMAIN_GET_MESSAGES = 426,
+
+    /**
+     * @generate: both
+     * @acl: none
+     */
+    REMOTE_PROC_DOMAIN_EVENT_MEMORY_DEVICE_SIZE_CHANGE = 427
 };
