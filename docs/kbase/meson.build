@@ -9,6 +9,7 @@ docs_kbase_files = [
   'locking-lockd',
   'locking',
   'locking-sanlock',
+  'memorydevices',
   'migrationinternals',
   'qemu-passthrough-security',
   'rpm-deployment',
