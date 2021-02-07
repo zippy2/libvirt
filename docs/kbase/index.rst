@@ -46,6 +46,10 @@ Usage
 `PCI topology <../pci-addresses.html>`__
    Addressing schemes for PCI devices
 
+`Memory devices <memorydevices.html>`__
+   Memory devices and their use
+
+
 Internals / Debugging
 ---------------------
 
