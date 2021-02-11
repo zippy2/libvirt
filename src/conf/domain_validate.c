@@ -499,6 +499,18 @@ virDomainDiskDefValidate(const virDomainDef *def,
                            _("NVMe namespace can't be zero"));
             return -1;
         }
+
+        if (disk->cachemode != VIR_DOMAIN_DISK_CACHE_DEFAULT) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                           _("cache is not supported for NVMe disks"));
+            return -1;
+        }
+
+        if (disk->iomode != VIR_DOMAIN_DISK_IO_DEFAULT) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                           _("io mode is not supported for NVMe disks"));
+            return -1;
+        }
     }
 
     if (disk->src->type == VIR_STORAGE_TYPE_VHOST_USER &&
