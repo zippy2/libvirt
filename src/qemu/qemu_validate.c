@@ -4790,6 +4790,7 @@ qemuValidateDomainDeviceDefHub(virDomainHubDefPtr hub,
 
 static int
 qemuValidateDomainDeviceDefMemory(virDomainMemoryDefPtr mem,
+                                  const virDomainDef *def,
                                   virQEMUCapsPtr qemuCaps)
 {
     switch (mem->model) {
@@ -4826,6 +4827,17 @@ qemuValidateDomainDeviceDefMemory(virDomainMemoryDefPtr mem,
         break;
 
     case VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM:
+        /* Accounting balloon and virtio-mem is hard. We have plenty of APIs
+         * which take balloon from QEMU and report it to users. We would have
+         * to change all that and account for virtio-mem actual size.  Also,
+         * virtio-mem is supposed to be replacement for balloon. Disable
+         * coexistence of these two for now. */
+        if (virDomainDefHasMemballoon(def)) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                           _("virtio-mem is not supported with memory balloon"));
+            return -1;
+        }
+
         if (!virQEMUCapsGet(qemuCaps, QEMU_CAPS_DEVICE_VIRTIO_MEM_PCI)) {
             virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
                            _("virtio-mem isn't supported by this QEMU binary"));
@@ -4987,7 +4999,7 @@ qemuValidateDomainDeviceDef(const virDomainDeviceDef *dev,
         break;
 
     case VIR_DOMAIN_DEVICE_MEMORY:
-        ret = qemuValidateDomainDeviceDefMemory(dev->data.memory, qemuCaps);
+        ret = qemuValidateDomainDeviceDefMemory(dev->data.memory, def, qemuCaps);
         break;
 
     case VIR_DOMAIN_DEVICE_SHMEM:

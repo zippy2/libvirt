@@ -7223,6 +7223,8 @@ appropriate, so there is no need to explicitly add this element in the guest XML
 unless a specific PCI slot needs to be assigned. :since:`Since 0.8.3, Xen, QEMU
 and KVM only` Additionally, :since:`since 0.8.4` , if the memballoon device
 needs to be explicitly disabled, ``model='none'`` may be used.
+Using memballoon among with ``virtio-mem`` memory device is unsupported. In
+that case, setting model to anything else then ``none`` results in an error.
 
 Example: automatically added device with KVM
 
@@ -7231,6 +7233,16 @@ Example: automatically added device with KVM
    ...
    <devices>
      <memballoon model='virtio'/>
+   </devices>
+   ...
+
+Example: automatically added device with QEMU/KVM and a ``virtio-mem`` device:
+
+::
+
+   ...
+   <devices>
+     <memballoon model='none'/>
    </devices>
    ...
 
@@ -7693,7 +7705,8 @@ Example: usage of the memory devices
    1.2.14` Provide ``nvdimm`` model that adds a Non-Volatile DIMM module.
    :since:`Since 3.2.0` Provide ``virtio-pmem`` model to add a paravirtualized
    persistent memory device. :since:`Since 7.1.0` Provide ``virtio-mem`` model
-   to add paravirtualized memory device. :since:`Since 7.1.0`
+   to add paravirtualized memory device. :since:`Since 7.1.0` Please note that
+   using ``virtio-mem`` with memory balloon is unsupported.
 
 ``access``
    An optional attribute ``access`` ( :since:`since 3.2.0` ) that provides

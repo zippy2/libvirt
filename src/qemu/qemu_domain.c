@@ -3863,10 +3863,21 @@ qemuDomainDefAddDefaultDevices(virQEMUDriverPtr driver,
     }
 
     if (addDefaultMemballoon && !def->memballoon) {
-        virDomainMemballoonDefPtr memballoon;
-        memballoon = g_new0(virDomainMemballoonDef, 1);
+        virDomainMemballoonDefPtr memballoon = g_new0(virDomainMemballoonDef, 1);
+        size_t i;
 
-        memballoon->model = VIR_DOMAIN_MEMBALLOON_MODEL_VIRTIO;
+        /* To simplify virtio-mem implementation, memballoon has to be turned
+         * off if domain has a virtio-mem device. See
+         * qemuValidateDomainDeviceDefMemory() for more details. */
+        for (i = 0; i < def->nmems; i++) {
+            if (def->mems[i]->model == VIR_DOMAIN_MEMORY_MODEL_VIRTIO_MEM)
+                break;
+        }
+
+        if (i == def->nmems)
+            memballoon->model = VIR_DOMAIN_MEMBALLOON_MODEL_VIRTIO;
+        else
+            memballoon->model = VIR_DOMAIN_MEMBALLOON_MODEL_NONE;
         def->memballoon = memballoon;
     }
 
