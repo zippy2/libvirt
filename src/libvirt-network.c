@@ -543,7 +543,7 @@ virNetworkUpdate(virNetworkPtr network,
 
     if (conn->networkDriver && conn->networkDriver->networkUpdate) {
         int ret;
-        ret = conn->networkDriver->networkUpdate(network, section, command,
+        ret = conn->networkDriver->networkUpdate(network, command, section,
                                                  parentIndex, xml, flags);
         if (ret < 0)
             goto error;

@@ -1542,10 +1542,15 @@ struct remote_network_undefine_args {
     remote_nonnull_network net;
 };
 
+/* The @section and @command members are intentionally inverted compared to the
+ * virNetworkUpdate() API. The reason is that since it's introduction until the
+ * 7.2.0 release the driver callback was given arguments in inverted order.
+ * After it was fixed, the XDR has to be swapped to keep compatibility with
+ * older daemons. */
 struct remote_network_update_args {
     remote_nonnull_network net;
-    unsigned int command;
     unsigned int section;
+    unsigned int command;
     int parentIndex;
     remote_nonnull_string xml;
     unsigned int flags;

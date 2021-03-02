@@ -1109,8 +1109,8 @@ struct remote_network_undefine_args {
 };
 struct remote_network_update_args {
         remote_nonnull_network     net;
-        u_int                      command;
         u_int                      section;
+        u_int                      command;
         int                        parentIndex;
         remote_nonnull_string      xml;
         u_int                      flags;
