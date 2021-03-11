@@ -476,7 +476,7 @@ virTypedParamsGetStringList(virTypedParameterPtr params,
  * Returns nothing.
  */
 void
-virTypedParamsRemoteFree(virTypedParameterRemotePtr remote_params_val,
+virTypedParamsRemoteFree(struct _virTypedParameterRemote *remote_params_val,
                          unsigned int remote_params_len)
 {
     size_t i;
@@ -521,7 +521,7 @@ virTypedParamsRemoteFree(virTypedParameterRemotePtr remote_params_val,
  * Returns 0 on success or -1 in case of an error.
  */
 int
-virTypedParamsDeserialize(virTypedParameterRemotePtr remote_params,
+virTypedParamsDeserialize(struct _virTypedParameterRemote *remote_params,
                           unsigned int remote_params_len,
                           int limit,
                           virTypedParameterPtr *params,
@@ -554,7 +554,7 @@ virTypedParamsDeserialize(virTypedParameterRemotePtr remote_params,
     /* Deserialize the result. */
     for (i = 0; i < remote_params_len; ++i) {
         virTypedParameterPtr param = *params + i;
-        virTypedParameterRemotePtr remote_param = remote_params + i;
+        struct _virTypedParameterRemote *remote_param = remote_params + i;
 
         if (virStrcpyStatic(param->field,
                             remote_param->field) < 0) {
@@ -640,14 +640,14 @@ int
 virTypedParamsSerialize(virTypedParameterPtr params,
                         int nparams,
                         int limit,
-                        virTypedParameterRemotePtr *remote_params_val,
+                        struct _virTypedParameterRemote **remote_params_val,
                         unsigned int *remote_params_len,
                         unsigned int flags)
 {
     size_t i;
     size_t j;
     int rv = -1;
-    virTypedParameterRemotePtr params_val = NULL;
+    struct _virTypedParameterRemote *params_val = NULL;
     int params_len = nparams;
 
     if (nparams > limit) {
@@ -661,7 +661,7 @@ virTypedParamsSerialize(virTypedParameterPtr params,
 
     for (i = 0, j = 0; i < nparams; ++i) {
         virTypedParameterPtr param = params + i;
-        virTypedParameterRemotePtr val = params_val + j;
+        struct _virTypedParameterRemote *val = params_val + j;
         /* NOTE: Following snippet is relevant to server only, because
          * virDomainGetCPUStats can return a sparse array; also, we can't pass
          * back strings to older clients. */
@@ -717,7 +717,7 @@ virTypedParamsSerialize(virTypedParameterPtr params,
 
 
 void
-virTypedParamListFree(virTypedParamListPtr list)
+virTypedParamListFree(virTypedParamList *list)
 {
     if (!list)
         return;
@@ -728,7 +728,7 @@ virTypedParamListFree(virTypedParamListPtr list)
 
 
 size_t
-virTypedParamListStealParams(virTypedParamListPtr list,
+virTypedParamListStealParams(virTypedParamList *list,
                              virTypedParameterPtr *params)
 {
     size_t ret = list->npar;
@@ -756,7 +756,7 @@ virTypedParamSetNameVPrintf(virTypedParameterPtr par,
 
 
 static virTypedParameterPtr
-virTypedParamListExtend(virTypedParamListPtr list)
+virTypedParamListExtend(virTypedParamList *list)
 {
     if (VIR_RESIZE_N(list->par, list->par_alloc, list->npar, 1) < 0)
         return NULL;
@@ -768,7 +768,7 @@ virTypedParamListExtend(virTypedParamListPtr list)
 
 
 int
-virTypedParamListAddInt(virTypedParamListPtr list,
+virTypedParamListAddInt(virTypedParamList *list,
                         int value,
                         const char *namefmt,
                         ...)
@@ -790,7 +790,7 @@ virTypedParamListAddInt(virTypedParamListPtr list,
 
 
 int
-virTypedParamListAddUInt(virTypedParamListPtr list,
+virTypedParamListAddUInt(virTypedParamList *list,
                          unsigned int value,
                          const char *namefmt,
                          ...)
@@ -812,7 +812,7 @@ virTypedParamListAddUInt(virTypedParamListPtr list,
 
 
 int
-virTypedParamListAddLLong(virTypedParamListPtr list,
+virTypedParamListAddLLong(virTypedParamList *list,
                           long long value,
                           const char *namefmt,
                           ...)
@@ -834,7 +834,7 @@ virTypedParamListAddLLong(virTypedParamListPtr list,
 
 
 int
-virTypedParamListAddULLong(virTypedParamListPtr list,
+virTypedParamListAddULLong(virTypedParamList *list,
                            unsigned long long value,
                            const char *namefmt,
                            ...)
@@ -856,7 +856,7 @@ virTypedParamListAddULLong(virTypedParamListPtr list,
 
 
 int
-virTypedParamListAddString(virTypedParamListPtr list,
+virTypedParamListAddString(virTypedParamList *list,
                            const char *value,
                            const char *namefmt,
                            ...)
@@ -878,7 +878,7 @@ virTypedParamListAddString(virTypedParamListPtr list,
 
 
 int
-virTypedParamListAddBoolean(virTypedParamListPtr list,
+virTypedParamListAddBoolean(virTypedParamList *list,
                             bool value,
                             const char *namefmt,
                             ...)
@@ -900,7 +900,7 @@ virTypedParamListAddBoolean(virTypedParamListPtr list,
 
 
 int
-virTypedParamListAddDouble(virTypedParamListPtr list,
+virTypedParamListAddDouble(virTypedParamList *list,
                            double value,
                            const char *namefmt,
                            ...)

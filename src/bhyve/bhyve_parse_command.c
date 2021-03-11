@@ -265,7 +265,7 @@ bhyveCommandLineToArgv(const char *nativeConfig,
 }
 
 static int
-bhyveParseBhyveLPCArg(virDomainDefPtr def,
+bhyveParseBhyveLPCArg(virDomainDef *def,
                       unsigned caps G_GNUC_UNUSED,
                       const char *arg)
 {
@@ -273,7 +273,7 @@ bhyveParseBhyveLPCArg(virDomainDefPtr def,
     const char *separator = NULL;
     const char *param = NULL;
     size_t last = 0;
-    virDomainChrDefPtr chr = NULL;
+    virDomainChrDef *chr = NULL;
     char *type = NULL;
 
     separator = strchr(arg, ',');
@@ -407,7 +407,7 @@ bhyveParsePCISlot(const char *slotdef,
 }
 
 static int
-bhyveParsePCIDisk(virDomainDefPtr def,
+bhyveParsePCIDisk(virDomainDef *def,
                   unsigned caps G_GNUC_UNUSED,
                   unsigned pcibus,
                   unsigned pcislot,
@@ -421,7 +421,7 @@ bhyveParsePCIDisk(virDomainDefPtr def,
     /* -s slot,virtio-blk|ahci-cd|ahci-hd,/path/to/file */
     const char *separator = NULL;
     int idx = -1;
-    virDomainDiskDefPtr disk = NULL;
+    virDomainDiskDef *disk = NULL;
 
     if (!(disk = virDomainDiskDefNew(NULL)))
         return 0;
@@ -477,8 +477,8 @@ bhyveParsePCIDisk(virDomainDefPtr def,
 }
 
 static int
-bhyveParsePCINet(virDomainDefPtr def,
-                 virDomainXMLOptionPtr xmlopt,
+bhyveParsePCINet(virDomainDef *def,
+                 virDomainXMLOption *xmlopt,
                  unsigned caps G_GNUC_UNUSED,
                  unsigned bus,
                  unsigned slot,
@@ -488,7 +488,7 @@ bhyveParsePCINet(virDomainDefPtr def,
 {
     /* -s slot,virtio-net,tapN[,mac=xx:xx:xx:xx:xx:xx] */
 
-    virDomainNetDefPtr net = NULL;
+    virDomainNetDef *net = NULL;
     const char *separator = NULL;
     const char *mac = NULL;
 
@@ -553,8 +553,8 @@ bhyveParsePCINet(virDomainDefPtr def,
 }
 
 static int
-bhyveParsePCIFbuf(virDomainDefPtr def,
-                  virDomainXMLOptionPtr xmlopt,
+bhyveParsePCIFbuf(virDomainDef *def,
+                  virDomainXMLOption *xmlopt,
                   unsigned caps G_GNUC_UNUSED,
                   unsigned bus,
                   unsigned slot,
@@ -563,8 +563,8 @@ bhyveParsePCIFbuf(virDomainDefPtr def,
 {
     /* -s slot,fbuf,wait,vga=on|io|off,rfb=<ip>:port,w=width,h=height */
 
-    virDomainVideoDefPtr video = NULL;
-    virDomainGraphicsDefPtr graphics = NULL;
+    virDomainVideoDef *video = NULL;
+    virDomainGraphicsDef *graphics = NULL;
     char **params = NULL;
     char *param = NULL, *separator = NULL;
     size_t nparams = 0;
@@ -667,8 +667,8 @@ bhyveParsePCIFbuf(virDomainDefPtr def,
 }
 
 static int
-bhyveParseBhyvePCIArg(virDomainDefPtr def,
-                      virDomainXMLOptionPtr xmlopt,
+bhyveParseBhyvePCIArg(virDomainDef *def,
+                      virDomainXMLOption *xmlopt,
                       unsigned caps,
                       unsigned *nvirtiodisk,
                       unsigned *nahcidisk,
@@ -752,8 +752,8 @@ bhyveParseBhyvePCIArg(virDomainDefPtr def,
  * Parse the /usr/sbin/bhyve command line.
  */
 static int
-bhyveParseBhyveCommandLine(virDomainDefPtr def,
-                           virDomainXMLOptionPtr xmlopt,
+bhyveParseBhyveCommandLine(virDomainDef *def,
+                           virDomainXMLOption *xmlopt,
                            unsigned caps,
                            int argc, char **argv)
 {
@@ -862,7 +862,7 @@ bhyveParseBhyveCommandLine(virDomainDefPtr def,
  * Parse the /usr/sbin/bhyveload command line.
  */
 static int
-bhyveParseBhyveLoadCommandLine(virDomainDefPtr def,
+bhyveParseBhyveLoadCommandLine(virDomainDef *def,
                                int argc, char **argv)
 {
     /* bhyveload called with default arguments when only -m and -d are given.
@@ -942,7 +942,7 @@ bhyveParseBhyveLoadCommandLine(virDomainDefPtr def,
 #undef CONSUME_ARG
 
 static int
-bhyveParseCustomLoaderCommandLine(virDomainDefPtr def,
+bhyveParseCustomLoaderCommandLine(virDomainDef *def,
                                   int argc G_GNUC_UNUSED,
                                   char **argv)
 {
@@ -955,12 +955,12 @@ bhyveParseCustomLoaderCommandLine(virDomainDefPtr def,
     return 0;
 }
 
-virDomainDefPtr
+virDomainDef *
 bhyveParseCommandLineString(const char* nativeConfig,
                             unsigned caps,
-                            virDomainXMLOptionPtr xmlopt)
+                            virDomainXMLOption *xmlopt)
 {
-    virDomainDefPtr def = NULL;
+    virDomainDef *def = NULL;
     int bhyve_argc = 0;
     char **bhyve_argv = NULL;
     int loader_argc = 0;

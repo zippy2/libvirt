@@ -35,7 +35,7 @@
 VIR_LOG_INIT("util.uri");
 
 static int
-virURIParamAppend(virURIPtr uri,
+virURIParamAppend(virURI *uri,
                   const char *name,
                   const char *value)
 {
@@ -63,7 +63,7 @@ virURIParamAppend(virURIPtr uri,
 
 
 static int
-virURIParseParams(virURIPtr uri)
+virURIParseParams(virURI *uri)
 {
     const char *end, *eq;
     const char *query = uri->query;
@@ -142,11 +142,11 @@ virURIParseParams(virURIPtr uri)
  *
  * @returns the parsed uri object with some fixes
  */
-virURIPtr
+virURI *
 virURIParse(const char *uri)
 {
     xmlURIPtr xmluri;
-    virURIPtr ret = NULL;
+    virURI *ret = NULL;
 
     xmluri = xmlParseURI(uri);
 
@@ -206,7 +206,7 @@ virURIParse(const char *uri)
  * @returns the constructed uri as a string
  */
 char *
-virURIFormat(virURIPtr uri)
+virURIFormat(virURI *uri)
 {
     xmlURI xmluri;
     g_autofree char *tmpserver = NULL;
@@ -246,7 +246,7 @@ virURIFormat(virURIPtr uri)
 }
 
 
-char *virURIFormatParams(virURIPtr uri)
+char *virURIFormatParams(virURI *uri)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
     size_t i;
@@ -270,7 +270,7 @@ char *virURIFormatParams(virURIPtr uri)
  *
  * Frees the URI
  */
-void virURIFree(virURIPtr uri)
+void virURIFree(virURI *uri)
 {
     size_t i;
 
@@ -352,7 +352,7 @@ virURIFindAliasMatch(char *const*aliases, const char *alias,
  * Returns 0 on success, -1 on error.
  */
 int
-virURIResolveAlias(virConfPtr conf, const char *alias, char **uri)
+virURIResolveAlias(virConf *conf, const char *alias, char **uri)
 {
     int ret = -1;
     char **aliases = NULL;
@@ -374,7 +374,7 @@ virURIResolveAlias(virConfPtr conf, const char *alias, char **uri)
 
 
 const char *
-virURIGetParam(virURIPtr uri, const char *name)
+virURIGetParam(virURI *uri, const char *name)
 {
     size_t i;
 
@@ -400,7 +400,7 @@ virURIGetParam(virURIPtr uri, const char *name)
  * Returns: true if the URI might be proxied to a remote server
  */
 bool
-virURICheckUnixSocket(virURIPtr uri)
+virURICheckUnixSocket(virURI *uri)
 {
     size_t i = 0;
 

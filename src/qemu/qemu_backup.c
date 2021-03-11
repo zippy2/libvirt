@@ -45,10 +45,10 @@
 VIR_LOG_INIT("qemu.qemu_backup");
 
 
-static virDomainBackupDefPtr
-qemuDomainGetBackup(virDomainObjPtr vm)
+static virDomainBackupDef *
+qemuDomainGetBackup(virDomainObj *vm)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
 
     if (!priv->backup) {
         virReportError(VIR_ERR_NO_DOMAIN_BACKUP, "%s",
@@ -61,7 +61,7 @@ qemuDomainGetBackup(virDomainObjPtr vm)
 
 
 static int
-qemuBackupPrepare(virDomainBackupDefPtr def)
+qemuBackupPrepare(virDomainBackupDef *def)
 {
 
     if (def->type == VIR_DOMAIN_BACKUP_TYPE_PULL) {
@@ -103,15 +103,15 @@ qemuBackupPrepare(virDomainBackupDefPtr def)
 
 
 struct qemuBackupDiskData {
-    virDomainBackupDiskDefPtr backupdisk;
-    virDomainDiskDefPtr domdisk;
-    qemuBlockJobDataPtr blockjob;
-    virStorageSourcePtr store;
-    virStorageSourcePtr terminator;
-    virStorageSourcePtr backingStore;
+    virDomainBackupDiskDef *backupdisk;
+    virDomainDiskDef *domdisk;
+    qemuBlockJobData *blockjob;
+    virStorageSource *store;
+    virStorageSource *terminator;
+    virStorageSource *backingStore;
     char *incrementalBitmap;
     const char *domdiskIncrementalBitmap; /* name of temporary bitmap installed on disk source */
-    qemuBlockStorageSourceChainDataPtr crdata;
+    qemuBlockStorageSourceChainData *crdata;
     bool labelled;
     bool initialized;
     bool created;
@@ -122,10 +122,10 @@ struct qemuBackupDiskData {
 
 
 static void
-qemuBackupDiskDataCleanupOne(virDomainObjPtr vm,
+qemuBackupDiskDataCleanupOne(virDomainObj *vm,
                              struct qemuBackupDiskData *dd)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
 
     if (!dd->started) {
         if (dd->added) {
@@ -156,7 +156,7 @@ qemuBackupDiskDataCleanupOne(virDomainObjPtr vm,
 
 
 static void
-qemuBackupDiskDataCleanup(virDomainObjPtr vm,
+qemuBackupDiskDataCleanup(virDomainObj *vm,
                           struct qemuBackupDiskData *dd,
                           size_t ndd)
 {
@@ -177,11 +177,11 @@ qemuBackupDiskDataCleanup(virDomainObjPtr vm,
 
 
 int
-qemuBackupDiskPrepareOneBitmapsChain(virStorageSourcePtr backingChain,
-                                     virStorageSourcePtr targetsrc,
+qemuBackupDiskPrepareOneBitmapsChain(virStorageSource *backingChain,
+                                     virStorageSource *targetsrc,
                                      const char *targetbitmap,
                                      const char *incremental,
-                                     virJSONValuePtr actions,
+                                     virJSONValue *actions,
                                      GHashTable *blockNamedNodeData)
 {
     g_autoptr(virJSONValue) tmpactions = NULL;
@@ -202,7 +202,7 @@ qemuBackupDiskPrepareOneBitmapsChain(virStorageSourcePtr backingChain,
 
 static int
 qemuBackupDiskPrepareOneBitmaps(struct qemuBackupDiskData *dd,
-                                virJSONValuePtr actions,
+                                virJSONValue *actions,
                                 bool pull,
                                 GHashTable *blockNamedNodeData)
 {
@@ -244,15 +244,15 @@ qemuBackupDiskPrepareOneBitmaps(struct qemuBackupDiskData *dd,
 
 
 static int
-qemuBackupDiskPrepareDataOne(virDomainObjPtr vm,
-                             virDomainBackupDiskDefPtr backupdisk,
+qemuBackupDiskPrepareDataOne(virDomainObj *vm,
+                             virDomainBackupDiskDef *backupdisk,
                              struct qemuBackupDiskData *dd,
-                             virJSONValuePtr actions,
+                             virJSONValue *actions,
                              bool pull,
                              GHashTable *blockNamedNodeData,
-                             virQEMUDriverConfigPtr cfg)
+                             virQEMUDriverConfig *cfg)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
 
     /* set data structure */
     dd->backupdisk = backupdisk;
@@ -331,7 +331,7 @@ qemuBackupDiskPrepareDataOne(virDomainObjPtr vm,
 
 
 static int
-qemuBackupDiskPrepareDataOnePush(virJSONValuePtr actions,
+qemuBackupDiskPrepareDataOnePush(virJSONValue *actions,
                                  struct qemuBackupDiskData *dd)
 {
     qemuMonitorTransactionBackupSyncMode syncmode = QEMU_MONITOR_TRANSACTION_BACKUP_SYNC_MODE_FULL;
@@ -352,7 +352,7 @@ qemuBackupDiskPrepareDataOnePush(virJSONValuePtr actions,
 
 
 static int
-qemuBackupDiskPrepareDataOnePull(virJSONValuePtr actions,
+qemuBackupDiskPrepareDataOnePull(virJSONValue *actions,
                                  struct qemuBackupDiskData *dd)
 {
     if (!dd->backupdisk->exportbitmap &&
@@ -372,11 +372,11 @@ qemuBackupDiskPrepareDataOnePull(virJSONValuePtr actions,
 
 
 static ssize_t
-qemuBackupDiskPrepareData(virDomainObjPtr vm,
-                          virDomainBackupDefPtr def,
+qemuBackupDiskPrepareData(virDomainObj *vm,
+                          virDomainBackupDef *def,
                           GHashTable *blockNamedNodeData,
-                          virJSONValuePtr actions,
-                          virQEMUDriverConfigPtr cfg,
+                          virJSONValue *actions,
+                          virQEMUDriverConfig *cfg,
                           struct qemuBackupDiskData **rdd)
 {
     struct qemuBackupDiskData *disks = NULL;
@@ -419,12 +419,12 @@ qemuBackupDiskPrepareData(virDomainObjPtr vm,
 
 
 static int
-qemuBackupDiskPrepareOneStorage(virDomainObjPtr vm,
+qemuBackupDiskPrepareOneStorage(virDomainObj *vm,
                                 GHashTable *blockNamedNodeData,
                                 struct qemuBackupDiskData *dd,
                                 bool reuse_external)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
     int rc;
 
     if (!reuse_external &&
@@ -485,7 +485,7 @@ qemuBackupDiskPrepareOneStorage(virDomainObjPtr vm,
 
 
 static int
-qemuBackupDiskPrepareStorage(virDomainObjPtr vm,
+qemuBackupDiskPrepareStorage(virDomainObj *vm,
                              struct qemuBackupDiskData *disks,
                              size_t ndisks,
                              GHashTable *blockNamedNodeData,
@@ -504,7 +504,7 @@ qemuBackupDiskPrepareStorage(virDomainObjPtr vm,
 
 
 static void
-qemuBackupDiskStarted(virDomainObjPtr vm,
+qemuBackupDiskStarted(virDomainObj *vm,
                       struct qemuBackupDiskData *dd,
                       size_t ndd)
 {
@@ -528,7 +528,7 @@ qemuBackupDiskStarted(virDomainObjPtr vm,
  * function must be called while in the monitor context.
  */
 static int
-qemuBackupBeginPullExportDisks(virDomainObjPtr vm,
+qemuBackupBeginPullExportDisks(virDomainObj *vm,
                                struct qemuBackupDiskData *disks,
                                size_t ndisks)
 {
@@ -553,11 +553,11 @@ qemuBackupBeginPullExportDisks(virDomainObjPtr vm,
 
 
 void
-qemuBackupJobTerminate(virDomainObjPtr vm,
+qemuBackupJobTerminate(virDomainObj *vm,
                        qemuDomainJobStatus jobstatus)
 
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
     size_t i;
 
     if (!(priv->backup->apiFlags & VIR_DOMAIN_BACKUP_BEGIN_REUSE_EXTERNAL) &&
@@ -568,7 +568,7 @@ qemuBackupJobTerminate(virDomainObjPtr vm,
         g_autoptr(virQEMUDriverConfig) cfg = virQEMUDriverGetConfig(priv->driver);
 
         for (i = 0; i < priv->backup->ndisks; i++) {
-            virDomainBackupDiskDefPtr backupdisk = priv->backup->disks + i;
+            virDomainBackupDiskDef *backupdisk = priv->backup->disks + i;
             uid_t uid;
             gid_t gid;
 
@@ -620,12 +620,12 @@ qemuBackupJobTerminate(virDomainObjPtr vm,
  * if there are no outstanding active blockjobs.
  */
 void
-qemuBackupJobCancelBlockjobs(virDomainObjPtr vm,
-                             virDomainBackupDefPtr backup,
+qemuBackupJobCancelBlockjobs(virDomainObj *vm,
+                             virDomainBackupDef *backup,
                              bool terminatebackup,
                              int asyncJob)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
     size_t i;
     int rc = 0;
     bool has_active = false;
@@ -634,8 +634,8 @@ qemuBackupJobCancelBlockjobs(virDomainObjPtr vm,
         return;
 
     for (i = 0; i < backup->ndisks; i++) {
-        virDomainBackupDiskDefPtr backupdisk = backup->disks + i;
-        virDomainDiskDefPtr disk;
+        virDomainBackupDiskDef *backupdisk = backup->disks + i;
+        virDomainDiskDef *disk;
         g_autoptr(qemuBlockJobData) job = NULL;
 
         if (!backupdisk->store)
@@ -679,13 +679,13 @@ qemuBackupJobCancelBlockjobs(virDomainObjPtr vm,
 #define QEMU_BACKUP_TLS_ALIAS_BASE "libvirt_backup"
 
 static int
-qemuBackupBeginPrepareTLS(virDomainObjPtr vm,
-                          virQEMUDriverConfigPtr cfg,
-                          virDomainBackupDefPtr def,
-                          virJSONValuePtr *tlsProps,
-                          virJSONValuePtr *tlsSecretProps)
+qemuBackupBeginPrepareTLS(virDomainObj *vm,
+                          virQEMUDriverConfig *cfg,
+                          virDomainBackupDef *def,
+                          virJSONValue **tlsProps,
+                          virJSONValue **tlsSecretProps)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
     g_autofree char *tlsObjAlias = qemuAliasTLSObjFromSrcAlias(QEMU_BACKUP_TLS_ALIAS_BASE);
     g_autoptr(qemuDomainSecretInfo) secinfo = NULL;
     const char *tlsKeySecretAlias = NULL;
@@ -721,17 +721,17 @@ qemuBackupBeginPrepareTLS(virDomainObjPtr vm,
 
 
 int
-qemuBackupBegin(virDomainObjPtr vm,
+qemuBackupBegin(virDomainObj *vm,
                 const char *backupXML,
                 const char *checkpointXML,
                 unsigned int flags)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
     g_autoptr(virQEMUDriverConfig) cfg = virQEMUDriverGetConfig(priv->driver);
     g_autoptr(virDomainBackupDef) def = NULL;
     g_autofree char *suffix = NULL;
     bool pull = false;
-    virDomainMomentObjPtr chk = NULL;
+    virDomainMomentObj *chk = NULL;
     g_autoptr(virDomainCheckpointDef) chkdef = NULL;
     g_autoptr(virJSONValue) actions = NULL;
     g_autoptr(virJSONValue) tlsProps = NULL;
@@ -866,7 +866,7 @@ qemuBackupBegin(virDomainObjPtr vm,
     qemuBackupDiskStarted(vm, dd, ndd);
 
     if (chk) {
-        virDomainMomentObjPtr tmpchk = g_steal_pointer(&chk);
+        virDomainMomentObj *tmpchk = g_steal_pointer(&chk);
         if (qemuCheckpointCreateFinalize(priv->driver, vm, cfg, tmpchk, true) < 0)
             goto endjob;
     }
@@ -918,11 +918,11 @@ qemuBackupBegin(virDomainObjPtr vm,
 
 
 char *
-qemuBackupGetXMLDesc(virDomainObjPtr vm,
+qemuBackupGetXMLDesc(virDomainObj *vm,
                      unsigned int flags)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
-    virDomainBackupDefPtr backup;
+    virDomainBackupDef *backup;
 
     virCheckFlags(0, NULL);
 
@@ -937,21 +937,21 @@ qemuBackupGetXMLDesc(virDomainObjPtr vm,
 
 
 void
-qemuBackupNotifyBlockjobEnd(virDomainObjPtr vm,
-                            virDomainDiskDefPtr disk,
+qemuBackupNotifyBlockjobEnd(virDomainObj *vm,
+                            virDomainDiskDef *disk,
                             qemuBlockjobState state,
                             const char *errmsg,
                             unsigned long long cur,
                             unsigned long long end,
                             int asyncJob)
 {
-    qemuDomainObjPrivatePtr priv = vm->privateData;
+    qemuDomainObjPrivate *priv = vm->privateData;
     bool has_running = false;
     bool has_cancelling = false;
     bool has_cancelled = false;
     bool has_failed = false;
     qemuDomainJobStatus jobstatus = QEMU_DOMAIN_JOB_STATUS_COMPLETED;
-    virDomainBackupDefPtr backup = priv->backup;
+    virDomainBackupDef *backup = priv->backup;
     size_t i;
 
     VIR_DEBUG("vm: '%s', disk:'%s', state:'%d' errmsg:'%s'",
@@ -984,7 +984,7 @@ qemuBackupNotifyBlockjobEnd(virDomainObjPtr vm,
         backup->errmsg = g_strdup(errmsg);
 
     for (i = 0; i < backup->ndisks; i++) {
-        virDomainBackupDiskDefPtr backupdisk = backup->disks + i;
+        virDomainBackupDiskDef *backupdisk = backup->disks + i;
 
         if (!backupdisk->store)
             continue;
@@ -1060,15 +1060,15 @@ qemuBackupNotifyBlockjobEnd(virDomainObjPtr vm,
 
 
 static void
-qemuBackupGetJobInfoStatsUpdateOne(virDomainObjPtr vm,
+qemuBackupGetJobInfoStatsUpdateOne(virDomainObj *vm,
                                    bool push,
                                    const char *diskdst,
                                    qemuDomainBackupStats *stats,
-                                   qemuMonitorJobInfoPtr *blockjobs,
+                                   qemuMonitorJobInfo **blockjobs,
                                    size_t nblockjobs)
 {
-    virDomainDiskDefPtr domdisk;
-    qemuMonitorJobInfoPtr monblockjob = NULL;
+    virDomainDiskDef *domdisk;
+    qemuMonitorJobInfo *monblockjob = NULL;
     g_autoptr(qemuBlockJobData) diskblockjob = NULL;
     size_t i;
 
@@ -1099,13 +1099,13 @@ qemuBackupGetJobInfoStatsUpdateOne(virDomainObjPtr vm,
 
 
 int
-qemuBackupGetJobInfoStats(virQEMUDriverPtr driver,
-                          virDomainObjPtr vm,
-                          qemuDomainJobInfoPtr jobInfo)
+qemuBackupGetJobInfoStats(virQEMUDriver *driver,
+                          virDomainObj *vm,
+                          qemuDomainJobInfo *jobInfo)
 {
     qemuDomainBackupStats *stats = &jobInfo->stats.backup;
-    qemuDomainObjPrivatePtr priv = vm->privateData;
-    qemuMonitorJobInfoPtr *blockjobs = NULL;
+    qemuDomainObjPrivate *priv = vm->privateData;
+    qemuMonitorJobInfo **blockjobs = NULL;
     size_t nblockjobs = 0;
     size_t i;
     int rc;

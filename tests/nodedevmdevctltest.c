@@ -53,7 +53,7 @@ testMdevctlStart(const char *virt_type,
                  const char *startjsonfile)
 {
     g_autoptr(virNodeDeviceDef) def = NULL;
-    virNodeDeviceObjPtr obj = NULL;
+    virNodeDeviceObj *obj = NULL;
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
     const char *actualCmdline = NULL;
     int ret = -1;
@@ -144,7 +144,7 @@ testMdevctlStop(const void *data)
 }
 
 static void
-nodedevTestDriverFree(virNodeDeviceDriverStatePtr drv)
+nodedevTestDriverFree(virNodeDeviceDriverState *drv)
 {
     if (!drv)
         return;
@@ -157,10 +157,10 @@ nodedevTestDriverFree(virNodeDeviceDriverStatePtr drv)
 }
 
 /* Add a fake root 'computer' device */
-static virNodeDeviceDefPtr
+static virNodeDeviceDef *
 fakeRootDevice(void)
 {
-    virNodeDeviceDefPtr def = NULL;
+    virNodeDeviceDef *def = NULL;
 
     def = g_new0(virNodeDeviceDef, 1);
     def->caps = g_new0(virNodeDevCapsDef, 1);
@@ -173,11 +173,11 @@ fakeRootDevice(void)
  * devices. For our purposes, it only needs to have a name that matches the
  * parent of the mdev, and it needs a PCI address
  */
-static virNodeDeviceDefPtr
+static virNodeDeviceDef *
 fakeParentDevice(void)
 {
-    virNodeDeviceDefPtr def = NULL;
-    virNodeDevCapPCIDevPtr pci_dev;
+    virNodeDeviceDef *def = NULL;
+    virNodeDevCapPCIDev *pci_dev;
 
     def = g_new0(virNodeDeviceDef, 1);
     def->caps = g_new0(virNodeDevCapsDef, 1);
@@ -196,9 +196,9 @@ fakeParentDevice(void)
 }
 
 static int
-addDevice(virNodeDeviceDefPtr def)
+addDevice(virNodeDeviceDef *def)
 {
-    virNodeDeviceObjPtr obj;
+    virNodeDeviceObj *obj;
     if (!def)
         return -1;
 

@@ -39,14 +39,14 @@ nodeDeviceLock(void);
 void
 nodeDeviceUnlock(void);
 
-extern virNodeDeviceDriverStatePtr driver;
+extern virNodeDeviceDriverState *driver;
 
 int
 nodedevRegister(void);
 
 virDrvOpenStatus nodeConnectOpen(virConnectPtr conn,
                                  virConnectAuthPtr auth,
-                                 virConfPtr conf,
+                                 virConf *conf,
                                  unsigned int flags);
 int nodeConnectClose(virConnectPtr conn);
 int nodeConnectIsSecure(virConnectPtr conn);
@@ -113,8 +113,8 @@ int
 nodeConnectNodeDeviceEventDeregisterAny(virConnectPtr conn,
                                         int callbackID);
 
-virCommandPtr
-nodeDeviceGetMdevctlStartCommand(virNodeDeviceDefPtr def,
+virCommand *
+nodeDeviceGetMdevctlStartCommand(virNodeDeviceDef *def,
                                  char **uuid_out);
-virCommandPtr
+virCommand *
 nodeDeviceGetMdevctlStopCommand(const char *uuid);

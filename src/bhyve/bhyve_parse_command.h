@@ -20,6 +20,6 @@
 
 #pragma once
 
-virDomainDefPtr bhyveParseCommandLineString(const char* nativeConfig,
+virDomainDef *bhyveParseCommandLineString(const char* nativeConfig,
                                             unsigned caps,
-                                            virDomainXMLOptionPtr xmlopt);
+                                            virDomainXMLOption *xmlopt);

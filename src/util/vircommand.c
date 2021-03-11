@@ -72,16 +72,12 @@ enum {
 };
 
 typedef struct _virCommandFD virCommandFD;
-typedef virCommandFD *virCommandFDPtr;
-
 struct _virCommandFD {
     int fd;
     unsigned int flags;
 };
 
 typedef struct _virCommandSendBuffer virCommandSendBuffer;
-typedef virCommandSendBuffer *virCommandSendBufferPtr;
-
 struct _virCommandSendBuffer {
     int fd;
     unsigned char *buffer;
@@ -103,7 +99,7 @@ struct _virCommand {
     char *pwd;
 
     size_t npassfd;
-    virCommandFDPtr passfd;
+    virCommandFD *passfd;
 
     unsigned int flags;
 
@@ -118,7 +114,7 @@ struct _virCommand {
     int *outfdptr;
     int *errfdptr;
 
-    virThreadPtr asyncioThread;
+    virThread *asyncioThread;
 
     bool handshake;
     int handshakeWait[2];
@@ -152,12 +148,12 @@ struct _virCommand {
 #endif
     int mask;
 
-    virCommandSendBufferPtr sendBuffers;
+    virCommandSendBuffer *sendBuffers;
     size_t numSendBuffers;
 };
 
 /* See virCommandSetDryRun for description for this variable */
-static virBufferPtr dryRunBuffer;
+static virBuffer *dryRunBuffer;
 static virCommandDryRunCallback dryRunCallback;
 static void *dryRunOpaque;
 #ifndef WIN32
@@ -166,14 +162,14 @@ static int dryRunStatus;
 
 
 static bool
-virCommandHasError(virCommandPtr cmd)
+virCommandHasError(virCommand *cmd)
 {
     return !cmd || cmd->has_error != 0;
 }
 
 
 static int
-virCommandRaiseError(virCommandPtr cmd)
+virCommandRaiseError(virCommand *cmd)
 {
     if (!cmd || cmd->has_error != 0) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -196,7 +192,7 @@ virCommandRaiseError(virCommandPtr cmd)
  * false otherwise.
  */
 static bool
-virCommandFDIsSet(virCommandPtr cmd,
+virCommandFDIsSet(virCommand *cmd,
                   int fd)
 {
     size_t i = 0;
@@ -221,7 +217,7 @@ virCommandFDIsSet(virCommandPtr cmd,
  * by FD_SETSIZE.
  */
 static void
-virCommandFDSet(virCommandPtr cmd,
+virCommandFDSet(virCommand *cmd,
                 int fd,
                 unsigned int flags)
 {
@@ -392,7 +388,7 @@ prepareStdFd(int fd, int std)
  *   completed its pre-exec initialization.
  */
 static int
-virCommandHandshakeChild(virCommandPtr cmd)
+virCommandHandshakeChild(virCommand *cmd)
 {
     char c = '1';
     int rv;
@@ -434,7 +430,7 @@ virCommandHandshakeChild(virCommandPtr cmd)
 }
 
 static int
-virExecCommon(virCommandPtr cmd, gid_t *groups, int ngroups)
+virExecCommon(virCommand *cmd, gid_t *groups, int ngroups)
 {
     if (cmd->uid != (uid_t)-1 || cmd->gid != (gid_t)-1 ||
         cmd->capabilities || (cmd->flags & VIR_EXEC_CLEAR_CAPS)) {
@@ -463,8 +459,8 @@ virExecCommon(virCommandPtr cmd, gid_t *groups, int ngroups)
  * onto child process (well, the one we will exec soon since this
  * is called from the child). */
 static int
-virCommandMassCloseGetFDsLinux(virCommandPtr cmd G_GNUC_UNUSED,
-                               virBitmapPtr fds)
+virCommandMassCloseGetFDsLinux(virCommand *cmd G_GNUC_UNUSED,
+                               virBitmap *fds)
 {
     g_autoptr(DIR) dp = NULL;
     struct dirent *entry;
@@ -496,8 +492,8 @@ virCommandMassCloseGetFDsLinux(virCommandPtr cmd G_GNUC_UNUSED,
 # else /* !__linux__ */
 
 static int
-virCommandMassCloseGetFDsGeneric(virCommandPtr cmd G_GNUC_UNUSED,
-                                 virBitmapPtr fds)
+virCommandMassCloseGetFDsGeneric(virCommand *cmd G_GNUC_UNUSED,
+                                 virBitmap *fds)
 {
     virBitmapSetAll(fds);
     return 0;
@@ -507,7 +503,7 @@ virCommandMassCloseGetFDsGeneric(virCommandPtr cmd G_GNUC_UNUSED,
 # ifdef __FreeBSD__
 
 static int
-virCommandMassClose(virCommandPtr cmd,
+virCommandMassClose(virCommand *cmd,
                     int childin,
                     int childout,
                     int childerr)
@@ -559,7 +555,7 @@ virCommandMassClose(virCommandPtr cmd,
 # else /* ! __FreeBSD__ */
 
 static int
-virCommandMassClose(virCommandPtr cmd,
+virCommandMassClose(virCommand *cmd,
                     int childin,
                     int childout,
                     int childerr)
@@ -611,11 +607,11 @@ virCommandMassClose(virCommandPtr cmd,
 
 /*
  * virExec:
- * @cmd virCommandPtr containing all information about the program to
+ * @cmd virCommand *containing all information about the program to
  *      exec.
  */
 static int
-virExec(virCommandPtr cmd)
+virExec(virCommand *cmd)
 {
     pid_t pid;
     int null = -1;
@@ -929,7 +925,7 @@ virFork(void)
  * it will be found via a PATH search of the parent's PATH (and not
  * any altered PATH set by virCommandAddEnv* commands).
  */
-virCommandPtr
+virCommand *
 virCommandNew(const char *binary)
 {
     const char *const args[] = { binary, NULL };
@@ -945,10 +941,10 @@ virCommandNew(const char *binary)
  * set of args, taking binary from args[0].  More arguments can
  * be added later.  @args[0] is handled like @binary of virCommandNew.
  */
-virCommandPtr
+virCommand *
 virCommandNewArgs(const char *const*args)
 {
-    virCommandPtr cmd;
+    virCommand *cmd;
 
     cmd = g_new0(virCommand, 1);
 
@@ -976,10 +972,10 @@ virCommandNewArgs(const char *const*args)
  * list of args, starting with the binary to run.  More arguments can
  * be added later.  @binary is handled as in virCommandNew.
  */
-virCommandPtr
+virCommand *
 virCommandNewArgList(const char *binary, ...)
 {
-    virCommandPtr cmd;
+    virCommand *cmd;
     va_list list;
 
     va_start(list, binary);
@@ -997,10 +993,10 @@ virCommandNewArgList(const char *binary, ...)
  * Create a new command with a NULL terminated
  * variable argument list.  @binary is handled as in virCommandNew.
  */
-virCommandPtr
+virCommand *
 virCommandNewVAList(const char *binary, va_list list)
 {
-    virCommandPtr cmd = virCommandNew(binary);
+    virCommand *cmd = virCommandNew(binary);
     const char *arg;
 
     if (virCommandHasError(cmd))
@@ -1033,7 +1029,7 @@ virCommandNewVAList(const char *binary, va_list list)
  * should cease using the @fd when this call completes
  */
 void
-virCommandPassFDIndex(virCommandPtr cmd, int fd, unsigned int flags, size_t *idx)
+virCommandPassFDIndex(virCommand *cmd, int fd, unsigned int flags, size_t *idx)
 {
     if (!cmd) {
         VIR_COMMAND_MAYBE_CLOSE_FD(fd, flags);
@@ -1069,7 +1065,7 @@ virCommandPassFDIndex(virCommandPtr cmd, int fd, unsigned int flags, size_t *idx
  * should cease using the @fd when this call completes
  */
 void
-virCommandPassFD(virCommandPtr cmd, int fd, unsigned int flags)
+virCommandPassFD(virCommand *cmd, int fd, unsigned int flags)
 {
     virCommandPassFDIndex(cmd, fd, flags, NULL);
 }
@@ -1085,7 +1081,7 @@ virCommandPassFD(virCommandPtr cmd, int fd, unsigned int flags)
  * -1 otherwise.
  */
 int
-virCommandPassFDGetFDIndex(virCommandPtr cmd, int fd)
+virCommandPassFDGetFDIndex(virCommand *cmd, int fd)
 {
     size_t i = 0;
 
@@ -1111,7 +1107,7 @@ virCommandPassFDGetFDIndex(virCommandPtr cmd, int fd)
  * pidfile.
  */
 void
-virCommandSetPidFile(virCommandPtr cmd, const char *pidfile)
+virCommandSetPidFile(virCommand *cmd, const char *pidfile)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1122,21 +1118,21 @@ virCommandSetPidFile(virCommandPtr cmd, const char *pidfile)
 
 
 gid_t
-virCommandGetGID(virCommandPtr cmd)
+virCommandGetGID(virCommand *cmd)
 {
     return cmd->gid;
 }
 
 
 uid_t
-virCommandGetUID(virCommandPtr cmd)
+virCommandGetUID(virCommand *cmd)
 {
     return cmd->uid;
 }
 
 
 void
-virCommandSetGID(virCommandPtr cmd, gid_t gid)
+virCommandSetGID(virCommand *cmd, gid_t gid)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1145,7 +1141,7 @@ virCommandSetGID(virCommandPtr cmd, gid_t gid)
 }
 
 void
-virCommandSetUID(virCommandPtr cmd, uid_t uid)
+virCommandSetUID(virCommand *cmd, uid_t uid)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1154,7 +1150,7 @@ virCommandSetUID(virCommandPtr cmd, uid_t uid)
 }
 
 void
-virCommandSetMaxMemLock(virCommandPtr cmd, unsigned long long bytes)
+virCommandSetMaxMemLock(virCommand *cmd, unsigned long long bytes)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1164,7 +1160,7 @@ virCommandSetMaxMemLock(virCommandPtr cmd, unsigned long long bytes)
 }
 
 void
-virCommandSetMaxProcesses(virCommandPtr cmd, unsigned int procs)
+virCommandSetMaxProcesses(virCommand *cmd, unsigned int procs)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1174,7 +1170,7 @@ virCommandSetMaxProcesses(virCommandPtr cmd, unsigned int procs)
 }
 
 void
-virCommandSetMaxFiles(virCommandPtr cmd, unsigned int files)
+virCommandSetMaxFiles(virCommand *cmd, unsigned int files)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1183,7 +1179,7 @@ virCommandSetMaxFiles(virCommandPtr cmd, unsigned int files)
     cmd->setMaxFiles = true;
 }
 
-void virCommandSetMaxCoreSize(virCommandPtr cmd, unsigned long long bytes)
+void virCommandSetMaxCoreSize(virCommand *cmd, unsigned long long bytes)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1192,7 +1188,7 @@ void virCommandSetMaxCoreSize(virCommandPtr cmd, unsigned long long bytes)
     cmd->setMaxCore = true;
 }
 
-void virCommandSetUmask(virCommandPtr cmd, int mask)
+void virCommandSetUmask(virCommand *cmd, int mask)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1207,7 +1203,7 @@ void virCommandSetUmask(virCommandPtr cmd, int mask)
  * Remove all capabilities from the child, after any hooks have been run.
  */
 void
-virCommandClearCaps(virCommandPtr cmd)
+virCommandClearCaps(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1223,7 +1219,7 @@ virCommandClearCaps(virCommandPtr cmd)
  * Allow specific capabilities
  */
 void
-virCommandAllowCap(virCommandPtr cmd,
+virCommandAllowCap(virCommand *cmd,
                    int capability)
 {
     if (virCommandHasError(cmd))
@@ -1244,7 +1240,7 @@ virCommandAllowCap(virCommandPtr cmd,
  * NULL, nothing will be done.
  */
 void
-virCommandSetSELinuxLabel(virCommandPtr cmd,
+virCommandSetSELinuxLabel(virCommand *cmd,
                           const char *label G_GNUC_UNUSED)
 {
     if (virCommandHasError(cmd))
@@ -1268,7 +1264,7 @@ virCommandSetSELinuxLabel(virCommandPtr cmd,
  * configured into libvirt, or if profile is NULL, nothing will be done.
  */
 void
-virCommandSetAppArmorProfile(virCommandPtr cmd,
+virCommandSetAppArmorProfile(virCommand *cmd,
                              const char *profile G_GNUC_UNUSED)
 {
     if (virCommandHasError(cmd))
@@ -1291,7 +1287,7 @@ virCommandSetAppArmorProfile(virCommandPtr cmd,
  * complete as soon as the daemon grandchild has started.
  */
 void
-virCommandDaemonize(virCommandPtr cmd)
+virCommandDaemonize(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1307,7 +1303,7 @@ virCommandDaemonize(virCommandPtr cmd)
  * as non-blocking in the parent.
  */
 void
-virCommandNonblockingFDs(virCommandPtr cmd)
+virCommandNonblockingFDs(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1326,7 +1322,7 @@ virCommandNonblockingFDs(virCommandPtr cmd)
  * signals returns -1).
  */
 void
-virCommandRawStatus(virCommandPtr cmd)
+virCommandRawStatus(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1339,7 +1335,7 @@ virCommandRawStatus(virCommandPtr cmd)
  * already set, then it is replaced in the list.
  */
 static void
-virCommandAddEnv(virCommandPtr cmd,
+virCommandAddEnv(virCommand *cmd,
                  char *envstr)
 {
     g_autofree char *env = envstr;
@@ -1372,7 +1368,7 @@ virCommandAddEnv(virCommandPtr cmd,
  * Add an environment variable to the child created by a printf-style format.
  */
 void
-virCommandAddEnvFormat(virCommandPtr cmd, const char *format, ...)
+virCommandAddEnvFormat(virCommand *cmd, const char *format, ...)
 {
     char *env;
     va_list list;
@@ -1397,7 +1393,7 @@ virCommandAddEnvFormat(virCommandPtr cmd, const char *format, ...)
  * using separate name & value strings
  */
 void
-virCommandAddEnvPair(virCommandPtr cmd, const char *name, const char *value)
+virCommandAddEnvPair(virCommand *cmd, const char *name, const char *value)
 {
     virCommandAddEnvFormat(cmd, "%s=%s", name, value);
 }
@@ -1412,7 +1408,7 @@ virCommandAddEnvPair(virCommandPtr cmd, const char *name, const char *value)
  * using a preformatted env string FOO=BAR
  */
 void
-virCommandAddEnvString(virCommandPtr cmd, const char *str)
+virCommandAddEnvString(virCommand *cmd, const char *str)
 {
     char *env;
 
@@ -1434,7 +1430,7 @@ virCommandAddEnvString(virCommandPtr cmd, const char *str)
  * using current process's value
  */
 void
-virCommandAddEnvPass(virCommandPtr cmd, const char *name)
+virCommandAddEnvPass(virCommand *cmd, const char *name)
 {
     const char *value;
     if (virCommandHasError(cmd))
@@ -1454,7 +1450,7 @@ virCommandAddEnvPass(virCommandPtr cmd, const char *name)
  * variables (such as PATH) from the parent process.
  */
 void
-virCommandAddEnvPassCommon(virCommandPtr cmd)
+virCommandAddEnvPassCommon(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1474,7 +1470,7 @@ virCommandAddEnvPassCommon(virCommandPtr cmd)
 
 
 void
-virCommandAddEnvXDG(virCommandPtr cmd, const char *baseDir)
+virCommandAddEnvXDG(virCommand *cmd, const char *baseDir)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1498,7 +1494,7 @@ virCommandAddEnvXDG(virCommandPtr cmd, const char *baseDir)
  * Add a command line argument to the child
  */
 void
-virCommandAddArg(virCommandPtr cmd, const char *val)
+virCommandAddArg(virCommand *cmd, const char *val)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1524,7 +1520,7 @@ virCommandAddArg(virCommandPtr cmd, const char *val)
  * Correctly transfers memory errors or contents from buf to cmd.
  */
 void
-virCommandAddArgBuffer(virCommandPtr cmd, virBufferPtr buf)
+virCommandAddArgBuffer(virCommand *cmd, virBuffer *buf)
 {
     g_autofree char *str = virBufferContentAndReset(buf);
 
@@ -1551,7 +1547,7 @@ virCommandAddArgBuffer(virCommandPtr cmd, virBufferPtr buf)
  * Add a command line argument created by a printf-style format.
  */
 void
-virCommandAddArgFormat(virCommandPtr cmd, const char *format, ...)
+virCommandAddArgFormat(virCommand *cmd, const char *format, ...)
 {
     char *arg;
     va_list list;
@@ -1578,7 +1574,7 @@ virCommandAddArgFormat(virCommandPtr cmd, const char *format, ...)
  * Add "NAME=VAL" as a single command line argument to the child
  */
 void
-virCommandAddArgPair(virCommandPtr cmd, const char *name, const char *val)
+virCommandAddArgPair(virCommand *cmd, const char *name, const char *val)
 {
     if (name == NULL || val == NULL) {
         cmd->has_error = EINVAL;
@@ -1595,7 +1591,7 @@ virCommandAddArgPair(virCommandPtr cmd, const char *name, const char *val)
  * Add a NULL terminated list of args
  */
 void
-virCommandAddArgSet(virCommandPtr cmd, const char *const*vals)
+virCommandAddArgSet(virCommand *cmd, const char *const*vals)
 {
     int narg = 0;
 
@@ -1630,7 +1626,7 @@ virCommandAddArgSet(virCommandPtr cmd, const char *const*vals)
  * Add a NULL terminated list of args.
  */
 void
-virCommandAddArgList(virCommandPtr cmd, ...)
+virCommandAddArgList(virCommand *cmd, ...)
 {
     va_list list;
     int narg = 0;
@@ -1667,7 +1663,7 @@ virCommandAddArgList(virCommandPtr cmd, ...)
  * without using this call.
  */
 void
-virCommandSetWorkingDirectory(virCommandPtr cmd, const char *pwd)
+virCommandSetWorkingDirectory(virCommand *cmd, const char *pwd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1682,14 +1678,14 @@ virCommandSetWorkingDirectory(virCommandPtr cmd, const char *pwd)
 
 
 static int
-virCommandGetNumSendBuffers(virCommandPtr cmd)
+virCommandGetNumSendBuffers(virCommand *cmd)
 {
     return cmd->numSendBuffers;
 }
 
 
 static void
-virCommandFreeSendBuffers(virCommandPtr cmd)
+virCommandFreeSendBuffers(virCommand *cmd)
 {
     size_t i;
 
@@ -1718,7 +1714,7 @@ virCommandFreeSendBuffers(virCommandPtr cmd)
  * Thus callers don't need to take a special action if -1 is returned.
  */
 int
-virCommandSetSendBuffer(virCommandPtr cmd,
+virCommandSetSendBuffer(virCommand *cmd,
                         unsigned char *buffer,
                         size_t buflen)
 {
@@ -1758,7 +1754,7 @@ virCommandSetSendBuffer(virCommandPtr cmd,
 
 
 static int
-virCommandSendBuffersFillPollfd(virCommandPtr cmd,
+virCommandSendBuffersFillPollfd(virCommand *cmd,
                                 struct pollfd *fds,
                                 int startidx)
 {
@@ -1778,7 +1774,7 @@ virCommandSendBuffersFillPollfd(virCommandPtr cmd,
 
 
 static int
-virCommandSendBuffersHandlePoll(virCommandPtr cmd,
+virCommandSendBuffersHandlePoll(virCommand *cmd,
                                 struct pollfd *fds)
 {
     size_t i;
@@ -1825,7 +1821,7 @@ virCommandSendBuffersHandlePoll(virCommandPtr cmd,
  * virCommandRunAsync. The buffer is forgotten after each @cmd run.
  */
 void
-virCommandSetInputBuffer(virCommandPtr cmd, const char *inbuf)
+virCommandSetInputBuffer(virCommand *cmd, const char *inbuf)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1854,7 +1850,7 @@ virCommandSetInputBuffer(virCommandPtr cmd, const char *inbuf)
  * buffer is forgotten after each @cmd run.
  */
 void
-virCommandSetOutputBuffer(virCommandPtr cmd, char **outbuf)
+virCommandSetOutputBuffer(virCommand *cmd, char **outbuf)
 {
     *outbuf = NULL;
     if (virCommandHasError(cmd))
@@ -1888,7 +1884,7 @@ virCommandSetOutputBuffer(virCommandPtr cmd, char **outbuf)
  * forgotten after each @cmd run.
  */
 void
-virCommandSetErrorBuffer(virCommandPtr cmd, char **errbuf)
+virCommandSetErrorBuffer(virCommand *cmd, char **errbuf)
 {
     *errbuf = NULL;
     if (virCommandHasError(cmd))
@@ -1913,7 +1909,7 @@ virCommandSetErrorBuffer(virCommandPtr cmd, char **errbuf)
  * Attach a file descriptor to the child's stdin
  */
 void
-virCommandSetInputFD(virCommandPtr cmd, int infd)
+virCommandSetInputFD(virCommand *cmd, int infd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1943,7 +1939,7 @@ virCommandSetInputFD(virCommandPtr cmd, int infd)
  * the child is run.  Otherwise, *@outfd is used as the output.
  */
 void
-virCommandSetOutputFD(virCommandPtr cmd, int *outfd)
+virCommandSetOutputFD(virCommand *cmd, int *outfd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1969,7 +1965,7 @@ virCommandSetOutputFD(virCommandPtr cmd, int *outfd)
  * and may be the same as outfd given to virCommandSetOutputFD().
  */
 void
-virCommandSetErrorFD(virCommandPtr cmd, int *errfd)
+virCommandSetErrorFD(virCommand *cmd, int *errfd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -1998,7 +1994,7 @@ virCommandSetErrorFD(virCommandPtr cmd, int *errfd)
  * any functions that are not async-signal-safe.
  */
 void
-virCommandSetPreExecHook(virCommandPtr cmd, virExecHook hook, void *opaque)
+virCommandSetPreExecHook(virCommand *cmd, virExecHook hook, void *opaque)
 {
     if (virCommandHasError(cmd))
         return;
@@ -2024,7 +2020,7 @@ virCommandSetPreExecHook(virCommandPtr cmd, virExecHook hook, void *opaque)
  * out-of-memory condition while building cmd), nothing will be logged.
  */
 void
-virCommandWriteArgLog(virCommandPtr cmd, int logfd)
+virCommandWriteArgLog(virCommand *cmd, int logfd)
 {
     int ioError = 0;
     size_t i;
@@ -2067,7 +2063,7 @@ virCommandWriteArgLog(virCommandPtr cmd, int logfd)
  * Caller is responsible for freeing the resulting string.
  */
 char *
-virCommandToString(virCommandPtr cmd, bool linebreaks)
+virCommandToString(virCommand *cmd, bool linebreaks)
 {
     size_t i;
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
@@ -2117,7 +2113,7 @@ virCommandToString(virCommandPtr cmd, bool linebreaks)
 
 
 int
-virCommandGetArgList(virCommandPtr cmd,
+virCommandGetArgList(virCommand *cmd,
                      char ***args,
                      size_t *nargs)
 {
@@ -2143,7 +2139,7 @@ virCommandGetArgList(virCommandPtr cmd,
  * Manage input and output to the child process.
  */
 static int
-virCommandProcessIO(virCommandPtr cmd)
+virCommandProcessIO(virCommand *cmd)
 {
     int outfd = -1, errfd = -1;
     size_t inlen = 0, outlen = 0, errlen = 0;
@@ -2307,7 +2303,7 @@ virCommandProcessIO(virCommandPtr cmd)
  * Returns -1 on any error executing the command.
  * Will not return on success.
  */
-int virCommandExec(virCommandPtr cmd, gid_t *groups, int ngroups)
+int virCommandExec(virCommand *cmd, gid_t *groups, int ngroups)
 {
     if (virCommandHasError(cmd)) {
         virCommandRaiseError(cmd);
@@ -2342,7 +2338,7 @@ int virCommandExec(virCommandPtr cmd, gid_t *groups, int ngroups)
  * status that the caller must then decipher using WIFEXITED() and friends.
  */
 int
-virCommandRun(virCommandPtr cmd, int *exitstatus)
+virCommandRun(virCommand *cmd, int *exitstatus)
 {
     int ret = 0;
     char *outbuf = NULL;
@@ -2462,7 +2458,7 @@ virCommandRun(virCommandPtr cmd, int *exitstatus)
 static void
 virCommandDoAsyncIOHelper(void *opaque)
 {
-    virCommandPtr cmd = opaque;
+    virCommand *cmd = opaque;
     if (virCommandProcessIO(cmd) < 0) {
         /* If something went wrong, save errno or -1 */
         cmd->has_error = errno ? errno : -1;
@@ -2491,7 +2487,7 @@ virCommandDoAsyncIOHelper(void *opaque)
  * you call virProcessWait or virProcessAbort.
  */
 int
-virCommandRunAsync(virCommandPtr cmd, pid_t *pid)
+virCommandRunAsync(virCommand *cmd, pid_t *pid)
 {
     int ret = -1;
     g_autofree char *str = NULL;
@@ -2642,7 +2638,7 @@ virCommandRunAsync(virCommandPtr cmd, pid_t *pid)
  * status that the caller must then decipher using WIFEXITED() and friends.
  */
 int
-virCommandWait(virCommandPtr cmd, int *exitstatus)
+virCommandWait(virCommand *cmd, int *exitstatus)
 {
     int ret;
     int status = 0;
@@ -2722,7 +2718,7 @@ virCommandWait(virCommandPtr cmd, int *exitstatus)
  * have started the child process.
  */
 void
-virCommandAbort(virCommandPtr cmd)
+virCommandAbort(virCommand *cmd)
 {
     if (!cmd || cmd->pid == -1)
         return;
@@ -2741,7 +2737,7 @@ virCommandAbort(virCommandPtr cmd)
  * execution. The child will not exec() until the
  * parent has notified
  */
-void virCommandRequireHandshake(virCommandPtr cmd)
+void virCommandRequireHandshake(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -2781,7 +2777,7 @@ void virCommandRequireHandshake(virCommandPtr cmd)
  * Wait for the child to complete execution of its
  * hook function.  To be called in the parent.
  */
-int virCommandHandshakeWait(virCommandPtr cmd)
+int virCommandHandshakeWait(virCommand *cmd)
 {
     char c;
     int rv;
@@ -2845,7 +2841,7 @@ int virCommandHandshakeWait(virCommandPtr cmd)
  * Notify the child that it is OK to exec() the
  * real binary now.  To be called in the parent.
  */
-int virCommandHandshakeNotify(virCommandPtr cmd)
+int virCommandHandshakeNotify(virCommand *cmd)
 {
     char c = '1';
 
@@ -2877,7 +2873,7 @@ int virCommandHandshakeNotify(virCommandPtr cmd)
 }
 #else /* WIN32 */
 int
-virCommandSetSendBuffer(virCommandPtr cmd,
+virCommandSetSendBuffer(virCommand *cmd,
                         unsigned char *buffer G_GNUC_UNUSED,
                         size_t buflen G_GNUC_UNUSED)
 {
@@ -2891,7 +2887,7 @@ virCommandSetSendBuffer(virCommandPtr cmd,
 
 
 int
-virCommandExec(virCommandPtr cmd G_GNUC_UNUSED, gid_t *groups G_GNUC_UNUSED,
+virCommandExec(virCommand *cmd G_GNUC_UNUSED, gid_t *groups G_GNUC_UNUSED,
                int ngroups G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
@@ -2901,7 +2897,7 @@ virCommandExec(virCommandPtr cmd G_GNUC_UNUSED, gid_t *groups G_GNUC_UNUSED,
 
 
 int
-virCommandRun(virCommandPtr cmd G_GNUC_UNUSED, int *exitstatus G_GNUC_UNUSED)
+virCommandRun(virCommand *cmd G_GNUC_UNUSED, int *exitstatus G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Executing new processes is not supported on Win32 platform"));
@@ -2910,7 +2906,7 @@ virCommandRun(virCommandPtr cmd G_GNUC_UNUSED, int *exitstatus G_GNUC_UNUSED)
 
 
 int
-virCommandRunAsync(virCommandPtr cmd G_GNUC_UNUSED, pid_t *pid G_GNUC_UNUSED)
+virCommandRunAsync(virCommand *cmd G_GNUC_UNUSED, pid_t *pid G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Executing new processes is not supported on Win32 platform"));
@@ -2919,7 +2915,7 @@ virCommandRunAsync(virCommandPtr cmd G_GNUC_UNUSED, pid_t *pid G_GNUC_UNUSED)
 
 
 int
-virCommandWait(virCommandPtr cmd G_GNUC_UNUSED, int *exitstatus G_GNUC_UNUSED)
+virCommandWait(virCommand *cmd G_GNUC_UNUSED, int *exitstatus G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Executing new processes is not supported on Win32 platform"));
@@ -2928,7 +2924,7 @@ virCommandWait(virCommandPtr cmd G_GNUC_UNUSED, int *exitstatus G_GNUC_UNUSED)
 
 
 void
-virCommandAbort(virCommandPtr cmd G_GNUC_UNUSED)
+virCommandAbort(virCommand *cmd G_GNUC_UNUSED)
 {
     /* Mingw lacks WNOHANG and kill().  But since we haven't ported
      * virExec to mingw yet, there's no process to be killed,
@@ -2936,7 +2932,7 @@ virCommandAbort(virCommandPtr cmd G_GNUC_UNUSED)
 }
 
 
-void virCommandRequireHandshake(virCommandPtr cmd)
+void virCommandRequireHandshake(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -2945,7 +2941,7 @@ void virCommandRequireHandshake(virCommandPtr cmd)
 }
 
 
-int virCommandHandshakeWait(virCommandPtr cmd G_GNUC_UNUSED)
+int virCommandHandshakeWait(virCommand *cmd G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Executing new processes is not supported on Win32 platform"));
@@ -2953,7 +2949,7 @@ int virCommandHandshakeWait(virCommandPtr cmd G_GNUC_UNUSED)
 }
 
 
-int virCommandHandshakeNotify(virCommandPtr cmd G_GNUC_UNUSED)
+int virCommandHandshakeNotify(virCommand *cmd G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Executing new processes is not supported on Win32 platform"));
@@ -2971,7 +2967,7 @@ int virCommandHandshakeNotify(virCommandPtr cmd G_GNUC_UNUSED)
  * is not reaped, and you must call virProcessWait() or virProcessAbort() yourself.
  */
 void
-virCommandFree(virCommandPtr cmd)
+virCommandFree(virCommand *cmd)
 {
     size_t i;
     if (!cmd)
@@ -3063,7 +3059,7 @@ virCommandFree(virCommandPtr cmd)
  * buffer setting functions (virCommandSet.*Buffer) prior each run.
  */
 void
-virCommandDoAsyncIO(virCommandPtr cmd)
+virCommandDoAsyncIO(virCommand *cmd)
 {
     if (virCommandHasError(cmd))
         return;
@@ -3094,7 +3090,7 @@ virCommandDoAsyncIO(virCommandPtr cmd)
  * virBuffer buffer = VIR_BUFFER_INITIALIZER;
  * virCommandSetDryRun(&buffer);
  *
- * virCommandPtr echocmd = virCommandNewArgList("/bin/echo", "Hello world", NULL);
+ * virCommand *echocmd = virCommandNewArgList("/bin/echo", "Hello world", NULL);
  * virCommandRun(echocmd, NULL);
  *
  * After this, the @buffer should contain:
@@ -3104,7 +3100,7 @@ virCommandDoAsyncIO(virCommandPtr cmd)
  * To cancel this effect pass NULL for @buf and @callback.
  */
 void
-virCommandSetDryRun(virBufferPtr buf,
+virCommandSetDryRun(virBuffer *buf,
                     virCommandDryRunCallback cb,
                     void *opaque)
 {
@@ -3136,7 +3132,7 @@ virCommandSetDryRun(virBufferPtr buf,
  * error or callback function error
  */
 int
-virCommandRunRegex(virCommandPtr cmd,
+virCommandRunRegex(virCommand *cmd,
                    int nregex,
                    const char **regex,
                    int *nvars,
@@ -3243,7 +3239,7 @@ virCommandRunRegex(virCommandPtr cmd,
  * If there are no input tokens (empty input), call FUNC with N_COLUMNS == 0.
  */
 int
-virCommandRunNul(virCommandPtr cmd,
+virCommandRunNul(virCommand *cmd,
                  size_t n_columns,
                  virCommandRunNulFunc func,
                  void *data)
@@ -3317,7 +3313,7 @@ virCommandRunNul(virCommandPtr cmd,
 #else /* WIN32 */
 
 int
-virCommandRunRegex(virCommandPtr cmd G_GNUC_UNUSED,
+virCommandRunRegex(virCommand *cmd G_GNUC_UNUSED,
                    int nregex G_GNUC_UNUSED,
                    const char **regex G_GNUC_UNUSED,
                    int *nvars G_GNUC_UNUSED,
@@ -3332,7 +3328,7 @@ virCommandRunRegex(virCommandPtr cmd G_GNUC_UNUSED,
 }
 
 int
-virCommandRunNul(virCommandPtr cmd G_GNUC_UNUSED,
+virCommandRunNul(virCommand *cmd G_GNUC_UNUSED,
                  size_t n_columns G_GNUC_UNUSED,
                  virCommandRunNulFunc func G_GNUC_UNUSED,
                  void *data G_GNUC_UNUSED)

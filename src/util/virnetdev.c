@@ -115,7 +115,6 @@ typedef enum {
 } virMCastType;
 
 typedef struct _virNetDevMcastEntry virNetDevMcastEntry;
-typedef virNetDevMcastEntry *virNetDevMcastEntryPtr;
 struct _virNetDevMcastEntry  {
         int idx;
         char name[VIR_MCAST_NAME_LEN];
@@ -125,7 +124,7 @@ struct _virNetDevMcastEntry  {
 };
 
 static void
-virNetDevMcastEntryFree(virNetDevMcastEntryPtr entry)
+virNetDevMcastEntryFree(virNetDevMcastEntry *entry)
 {
     g_free(entry);
 }
@@ -133,10 +132,9 @@ virNetDevMcastEntryFree(virNetDevMcastEntryPtr entry)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(virNetDevMcastEntry, virNetDevMcastEntryFree);
 
 typedef struct _virNetDevMcastList virNetDevMcastList;
-typedef virNetDevMcastList *virNetDevMcastListPtr;
 struct _virNetDevMcastList {
     size_t nentries;
-    virNetDevMcastEntryPtr *entries;
+    virNetDevMcastEntry **entries;
 };
 
 #if defined(WITH_STRUCT_IFREQ)
@@ -370,7 +368,7 @@ virNetDevSetMAC(const char *ifname,
  * Returns 0 in case of success or -1 on failure
  */
 int virNetDevGetMAC(const char *ifname,
-                    virMacAddrPtr macaddr)
+                    virMacAddr *macaddr)
 {
     struct ifreq ifr;
     VIR_AUTOCLOSE fd = -1;
@@ -391,7 +389,7 @@ int virNetDevGetMAC(const char *ifname,
 }
 #else
 int virNetDevGetMAC(const char *ifname,
-                    virMacAddrPtr macaddr G_GNUC_UNUSED)
+                    virMacAddr *macaddr G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS,
                          _("Cannot get interface MAC on '%s'"),
@@ -1125,7 +1123,7 @@ virNetDevIsPCIDevice(const char *devpath)
 }
 
 
-static virPCIDevicePtr
+static virPCIDevice *
 virNetDevGetPCIDevice(const char *devName)
 {
     g_autofree char *vfSysfsDevicePath = NULL;
@@ -1226,7 +1224,7 @@ virNetDevGetPhysPortName(const char *ifname,
 int
 virNetDevGetVirtualFunctions(const char *pfname,
                              char ***vfname,
-                             virPCIDeviceAddressPtr **virt_fns,
+                             virPCIDeviceAddress ***virt_fns,
                              size_t *n_vfname,
                              unsigned int *max_vfs)
 {
@@ -1478,7 +1476,7 @@ virNetDevGetPhysPortName(const char *ifname G_GNUC_UNUSED,
 int
 virNetDevGetVirtualFunctions(const char *pfname G_GNUC_UNUSED,
                              char ***vfname G_GNUC_UNUSED,
-                             virPCIDeviceAddressPtr **virt_fns G_GNUC_UNUSED,
+                             virPCIDeviceAddress ***virt_fns G_GNUC_UNUSED,
                              size_t *n_vfname G_GNUC_UNUSED,
                              unsigned int *max_vfs G_GNUC_UNUSED)
 {
@@ -1711,7 +1709,7 @@ virNetDevSetVfConfig(const char *ifname, int vf,
  * data is better than add a new function.
  */
 static int
-virNetDevParseVfInfo(struct nlattr **tb, int32_t vf, virMacAddrPtr mac,
+virNetDevParseVfInfo(struct nlattr **tb, int32_t vf, virMacAddr *mac,
                      int *vlanid, virDomainInterfaceStatsPtr stats)
 {
     int rc = -1;
@@ -1786,7 +1784,7 @@ virNetDevParseVfInfo(struct nlattr **tb, int32_t vf, virMacAddrPtr mac,
 }
 
 static int
-virNetDevGetVfConfig(const char *ifname, int vf, virMacAddrPtr mac,
+virNetDevGetVfConfig(const char *ifname, int vf, virMacAddr *mac,
                      int *vlanid)
 {
     g_autofree void *nlData = NULL;
@@ -1809,7 +1807,7 @@ virNetDevGetVfConfig(const char *ifname, int vf, virMacAddrPtr mac,
  * Returns 0 on success, -1 on failure.
  */
 int
-virNetDevVFInterfaceStats(virPCIDeviceAddressPtr vfAddr,
+virNetDevVFInterfaceStats(virPCIDeviceAddress *vfAddr,
                           virDomainInterfaceStatsPtr stats)
 {
     g_autofree void *nlData = NULL;
@@ -2025,9 +2023,9 @@ virNetDevSaveNetConfig(const char *linkdev, int vf,
 int
 virNetDevReadNetConfig(const char *linkdev, int vf,
                        const char *stateDir,
-                       virMacAddrPtr *adminMAC,
-                       virNetDevVlanPtr *vlan,
-                       virMacAddrPtr *MAC)
+                       virMacAddr **adminMAC,
+                       virNetDevVlan **vlan,
+                       virMacAddr **MAC)
 {
     int ret = -1;
     const char *pfDevName = NULL;
@@ -2424,9 +2422,9 @@ int
 virNetDevReadNetConfig(const char *linkdev G_GNUC_UNUSED,
                        int vf G_GNUC_UNUSED,
                        const char *stateDir G_GNUC_UNUSED,
-                       virMacAddrPtr *adminMAC G_GNUC_UNUSED,
-                       virNetDevVlanPtr *vlan G_GNUC_UNUSED,
-                       virMacAddrPtr *MAC G_GNUC_UNUSED)
+                       virMacAddr **adminMAC G_GNUC_UNUSED,
+                       virNetDevVlan **vlan G_GNUC_UNUSED,
+                       virMacAddr **MAC G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Unable to read net device config on this platform"));
@@ -2449,7 +2447,7 @@ virNetDevSetNetConfig(const char *linkdev G_GNUC_UNUSED,
 
 
 int
-virNetDevVFInterfaceStats(virPCIDeviceAddressPtr vfAddr G_GNUC_UNUSED,
+virNetDevVFInterfaceStats(virPCIDeviceAddress *vfAddr G_GNUC_UNUSED,
                           virDomainInterfaceStatsPtr stats G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
@@ -2489,7 +2487,7 @@ VIR_ENUM_IMPL(virNetDevFeature,
 #ifdef __linux__
 int
 virNetDevGetLinkInfo(const char *ifname,
-                     virNetDevIfLinkPtr lnk)
+                     virNetDevIfLink *lnk)
 {
     g_autofree char *path = NULL;
     g_autofree char *buf = NULL;
@@ -2580,7 +2578,7 @@ virNetDevGetLinkInfo(const char *ifname,
 
 int
 virNetDevGetLinkInfo(const char *ifname,
-                     virNetDevIfLinkPtr lnk)
+                     virNetDevIfLink *lnk)
 {
     /* Port me */
     VIR_DEBUG("Getting link info on %s is not implemented on this platform",
@@ -2604,7 +2602,7 @@ virNetDevGetLinkInfo(const char *ifname,
  * Returns 0 in case of success or -1 on failure
  */
 int virNetDevAddMulti(const char *ifname,
-                      virMacAddrPtr macaddr)
+                      virMacAddr *macaddr)
 {
     struct ifreq ifr;
     VIR_AUTOCLOSE fd = -1;
@@ -2627,7 +2625,7 @@ int virNetDevAddMulti(const char *ifname,
 }
 #else
 int virNetDevAddMulti(const char *ifname G_GNUC_UNUSED,
-                      virMacAddrPtr macaddr G_GNUC_UNUSED)
+                      virMacAddr *macaddr G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Unable to add address to interface "
@@ -2649,7 +2647,7 @@ int virNetDevAddMulti(const char *ifname G_GNUC_UNUSED,
  * Returns 0 in case of success or -1 on failure
  */
 int virNetDevDelMulti(const char *ifname,
-                      virMacAddrPtr macaddr)
+                      virMacAddr *macaddr)
 {
     struct ifreq ifr;
     VIR_AUTOCLOSE fd = -1;
@@ -2672,7 +2670,7 @@ int virNetDevDelMulti(const char *ifname,
 }
 #else
 int virNetDevDelMulti(const char *ifname G_GNUC_UNUSED,
-                      virMacAddrPtr macaddr G_GNUC_UNUSED)
+                      virMacAddr *macaddr G_GNUC_UNUSED)
 {
     virReportSystemError(ENOSYS, "%s",
                          _("Unable to delete address from interface "
@@ -2681,7 +2679,7 @@ int virNetDevDelMulti(const char *ifname G_GNUC_UNUSED,
 }
 #endif
 
-static int virNetDevParseMcast(char *buf, virNetDevMcastEntryPtr mcast)
+static int virNetDevParseMcast(char *buf, virNetDevMcastEntry *mcast)
 {
     int ifindex;
     int num;
@@ -2758,7 +2756,7 @@ static int virNetDevParseMcast(char *buf, virNetDevMcastEntryPtr mcast)
 }
 
 
-static void virNetDevMcastListClear(virNetDevMcastListPtr mcast)
+static void virNetDevMcastListClear(virNetDevMcastList *mcast)
 {
     size_t i;
 
@@ -2770,7 +2768,7 @@ static void virNetDevMcastListClear(virNetDevMcastListPtr mcast)
 
 
 static int virNetDevGetMcastList(const char *ifname,
-                                 virNetDevMcastListPtr mcast)
+                                 virNetDevMcastList *mcast)
 {
     char *cur = NULL;
     g_autofree char *buf = NULL;
@@ -2820,7 +2818,7 @@ VIR_ENUM_IMPL(virNetDevRxFilterMode,
 
 
 static int virNetDevGetMulticastTable(const char *ifname,
-                                      virNetDevRxFilterPtr filter)
+                                      virNetDevRxFilter *filter)
 {
     size_t i;
     int ret = -1;
@@ -2850,10 +2848,10 @@ static int virNetDevGetMulticastTable(const char *ifname,
 }
 
 
-virNetDevRxFilterPtr
+virNetDevRxFilter *
 virNetDevRxFilterNew(void)
 {
-    virNetDevRxFilterPtr filter;
+    virNetDevRxFilter *filter;
 
     filter = g_new0(virNetDevRxFilter, 1);
     return filter;
@@ -2861,7 +2859,7 @@ virNetDevRxFilterNew(void)
 
 
 void
-virNetDevRxFilterFree(virNetDevRxFilterPtr filter)
+virNetDevRxFilterFree(virNetDevRxFilter *filter)
 {
     if (filter) {
         g_free(filter->name);
@@ -2883,11 +2881,11 @@ virNetDevRxFilterFree(virNetDevRxFilterPtr filter)
  * Returns 0 or -1 on failure.
  */
 int virNetDevGetRxFilter(const char *ifname,
-                         virNetDevRxFilterPtr *filter)
+                         virNetDevRxFilter **filter)
 {
     int ret = -1;
     bool receive = false;
-    virNetDevRxFilterPtr fil = virNetDevRxFilterNew();
+    virNetDevRxFilter *fil = virNetDevRxFilterNew();
 
     if (!fil)
         goto cleanup;
@@ -2941,7 +2939,7 @@ int virNetDevGetRxFilter(const char *ifname,
  */
 static int
 virNetDevRDMAFeature(const char *ifname,
-                     virBitmapPtr *out)
+                     virBitmap **out)
 {
     g_autofree char *eth_devpath = NULL;
     g_autofree char *eth_res_buf = NULL;
@@ -3042,7 +3040,7 @@ virNetDevFeatureAvailable(const char *ifname, int fd, struct ifreq *ifr, struct 
 
 static void
 virNetDevGetEthtoolFeatures(const char *ifname,
-                            virBitmapPtr bitmap,
+                            virBitmap *bitmap,
                             int fd,
                             struct ifreq *ifr)
 {
@@ -3174,7 +3172,7 @@ virNetDevGetFamilyId(const char *family_name,
  */
 static int
 virNetDevSwitchdevFeature(const char *ifname,
-                          virBitmapPtr *out)
+                          virBitmap **out)
 {
     struct nl_msg *nl_msg = NULL;
     g_autofree struct nlmsghdr *resp = NULL;
@@ -3249,7 +3247,7 @@ virNetDevSwitchdevFeature(const char *ifname,
 # else
 static int
 virNetDevSwitchdevFeature(const char *ifname G_GNUC_UNUSED,
-                          virBitmapPtr *out G_GNUC_UNUSED)
+                          virBitmap **out G_GNUC_UNUSED)
 {
     return 0;
 }
@@ -3282,7 +3280,7 @@ virNetDevGFeatureAvailable(const char *ifname,
 
 static int
 virNetDevGetEthtoolGFeatures(const char *ifname,
-                             virBitmapPtr bitmap,
+                             virBitmap *bitmap,
                              int fd,
                              struct ifreq *ifr)
 {
@@ -3300,7 +3298,7 @@ virNetDevGetEthtoolGFeatures(const char *ifname,
 # else
 static int
 virNetDevGetEthtoolGFeatures(const char *ifname G_GNUC_UNUSED,
-                             virBitmapPtr bitmap G_GNUC_UNUSED,
+                             virBitmap *bitmap G_GNUC_UNUSED,
                              int fd G_GNUC_UNUSED,
                              struct ifreq *ifr G_GNUC_UNUSED)
 {
@@ -3322,7 +3320,7 @@ virNetDevGetEthtoolGFeatures(const char *ifname G_GNUC_UNUSED,
  * Returns 0 in case of success or -1 on failure
  */
 int virNetDevSetCoalesce(const char *ifname,
-                         virNetDevCoalescePtr coalesce,
+                         virNetDevCoalesce *coalesce,
                          bool update)
 {
     struct ifreq ifr;
@@ -3407,7 +3405,7 @@ int virNetDevSetCoalesce(const char *ifname,
 }
 # else
 int virNetDevSetCoalesce(const char *ifname,
-                         virNetDevCoalescePtr coalesce,
+                         virNetDevCoalesce *coalesce,
                          bool update)
 {
     if (!coalesce && !update)
@@ -3433,7 +3431,7 @@ int virNetDevSetCoalesce(const char *ifname,
  */
 int
 virNetDevGetFeatures(const char *ifname,
-                     virBitmapPtr *out)
+                     virBitmap **out)
 {
     struct ifreq ifr;
     VIR_AUTOCLOSE fd = -1;
@@ -3459,7 +3457,7 @@ virNetDevGetFeatures(const char *ifname,
 #else
 int
 virNetDevGetFeatures(const char *ifname G_GNUC_UNUSED,
-                     virBitmapPtr *out G_GNUC_UNUSED)
+                     virBitmap **out G_GNUC_UNUSED)
 {
     VIR_DEBUG("Getting network device features on %s is not implemented on this platform",
               ifname);
@@ -3467,7 +3465,7 @@ virNetDevGetFeatures(const char *ifname G_GNUC_UNUSED,
 }
 
 int virNetDevSetCoalesce(const char *ifname,
-                         virNetDevCoalescePtr coalesce,
+                         virNetDevCoalesce *coalesce,
                          bool update)
 {
     if (!coalesce && !update)

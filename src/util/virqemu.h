@@ -27,30 +27,30 @@
 #include "virjson.h"
 
 typedef int (*virQEMUBuildCommandLineJSONArrayFormatFunc)(const char *key,
-                                                          virJSONValuePtr array,
-                                                          virBufferPtr buf,
+                                                          virJSONValue *array,
+                                                          virBuffer *buf,
                                                           const char *skipKey);
 int virQEMUBuildCommandLineJSONArrayBitmap(const char *key,
-                                           virJSONValuePtr array,
-                                           virBufferPtr buf,
+                                           virJSONValue *array,
+                                           virBuffer *buf,
                                            const char *skipKey);
 int virQEMUBuildCommandLineJSONArrayNumbered(const char *key,
-                                             virJSONValuePtr array,
-                                             virBufferPtr buf,
+                                             virJSONValue *array,
+                                             virBuffer *buf,
                                              const char *skipKey);
 
-int virQEMUBuildCommandLineJSON(virJSONValuePtr value,
-                                virBufferPtr buf,
+int virQEMUBuildCommandLineJSON(virJSONValue *value,
+                                virBuffer *buf,
                                 const char *skipKey,
                                 virQEMUBuildCommandLineJSONArrayFormatFunc array);
 
 char *
-virQEMUBuildNetdevCommandlineFromJSON(virJSONValuePtr props,
+virQEMUBuildNetdevCommandlineFromJSON(virJSONValue *props,
                                       bool rawjson);
 
-int virQEMUBuildObjectCommandlineFromJSON(virBufferPtr buf,
-                                          virJSONValuePtr objprops);
+int virQEMUBuildObjectCommandlineFromJSON(virBuffer *buf,
+                                          virJSONValue *objprops);
 
-char *virQEMUBuildDriveCommandlineFromJSON(virJSONValuePtr src);
+char *virQEMUBuildDriveCommandlineFromJSON(virJSONValue *src);
 
-void virQEMUBuildBufferEscapeComma(virBufferPtr buf, const char *str);
+void virQEMUBuildBufferEscapeComma(virBuffer *buf, const char *str);

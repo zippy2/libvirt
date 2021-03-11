@@ -352,7 +352,7 @@ esxFormatVMXFileName(const char *fileName, void *opaque)
 
 
 static int
-esxAutodetectSCSIControllerModel(virDomainDiskDefPtr def, int *model,
+esxAutodetectSCSIControllerModel(virDomainDiskDef *def, int *model,
                                  void *opaque)
 {
     int result = -1;
@@ -536,12 +536,12 @@ esxLookupHostSystemBiosUuid(esxPrivate *priv, unsigned char *uuid)
 }
 
 
-static virCapsPtr
+static virCaps *
 esxCapsInit(esxPrivate *priv)
 {
     esxVI_Boolean supportsLongMode = esxSupportsLongMode(priv);
-    virCapsPtr caps = NULL;
-    virCapsGuestPtr guest = NULL;
+    virCaps *caps = NULL;
+    virCapsGuest *guest = NULL;
 
     if (supportsLongMode == esxVI_Boolean_Undefined)
         return NULL;
@@ -796,7 +796,7 @@ esxConnectToVCenter(esxPrivate *priv,
  */
 static virDrvOpenStatus
 esxConnectOpen(virConnectPtr conn, virConnectAuthPtr auth,
-               virConfPtr conf G_GNUC_UNUSED,
+               virConf *conf G_GNUC_UNUSED,
                unsigned int flags)
 {
     virDrvOpenStatus result = VIR_DRV_OPEN_ERROR;
@@ -2542,7 +2542,7 @@ esxDomainGetXMLDesc(virDomainPtr domain, unsigned int flags)
     g_autofree char *vmx = NULL;
     virVMXContext ctx;
     esxVMX_Data data;
-    virDomainDefPtr def = NULL;
+    virDomainDef *def = NULL;
     char *xml = NULL;
 
     virCheckFlags(VIR_DOMAIN_XML_COMMON_FLAGS, NULL);
@@ -2629,7 +2629,7 @@ esxConnectDomainXMLFromNative(virConnectPtr conn, const char *nativeFormat,
     esxPrivate *priv = conn->privateData;
     virVMXContext ctx;
     esxVMX_Data data;
-    virDomainDefPtr def = NULL;
+    virDomainDef *def = NULL;
     char *xml = NULL;
 
     virCheckFlags(0, NULL);
@@ -2674,7 +2674,7 @@ esxConnectDomainXMLToNative(virConnectPtr conn, const char *nativeFormat,
     int virtualHW_version;
     virVMXContext ctx;
     esxVMX_Data data;
-    virDomainDefPtr def = NULL;
+    virDomainDef *def = NULL;
     char *vmx = NULL;
 
     virCheckFlags(0, NULL);
@@ -2873,10 +2873,10 @@ static virDomainPtr
 esxDomainDefineXMLFlags(virConnectPtr conn, const char *xml, unsigned int flags)
 {
     esxPrivate *priv = conn->privateData;
-    virDomainDefPtr def = NULL;
+    virDomainDef *def = NULL;
     g_autofree char *vmx = NULL;
     size_t i;
-    virDomainDiskDefPtr disk = NULL;
+    virDomainDiskDef *disk = NULL;
     esxVI_ObjectContent *virtualMachine = NULL;
     int virtualHW_version;
     virVMXContext ctx;
@@ -3666,7 +3666,7 @@ esxDomainMigratePerform(virDomainPtr domain,
 {
     int result = -1;
     esxPrivate *priv = domain->conn->privateData;
-    virURIPtr parsedUri = NULL;
+    virURI *parsedUri = NULL;
     char *saveptr;
     char *path_resourcePool;
     char *path_hostSystem;

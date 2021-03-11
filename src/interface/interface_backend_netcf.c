@@ -56,7 +56,7 @@ typedef struct
     bool privileged;
 } virNetcfDriverState, *virNetcfDriverStatePtr;
 
-static virClassPtr virNetcfDriverStateClass;
+static virClass *virNetcfDriverStateClass;
 static void virNetcfDriverStateDispose(void *obj);
 
 static int
@@ -188,7 +188,7 @@ netcfStateReload(void)
 static virDrvOpenStatus
 netcfConnectOpen(virConnectPtr conn,
                  virConnectAuthPtr auth G_GNUC_UNUSED,
-                 virConfPtr conf G_GNUC_UNUSED,
+                 virConf *conf G_GNUC_UNUSED,
                  unsigned int flags)
 {
     virCheckFlags(VIR_CONNECT_RO, VIR_DRV_OPEN_ERROR);
@@ -387,7 +387,7 @@ static int netcfConnectNumOfInterfacesImpl(virConnectPtr conn,
     }
 
     for (i = 0; i < count; i++) {
-        virInterfaceDefPtr def;
+        virInterfaceDef *def;
         struct netcf_if *iface;
 
         iface = ncf_lookup_by_name(driver->netcf, names[i]);
@@ -481,7 +481,7 @@ static int netcfConnectListInterfacesImpl(virConnectPtr conn,
     }
 
     for (i = 0; i < count && want < nnames; i++) {
-        virInterfaceDefPtr def;
+        virInterfaceDef *def;
         struct netcf_if *iface;
 
         iface = ncf_lookup_by_name(driver->netcf, allnames[i]);
@@ -666,7 +666,7 @@ netcfConnectListAllInterfaces(virConnectPtr conn,
         tmp_iface_objs = g_new0(virInterfacePtr, count + 1);
 
     for (i = 0; i < count; i++) {
-        virInterfaceDefPtr def;
+        virInterfaceDef *def;
 
         iface = ncf_lookup_by_name(driver->netcf, names[i]);
         if (!iface) {
@@ -744,7 +744,7 @@ static virInterfacePtr netcfInterfaceLookupByName(virConnectPtr conn,
 {
     struct netcf_if *iface;
     virInterfacePtr ret = NULL;
-    virInterfaceDefPtr def = NULL;
+    virInterfaceDef *def = NULL;
 
     virObjectLock(driver);
     iface = ncf_lookup_by_name(driver->netcf, name);
@@ -784,7 +784,7 @@ static virInterfacePtr netcfInterfaceLookupByMACString(virConnectPtr conn,
     struct netcf_if *iface;
     int niface;
     virInterfacePtr ret = NULL;
-    virInterfaceDefPtr def = NULL;
+    virInterfaceDef *def = NULL;
 
     virObjectLock(driver);
     niface = ncf_lookup_by_mac_string(driver->netcf, macstr, 1, &iface);
@@ -831,7 +831,7 @@ static char *netcfInterfaceGetXMLDesc(virInterfacePtr ifinfo,
 {
     struct netcf_if *iface = NULL;
     char *xmlstr = NULL;
-    virInterfaceDefPtr ifacedef = NULL;
+    virInterfaceDef *ifacedef = NULL;
     char *ret = NULL;
     bool active;
 
@@ -892,7 +892,7 @@ static virInterfacePtr netcfInterfaceDefineXML(virConnectPtr conn,
 {
     struct netcf_if *iface = NULL;
     char *xmlstr = NULL;
-    virInterfaceDefPtr ifacedef = NULL;
+    virInterfaceDef *ifacedef = NULL;
     virInterfacePtr ret = NULL;
 
     virCheckFlags(0, NULL);
@@ -938,7 +938,7 @@ static virInterfacePtr netcfInterfaceDefineXML(virConnectPtr conn,
 static int netcfInterfaceUndefine(virInterfacePtr ifinfo)
 {
     struct netcf_if *iface = NULL;
-    virInterfaceDefPtr def = NULL;
+    virInterfaceDef *def = NULL;
     int ret = -1;
 
     virObjectLock(driver);
@@ -978,7 +978,7 @@ static int netcfInterfaceCreate(virInterfacePtr ifinfo,
                                 unsigned int flags)
 {
     struct netcf_if *iface = NULL;
-    virInterfaceDefPtr def = NULL;
+    virInterfaceDef *def = NULL;
     int ret = -1;
     bool active;
 
@@ -1030,7 +1030,7 @@ static int netcfInterfaceDestroy(virInterfacePtr ifinfo,
                                  unsigned int flags)
 {
     struct netcf_if *iface = NULL;
-    virInterfaceDefPtr def = NULL;
+    virInterfaceDef *def = NULL;
     int ret = -1;
     bool active;
 
@@ -1081,7 +1081,7 @@ static int netcfInterfaceDestroy(virInterfacePtr ifinfo,
 static int netcfInterfaceIsActive(virInterfacePtr ifinfo)
 {
     struct netcf_if *iface = NULL;
-    virInterfaceDefPtr def = NULL;
+    virInterfaceDef *def = NULL;
     int ret = -1;
     bool active;
 

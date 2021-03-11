@@ -70,26 +70,26 @@ struct _qemuMonitorTest {
     size_t outgoingLength;
     size_t outgoingCapacity;
 
-    virNetSocketPtr server;
-    virNetSocketPtr client;
+    virNetSocket *server;
+    virNetSocket *client;
 
     virEventThread *eventThread;
 
-    qemuMonitorPtr mon;
-    qemuAgentPtr agent;
+    qemuMonitor *mon;
+    qemuAgent *agent;
 
     char *tmpdir;
 
     size_t nitems;
-    qemuMonitorTestItemPtr *items;
+    qemuMonitorTestItem **items;
 
-    virDomainObjPtr vm;
+    virDomainObj *vm;
     GHashTable *qapischema;
 };
 
 
 static void
-qemuMonitorTestItemFree(qemuMonitorTestItemPtr item)
+qemuMonitorTestItemFree(qemuMonitorTestItem *item)
 {
     if (!item)
         return;
@@ -107,7 +107,7 @@ qemuMonitorTestItemFree(qemuMonitorTestItemPtr item)
  * Appends data for a reply to the outgoing buffer
  */
 int
-qemuMonitorTestAddResponse(qemuMonitorTestPtr test,
+qemuMonitorTestAddResponse(qemuMonitorTest *test,
                            const char *response)
 {
     size_t want = strlen(response) + 2;
@@ -130,7 +130,7 @@ qemuMonitorTestAddResponse(qemuMonitorTestPtr test,
 
 
 static int
-qemuMonitorTestAddErrorResponseInternal(qemuMonitorTestPtr test,
+qemuMonitorTestAddErrorResponseInternal(qemuMonitorTest *test,
                                         const char *usermsg)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
@@ -162,7 +162,7 @@ qemuMonitorTestAddErrorResponseInternal(qemuMonitorTestPtr test,
 
 
 int
-qemuMonitorTestAddInvalidCommandResponse(qemuMonitorTestPtr test,
+qemuMonitorTestAddInvalidCommandResponse(qemuMonitorTest *test,
                                          const char *expectedcommand,
                                          const char *actualcommand)
 {
@@ -176,7 +176,7 @@ qemuMonitorTestAddInvalidCommandResponse(qemuMonitorTestPtr test,
 
 
 int G_GNUC_PRINTF(2, 3)
-qemuMonitorTestAddErrorResponse(qemuMonitorTestPtr test, const char *errmsg, ...)
+qemuMonitorTestAddErrorResponse(qemuMonitorTest *test, const char *errmsg, ...)
 {
     va_list msgargs;
     g_autofree char *msg = NULL;
@@ -223,7 +223,7 @@ qemuMonitorTestErrorInvalidCommand(const char *expectedcommand,
 
 
 static int
-qemuMonitorTestProcessCommand(qemuMonitorTestPtr test,
+qemuMonitorTestProcessCommand(qemuMonitorTest *test,
                               const char *cmdstr)
 {
     int ret;
@@ -233,7 +233,7 @@ qemuMonitorTestProcessCommand(qemuMonitorTestPtr test,
     if (test->nitems == 0) {
         qemuMonitorTestError("unexpected command: '%s'", cmdstr);
     } else {
-        qemuMonitorTestItemPtr item = test->items[0];
+        qemuMonitorTestItem *item = test->items[0];
         ret = (item->cb)(test, item, cmdstr);
         qemuMonitorTestItemFree(item);
         if (VIR_DELETE_ELEMENT(test->items, 0, test->nitems) < 0)
@@ -248,11 +248,11 @@ qemuMonitorTestProcessCommand(qemuMonitorTestPtr test,
  * Handles read/write of monitor data on the monitor server side
  */
 static void
-qemuMonitorTestIO(virNetSocketPtr sock,
+qemuMonitorTestIO(virNetSocket *sock,
                   int events,
                   void *opaque)
 {
-    qemuMonitorTestPtr test = opaque;
+    qemuMonitorTest *test = opaque;
     bool err = false;
 
     virMutexLock(&test->lock);
@@ -348,7 +348,7 @@ qemuMonitorTestIO(virNetSocketPtr sock,
 static void
 qemuMonitorTestWorker(void *opaque)
 {
-    qemuMonitorTestPtr test = opaque;
+    qemuMonitorTest *test = opaque;
 
     virMutexLock(&test->lock);
 
@@ -380,7 +380,7 @@ qemuMonitorTestFreeTimer(int timer G_GNUC_UNUSED,
 
 
 void
-qemuMonitorTestFree(qemuMonitorTestPtr test)
+qemuMonitorTestFree(qemuMonitorTest *test)
 {
     size_t i;
     int timer = -1;
@@ -453,13 +453,13 @@ qemuMonitorTestFree(qemuMonitorTestPtr test)
 
 
 int
-qemuMonitorTestAddHandler(qemuMonitorTestPtr test,
+qemuMonitorTestAddHandler(qemuMonitorTest *test,
                           const char *identifier,
                           qemuMonitorTestResponseCallback cb,
                           void *opaque,
                           virFreeCallback freecb)
 {
-    qemuMonitorTestItemPtr item;
+    qemuMonitorTestItem *item;
 
     item = g_new0(qemuMonitorTestItem, 1);
 
@@ -485,14 +485,13 @@ qemuMonitorTestAddHandler(qemuMonitorTestPtr test,
 }
 
 void *
-qemuMonitorTestItemGetPrivateData(qemuMonitorTestItemPtr item)
+qemuMonitorTestItemGetPrivateData(qemuMonitorTestItem *item)
 {
     return item ? item->opaque : NULL;
 }
 
 
 typedef struct _qemuMonitorTestCommandArgs qemuMonitorTestCommandArgs;
-typedef qemuMonitorTestCommandArgs *qemuMonitorTestCommandArgsPtr;
 struct _qemuMonitorTestCommandArgs {
     char *argname;
     char *argval;
@@ -504,7 +503,7 @@ struct qemuMonitorTestHandlerData {
     char *cmderr;
     char *response;
     size_t nargs;
-    qemuMonitorTestCommandArgsPtr args;
+    qemuMonitorTestCommandArgs *args;
     char *expectArgs;
 };
 
@@ -533,9 +532,9 @@ qemuMonitorTestHandlerDataFree(void *opaque)
 
 /* Returns -1 on error, 0 if validation was successful/not necessary */
 static int
-qemuMonitorTestProcessCommandDefaultValidate(qemuMonitorTestPtr test,
+qemuMonitorTestProcessCommandDefaultValidate(qemuMonitorTest *test,
                                              const char *cmdname,
-                                             virJSONValuePtr args)
+                                             virJSONValue *args)
 {
     g_auto(virBuffer) debug = VIR_BUFFER_INITIALIZER;
 
@@ -581,13 +580,13 @@ qemuMonitorTestProcessCommandDefaultValidate(qemuMonitorTestPtr test,
 
 
 static int
-qemuMonitorTestProcessCommandDefault(qemuMonitorTestPtr test,
-                                     qemuMonitorTestItemPtr item,
+qemuMonitorTestProcessCommandDefault(qemuMonitorTest *test,
+                                     qemuMonitorTestItem *item,
                                      const char *cmdstr)
 {
     struct qemuMonitorTestHandlerData *data = item->opaque;
     g_autoptr(virJSONValue) val = NULL;
-    virJSONValuePtr cmdargs = NULL;
+    virJSONValue *cmdargs = NULL;
     const char *cmdname;
 
     if (!(val = virJSONValueFromString(cmdstr)))
@@ -612,7 +611,7 @@ qemuMonitorTestProcessCommandDefault(qemuMonitorTestPtr test,
 
 
 int
-qemuMonitorTestAddItem(qemuMonitorTestPtr test,
+qemuMonitorTestAddItem(qemuMonitorTest *test,
                        const char *command_name,
                        const char *response)
 {
@@ -631,14 +630,14 @@ qemuMonitorTestAddItem(qemuMonitorTestPtr test,
 
 
 static int
-qemuMonitorTestProcessCommandVerbatim(qemuMonitorTestPtr test,
-                                      qemuMonitorTestItemPtr item,
+qemuMonitorTestProcessCommandVerbatim(qemuMonitorTest *test,
+                                      qemuMonitorTestItem *item,
                                       const char *cmdstr)
 {
     struct qemuMonitorTestHandlerData *data = item->opaque;
     g_autofree char *reformatted = NULL;
     g_autoptr(virJSONValue) json = NULL;
-    virJSONValuePtr cmdargs;
+    virJSONValue *cmdargs;
     const char *cmdname;
     int ret = -1;
 
@@ -685,7 +684,7 @@ qemuMonitorTestProcessCommandVerbatim(qemuMonitorTestPtr test,
  * Returns 0 when command was successfully added, -1 on error.
  */
 int
-qemuMonitorTestAddItemVerbatim(qemuMonitorTestPtr test,
+qemuMonitorTestAddItemVerbatim(qemuMonitorTest *test,
                                const char *command,
                                const char *cmderr,
                                const char *response)
@@ -713,12 +712,12 @@ qemuMonitorTestAddItemVerbatim(qemuMonitorTestPtr test,
 
 
 static int
-qemuMonitorTestProcessGuestAgentSync(qemuMonitorTestPtr test,
-                                     qemuMonitorTestItemPtr item G_GNUC_UNUSED,
+qemuMonitorTestProcessGuestAgentSync(qemuMonitorTest *test,
+                                     qemuMonitorTestItem *item G_GNUC_UNUSED,
                                      const char *cmdstr)
 {
     g_autoptr(virJSONValue) val = NULL;
-    virJSONValuePtr args;
+    virJSONValue *args;
     unsigned long long id;
     const char *cmdname;
     g_autofree char *retmsg = NULL;
@@ -758,7 +757,7 @@ qemuMonitorTestProcessGuestAgentSync(qemuMonitorTestPtr test,
 
 
 int
-qemuMonitorTestAddAgentSyncResponse(qemuMonitorTestPtr test)
+qemuMonitorTestAddAgentSyncResponse(qemuMonitorTest *test)
 {
     if (!test->agent) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -774,14 +773,14 @@ qemuMonitorTestAddAgentSyncResponse(qemuMonitorTestPtr test)
 
 
 static int
-qemuMonitorTestProcessCommandWithArgs(qemuMonitorTestPtr test,
-                                      qemuMonitorTestItemPtr item,
+qemuMonitorTestProcessCommandWithArgs(qemuMonitorTest *test,
+                                      qemuMonitorTestItem *item,
                                       const char *cmdstr)
 {
     struct qemuMonitorTestHandlerData *data = item->opaque;
     g_autoptr(virJSONValue) val = NULL;
-    virJSONValuePtr args;
-    virJSONValuePtr argobj;
+    virJSONValue *args;
+    virJSONValue *argobj;
     const char *cmdname;
     size_t i;
 
@@ -807,7 +806,7 @@ qemuMonitorTestProcessCommandWithArgs(qemuMonitorTestPtr test,
 
     /* validate the args */
     for (i = 0; i < data->nargs; i++) {
-        qemuMonitorTestCommandArgsPtr arg = &data->args[i];
+        qemuMonitorTestCommandArgs *arg = &data->args[i];
         g_autofree char *argstr = NULL;
 
         if (!(argobj = virJSONValueObjectGet(args, arg->argname))) {
@@ -841,7 +840,7 @@ qemuMonitorTestProcessCommandWithArgs(qemuMonitorTestPtr test,
 /* this allows to add a responder that is able to check
  * a (shallow) structure of arguments for a command */
 int
-qemuMonitorTestAddItemParams(qemuMonitorTestPtr test,
+qemuMonitorTestAddItemParams(qemuMonitorTest *test,
                              const char *cmdname,
                              const char *response,
                              ...)
@@ -890,13 +889,13 @@ qemuMonitorTestAddItemParams(qemuMonitorTestPtr test,
 
 
 static int
-qemuMonitorTestProcessCommandWithArgStr(qemuMonitorTestPtr test,
-                                        qemuMonitorTestItemPtr item,
+qemuMonitorTestProcessCommandWithArgStr(qemuMonitorTest *test,
+                                        qemuMonitorTestItem *item,
                                         const char *cmdstr)
 {
     struct qemuMonitorTestHandlerData *data = item->opaque;
     g_autoptr(virJSONValue) val = NULL;
-    virJSONValuePtr args;
+    virJSONValue *args;
     g_autofree char *argstr = NULL;
     const char *cmdname;
 
@@ -950,7 +949,7 @@ qemuMonitorTestProcessCommandWithArgStr(qemuMonitorTestPtr test,
  * quotes for simplification of writing the strings into code.
  */
 int
-qemuMonitorTestAddItemExpect(qemuMonitorTestPtr test,
+qemuMonitorTestAddItemExpect(qemuMonitorTest *test,
                              const char *cmdname,
                              const char *cmdargs,
                              bool apostrophe,
@@ -983,16 +982,16 @@ qemuMonitorTestAddItemExpect(qemuMonitorTestPtr test,
 
 
 static void
-qemuMonitorTestEOFNotify(qemuMonitorPtr mon G_GNUC_UNUSED,
-                         virDomainObjPtr vm G_GNUC_UNUSED,
+qemuMonitorTestEOFNotify(qemuMonitor *mon G_GNUC_UNUSED,
+                         virDomainObj *vm G_GNUC_UNUSED,
                          void *opaque G_GNUC_UNUSED)
 {
 }
 
 
 static void
-qemuMonitorTestErrorNotify(qemuMonitorPtr mon G_GNUC_UNUSED,
-                           virDomainObjPtr vm G_GNUC_UNUSED,
+qemuMonitorTestErrorNotify(qemuMonitor *mon G_GNUC_UNUSED,
+                           virDomainObj *vm G_GNUC_UNUSED,
                            void *opaque G_GNUC_UNUSED)
 {
 }
@@ -1006,8 +1005,8 @@ static qemuMonitorCallbacks qemuMonitorTestCallbacks = {
 
 
 static void
-qemuMonitorTestAgentNotify(qemuAgentPtr agent G_GNUC_UNUSED,
-                           virDomainObjPtr vm G_GNUC_UNUSED)
+qemuMonitorTestAgentNotify(qemuAgent *agent G_GNUC_UNUSED,
+                           virDomainObj *vm G_GNUC_UNUSED)
 {
 }
 
@@ -1018,12 +1017,12 @@ static qemuAgentCallbacks qemuMonitorTestAgentCallbacks = {
 };
 
 
-static qemuMonitorTestPtr
-qemuMonitorCommonTestNew(virDomainXMLOptionPtr xmlopt,
-                         virDomainObjPtr vm,
-                         virDomainChrSourceDefPtr src)
+static qemuMonitorTest *
+qemuMonitorCommonTestNew(virDomainXMLOption *xmlopt,
+                         virDomainObj *vm,
+                         virDomainChrSourceDef *src)
 {
-    qemuMonitorTestPtr test = NULL;
+    qemuMonitorTest *test = NULL;
     char *path = NULL;
     char *tmpdir_template = NULL;
 
@@ -1083,7 +1082,7 @@ qemuMonitorCommonTestNew(virDomainXMLOptionPtr xmlopt,
 
 
 static int
-qemuMonitorCommonTestInit(qemuMonitorTestPtr test)
+qemuMonitorCommonTestInit(qemuMonitorTest *test)
 {
     int events = VIR_EVENT_HANDLE_READABLE;
 
@@ -1136,14 +1135,14 @@ qemuMonitorCommonTestInit(qemuMonitorTestPtr test)
 /* We skip the normal handshake reply of "{\"execute\":\"qmp_capabilities\"}" */
 
 
-qemuMonitorTestPtr
-qemuMonitorTestNew(virDomainXMLOptionPtr xmlopt,
-                   virDomainObjPtr vm,
-                   virQEMUDriverPtr driver,
+qemuMonitorTest *
+qemuMonitorTestNew(virDomainXMLOption *xmlopt,
+                   virDomainObj *vm,
+                   virQEMUDriver *driver,
                    const char *greeting,
                    GHashTable *schema)
 {
-    qemuMonitorTestPtr test = NULL;
+    qemuMonitorTest *test = NULL;
     virDomainChrSourceDef src;
 
     memset(&src, 0, sizeof(src));
@@ -1199,12 +1198,12 @@ qemuMonitorTestNew(virDomainXMLOptionPtr xmlopt,
  *
  * Returns the monitor object on success; NULL on error.
  */
-qemuMonitorTestPtr
+qemuMonitorTest *
 qemuMonitorTestNewFromFile(const char *fileName,
-                           virDomainXMLOptionPtr xmlopt,
+                           virDomainXMLOption *xmlopt,
                            bool simple)
 {
-    qemuMonitorTestPtr test = NULL;
+    qemuMonitorTest *test = NULL;
     g_autofree char *json = NULL;
     char *tmp;
     char *singleReply;
@@ -1272,7 +1271,7 @@ qemuMonitorTestNewFromFile(const char *fileName,
  * to test some negative scenarios which would not use all commands.
  */
 void
-qemuMonitorTestAllowUnusedCommands(qemuMonitorTestPtr test)
+qemuMonitorTestAllowUnusedCommands(qemuMonitorTest *test)
 {
     test->allowUnusedCommands = true;
 }
@@ -1295,7 +1294,7 @@ qemuMonitorTestAllowUnusedCommands(qemuMonitorTestPtr test)
  * argument is removed it will still fail validation.
  */
 void
-qemuMonitorTestSkipDeprecatedValidation(qemuMonitorTestPtr test,
+qemuMonitorTestSkipDeprecatedValidation(qemuMonitorTest *test,
                                         bool allowRemoved)
 {
     test->skipValidationDeprecated = true;
@@ -1304,7 +1303,7 @@ qemuMonitorTestSkipDeprecatedValidation(qemuMonitorTestPtr test,
 
 
 static int
-qemuMonitorTestFullAddItem(qemuMonitorTestPtr test,
+qemuMonitorTestFullAddItem(qemuMonitorTest *test,
                            const char *filename,
                            const char *command,
                            const char *response,
@@ -1337,13 +1336,13 @@ qemuMonitorTestFullAddItem(qemuMonitorTestPtr test,
  *
  * Returns the monitor object on success; NULL on error.
  */
-qemuMonitorTestPtr
+qemuMonitorTest *
 qemuMonitorTestNewFromFileFull(const char *fileName,
-                               virQEMUDriverPtr driver,
-                               virDomainObjPtr vm,
+                               virQEMUDriver *driver,
+                               virDomainObj *vm,
                                GHashTable *qmpschema)
 {
-    qemuMonitorTestPtr ret = NULL;
+    qemuMonitorTest *ret = NULL;
     g_autofree char *jsonstr = NULL;
     char *tmp;
     size_t line = 0;
@@ -1419,10 +1418,10 @@ qemuMonitorTestNewFromFileFull(const char *fileName,
 }
 
 
-qemuMonitorTestPtr
-qemuMonitorTestNewAgent(virDomainXMLOptionPtr xmlopt)
+qemuMonitorTest *
+qemuMonitorTestNewAgent(virDomainXMLOption *xmlopt)
 {
-    qemuMonitorTestPtr test = NULL;
+    qemuMonitorTest *test = NULL;
     virDomainChrSourceDef src;
 
     memset(&src, 0, sizeof(src));
@@ -1456,22 +1455,22 @@ qemuMonitorTestNewAgent(virDomainXMLOptionPtr xmlopt)
 }
 
 
-qemuMonitorPtr
-qemuMonitorTestGetMonitor(qemuMonitorTestPtr test)
+qemuMonitor *
+qemuMonitorTestGetMonitor(qemuMonitorTest *test)
 {
     return test->mon;
 }
 
 
-qemuAgentPtr
-qemuMonitorTestGetAgent(qemuMonitorTestPtr test)
+qemuAgent *
+qemuMonitorTestGetAgent(qemuMonitorTest *test)
 {
     return test->agent;
 }
 
 
-virDomainObjPtr
-qemuMonitorTestGetDomainObj(qemuMonitorTestPtr test)
+virDomainObj *
+qemuMonitorTestGetDomainObj(qemuMonitorTest *test)
 {
     return test->vm;
 }

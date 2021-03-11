@@ -1180,7 +1180,7 @@ static void catchRNGError(void *ctx,
                           const char *msg,
                           ...)
 {
-    virBufferPtr buf = ctx;
+    virBuffer *buf = ctx;
     va_list args;
 
     va_start(args, msg);
@@ -1197,10 +1197,10 @@ static void ignoreRNGError(void *ctx G_GNUC_UNUSED,
 {}
 
 
-virXMLValidatorPtr
+virXMLValidator *
 virXMLValidatorInit(const char *schemafile)
 {
-    virXMLValidatorPtr validator = NULL;
+    virXMLValidator *validator = NULL;
 
     validator = g_new0(virXMLValidator, 1);
 
@@ -1247,7 +1247,7 @@ virXMLValidatorInit(const char *schemafile)
 
 
 int
-virXMLValidatorValidate(virXMLValidatorPtr validator,
+virXMLValidatorValidate(virXMLValidator *validator,
                         xmlDocPtr doc)
 {
     if (xmlRelaxNGValidateDoc(validator->rngValid, doc) != 0) {
@@ -1266,7 +1266,7 @@ int
 virXMLValidateAgainstSchema(const char *schemafile,
                             xmlDocPtr doc)
 {
-    virXMLValidatorPtr validator = NULL;
+    virXMLValidator *validator = NULL;
     int ret = -1;
 
     if (!(validator = virXMLValidatorInit(schemafile)))
@@ -1298,7 +1298,7 @@ virXMLValidateNodeAgainstSchema(const char *schemafile,
 
 
 void
-virXMLValidatorFree(virXMLValidatorPtr validator)
+virXMLValidatorFree(virXMLValidator *validator)
 {
     if (!validator)
         return;
@@ -1327,10 +1327,10 @@ virXMLValidatorFree(virXMLValidatorPtr validator)
  * Both passed buffers are always consumed and freed.
  */
 void
-virXMLFormatElement(virBufferPtr buf,
+virXMLFormatElement(virBuffer *buf,
                     const char *name,
-                    virBufferPtr attrBuf,
-                    virBufferPtr childBuf)
+                    virBuffer *attrBuf,
+                    virBuffer *childBuf)
 {
     if ((!attrBuf || virBufferUse(attrBuf) == 0) &&
         (!childBuf || virBufferUse(childBuf) == 0))
@@ -1355,7 +1355,7 @@ virXMLFormatElement(virBufferPtr buf,
 
 
 void
-virXPathContextNodeRestore(virXPathContextNodeSavePtr save)
+virXPathContextNodeRestore(virXPathContextNodeSave *save)
 {
     if (!save->ctxt)
         return;
@@ -1365,7 +1365,7 @@ virXPathContextNodeRestore(virXPathContextNodeSavePtr save)
 
 
 void
-virXMLNamespaceFormatNS(virBufferPtr buf,
+virXMLNamespaceFormatNS(virBuffer *buf,
                         virXMLNamespace const *ns)
 {
     virBufferAsprintf(buf, " xmlns:%s='%s'", ns->prefix, ns->uri);

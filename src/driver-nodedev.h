@@ -89,7 +89,6 @@ typedef int
 
 
 typedef struct _virNodeDeviceDriver virNodeDeviceDriver;
-typedef virNodeDeviceDriver *virNodeDeviceDriverPtr;
 
 /**
  * _virNodeDeviceDriver:

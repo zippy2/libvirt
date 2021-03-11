@@ -35,6 +35,6 @@ typedef void (*virCommandDryRunCallback)(const char *const*args,
                                          int *status,
                                          void *opaque);
 
-void virCommandSetDryRun(virBufferPtr buf,
+void virCommandSetDryRun(virBuffer *buf,
                          virCommandDryRunCallback cb,
                          void *opaque);

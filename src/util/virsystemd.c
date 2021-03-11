@@ -49,14 +49,12 @@ struct _virSystemdActivation {
 };
 
 typedef struct _virSystemdActivationEntry virSystemdActivationEntry;
-typedef virSystemdActivationEntry *virSystemdActivationEntryPtr;
-
 struct _virSystemdActivationEntry {
     int *fds;
     size_t nfds;
 };
 
-static void virSystemdEscapeName(virBufferPtr buf,
+static void virSystemdEscapeName(virBuffer *buf,
                                  const char *name)
 {
     static const char hextable[16] = "0123456789abcdef";
@@ -703,7 +701,7 @@ int virSystemdCanHybridSleep(bool *result)
 static void
 virSystemdActivationEntryFree(void *data)
 {
-    virSystemdActivationEntryPtr ent = data;
+    virSystemdActivationEntry *ent = data;
     size_t i;
 
     VIR_DEBUG("Closing activation FDs");
@@ -718,11 +716,11 @@ virSystemdActivationEntryFree(void *data)
 
 
 static int
-virSystemdActivationAddFD(virSystemdActivationPtr act,
+virSystemdActivationAddFD(virSystemdActivation *act,
                           const char *name,
                           int fd)
 {
-    virSystemdActivationEntryPtr ent = virHashLookup(act->fds, name);
+    virSystemdActivationEntry *ent = virHashLookup(act->fds, name);
 
     if (!ent) {
         ent = g_new0(virSystemdActivationEntry, 1);
@@ -749,7 +747,7 @@ virSystemdActivationAddFD(virSystemdActivationPtr act,
 
 
 static int
-virSystemdActivationInitFromNames(virSystemdActivationPtr act,
+virSystemdActivationInitFromNames(virSystemdActivation *act,
                                   int nfds,
                                   const char *fdnames)
 {
@@ -797,7 +795,7 @@ virSystemdActivationInitFromNames(virSystemdActivationPtr act,
  * Delete when min systemd is increased ie RHEL7 dropped
  */
 static int
-virSystemdActivationInitFromMap(virSystemdActivationPtr act,
+virSystemdActivationInitFromMap(virSystemdActivation *act,
                                 int nfds,
                                 virSystemdActivationMap *map,
                                 size_t nmap)
@@ -957,12 +955,12 @@ virSystemdGetListenFDs(void)
 
 #endif /* WIN32 */
 
-static virSystemdActivationPtr
+static virSystemdActivation *
 virSystemdActivationNew(virSystemdActivationMap *map,
                         size_t nmap,
                         int nfds)
 {
-    virSystemdActivationPtr act;
+    virSystemdActivation *act;
     const char *fdnames;
 
     VIR_DEBUG("Activated with %d FDs", nfds);
@@ -1007,7 +1005,7 @@ virSystemdActivationNew(virSystemdActivationMap *map,
 int
 virSystemdGetActivation(virSystemdActivationMap *map,
                         size_t nmap,
-                        virSystemdActivationPtr *act)
+                        virSystemdActivation **act)
 {
     int nfds = 0;
 
@@ -1036,7 +1034,7 @@ virSystemdGetActivation(virSystemdActivationMap *map,
  * Returns: true if a FD is present, false otherwise
  */
 bool
-virSystemdActivationHasName(virSystemdActivationPtr act,
+virSystemdActivationHasName(virSystemdActivation *act,
                             const char *name)
 {
     return virHashLookup(act->fds, name) != NULL;
@@ -1055,7 +1053,7 @@ virSystemdActivationHasName(virSystemdActivationPtr act,
  * Returns: 0 on success, -1 if some FDs are unclaimed
  */
 int
-virSystemdActivationComplete(virSystemdActivationPtr act)
+virSystemdActivationComplete(virSystemdActivation *act)
 {
     if (virHashSize(act->fds) != 0) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -1083,12 +1081,12 @@ virSystemdActivationComplete(virSystemdActivationPtr act)
  * the array memory in @fds.
  */
 void
-virSystemdActivationClaimFDs(virSystemdActivationPtr act,
+virSystemdActivationClaimFDs(virSystemdActivation *act,
                              const char *name,
                              int **fds,
                              size_t *nfds)
 {
-    virSystemdActivationEntryPtr ent = virHashSteal(act->fds, name);
+    virSystemdActivationEntry *ent = virHashSteal(act->fds, name);
 
     if (!ent) {
         *fds = NULL;
@@ -1113,7 +1111,7 @@ virSystemdActivationClaimFDs(virSystemdActivationPtr act,
  * associated with the activation object
  */
 void
-virSystemdActivationFree(virSystemdActivationPtr act)
+virSystemdActivationFree(virSystemdActivation *act)
 {
     if (!act)
         return;

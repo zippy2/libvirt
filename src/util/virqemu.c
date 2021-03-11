@@ -35,7 +35,7 @@ VIR_LOG_INIT("util.qemu");
 
 struct virQEMUCommandLineJSONIteratorData {
     const char *prefix;
-    virBufferPtr buf;
+    virBuffer *buf;
     const char *skipKey;
     virQEMUBuildCommandLineJSONArrayFormatFunc arrayFunc;
 };
@@ -43,8 +43,8 @@ struct virQEMUCommandLineJSONIteratorData {
 
 static int
 virQEMUBuildCommandLineJSONRecurse(const char *key,
-                                   virJSONValuePtr value,
-                                   virBufferPtr buf,
+                                   virJSONValue *value,
+                                   virBuffer *buf,
                                    const char *skipKey,
                                    virQEMUBuildCommandLineJSONArrayFormatFunc arrayFunc,
                                    bool nested);
@@ -53,8 +53,8 @@ virQEMUBuildCommandLineJSONRecurse(const char *key,
 
 int
 virQEMUBuildCommandLineJSONArrayBitmap(const char *key,
-                                       virJSONValuePtr array,
-                                       virBufferPtr buf,
+                                       virJSONValue *array,
+                                       virBuffer *buf,
                                        const char *skipKey G_GNUC_UNUSED)
 {
     ssize_t pos = -1;
@@ -82,17 +82,17 @@ virQEMUBuildCommandLineJSONArrayBitmap(const char *key,
 
 int
 virQEMUBuildCommandLineJSONArrayNumbered(const char *key,
-                                         virJSONValuePtr array,
-                                         virBufferPtr buf,
+                                         virJSONValue *array,
+                                         virBuffer *buf,
                                          const char *skipKey)
 {
-    virJSONValuePtr member;
+    virJSONValue *member;
     size_t i;
 
     for (i = 0; i < virJSONValueArraySize(array); i++) {
         g_autofree char *prefix = NULL;
 
-        member = virJSONValueArrayGet((virJSONValuePtr) array, i);
+        member = virJSONValueArrayGet((virJSONValue *) array, i);
         prefix = g_strdup_printf("%s.%zu", key, i);
 
         if (virQEMUBuildCommandLineJSONRecurse(prefix, member, buf, skipKey,
@@ -119,15 +119,15 @@ virQEMUBuildCommandLineJSONArrayNumbered(const char *key,
  */
 static int
 virQEMUBuildCommandLineJSONArrayObjectsStr(const char *key,
-                                           virJSONValuePtr array,
-                                           virBufferPtr buf,
+                                           virJSONValue *array,
+                                           virBuffer *buf,
                                            const char *skipKey G_GNUC_UNUSED)
 {
     g_auto(virBuffer) tmp = VIR_BUFFER_INITIALIZER;
     size_t i;
 
     for (i = 0; i < virJSONValueArraySize(array); i++) {
-        virJSONValuePtr member = virJSONValueArrayGet(array, i);
+        virJSONValue *member = virJSONValueArrayGet(array, i);
         const char *str = virJSONValueObjectGetString(member, "str");
 
         if (!str)
@@ -144,7 +144,7 @@ virQEMUBuildCommandLineJSONArrayObjectsStr(const char *key,
 /* internal iterator to handle nested object formatting */
 static int
 virQEMUBuildCommandLineJSONIterate(const char *key,
-                                   virJSONValuePtr value,
+                                   virJSONValue *value,
                                    void *opaque)
 {
     struct virQEMUCommandLineJSONIteratorData *data = opaque;
@@ -170,15 +170,15 @@ virQEMUBuildCommandLineJSONIterate(const char *key,
 
 static int
 virQEMUBuildCommandLineJSONRecurse(const char *key,
-                                   virJSONValuePtr value,
-                                   virBufferPtr buf,
+                                   virJSONValue *value,
+                                   virBuffer *buf,
                                    const char *skipKey,
                                    virQEMUBuildCommandLineJSONArrayFormatFunc arrayFunc,
                                    bool nested)
 {
     struct virQEMUCommandLineJSONIteratorData data = { key, buf, skipKey, arrayFunc };
     virJSONType type = virJSONValueGetType(value);
-    virJSONValuePtr elem;
+    virJSONValue *elem;
     bool tmp;
     size_t i;
 
@@ -219,7 +219,7 @@ virQEMUBuildCommandLineJSONRecurse(const char *key,
             /* fallback, treat the array as a non-bitmap, adding the key
              * for each member */
             for (i = 0; i < virJSONValueArraySize(value); i++) {
-                elem = virJSONValueArrayGet((virJSONValuePtr)value, i);
+                elem = virJSONValueArrayGet((virJSONValue *)value, i);
 
                 /* recurse to avoid duplicating code */
                 if (virQEMUBuildCommandLineJSONRecurse(key, elem, buf, skipKey,
@@ -259,8 +259,8 @@ virQEMUBuildCommandLineJSONRecurse(const char *key,
  * Returns 0 on success -1 on error.
  */
 int
-virQEMUBuildCommandLineJSON(virJSONValuePtr value,
-                            virBufferPtr buf,
+virQEMUBuildCommandLineJSON(virJSONValue *value,
+                            virBuffer *buf,
                             const char *skipKey,
                             virQEMUBuildCommandLineJSONArrayFormatFunc array)
 {
@@ -284,7 +284,7 @@ virQEMUBuildCommandLineJSON(virJSONValuePtr value,
  * @rawjson is meant for testing of the schema in the xml2argvtest
  */
 char *
-virQEMUBuildNetdevCommandlineFromJSON(virJSONValuePtr props,
+virQEMUBuildNetdevCommandlineFromJSON(virJSONValue *props,
                                       bool rawjson)
 {
     const char *type = virJSONValueObjectGetString(props, "type");
@@ -304,10 +304,10 @@ virQEMUBuildNetdevCommandlineFromJSON(virJSONValuePtr props,
 
 
 static int
-virQEMUBuildObjectCommandlineFromJSONInternal(virBufferPtr buf,
+virQEMUBuildObjectCommandlineFromJSONInternal(virBuffer *buf,
                                               const char *type,
                                               const char *alias,
-                                              virJSONValuePtr props)
+                                              virJSONValue *props)
 {
     if (!type || !alias) {
         virReportError(VIR_ERR_INTERNAL_ERROR,
@@ -330,19 +330,19 @@ virQEMUBuildObjectCommandlineFromJSONInternal(virBufferPtr buf,
 
 
 int
-virQEMUBuildObjectCommandlineFromJSON(virBufferPtr buf,
-                                      virJSONValuePtr objprops)
+virQEMUBuildObjectCommandlineFromJSON(virBuffer *buf,
+                                      virJSONValue *objprops)
 {
     const char *type = virJSONValueObjectGetString(objprops, "qom-type");
     const char *alias = virJSONValueObjectGetString(objprops, "id");
-    virJSONValuePtr props = virJSONValueObjectGetObject(objprops, "props");
+    virJSONValue *props = virJSONValueObjectGetObject(objprops, "props");
 
     return virQEMUBuildObjectCommandlineFromJSONInternal(buf, type, alias, props);
 }
 
 
 char *
-virQEMUBuildDriveCommandlineFromJSON(virJSONValuePtr srcdef)
+virQEMUBuildDriveCommandlineFromJSON(virJSONValue *srcdef)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
 
@@ -363,7 +363,7 @@ virQEMUBuildDriveCommandlineFromJSON(virJSONValuePtr srcdef)
  * a ',' must escape it using an extra ',' as the escape character
  */
 void
-virQEMUBuildBufferEscapeComma(virBufferPtr buf, const char *str)
+virQEMUBuildBufferEscapeComma(virBuffer *buf, const char *str)
 {
     virBufferEscape(buf, ',', ",", "%s", str);
 }
