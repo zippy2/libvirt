@@ -175,7 +175,11 @@ virSecurityDACTransactionAppend(const char *path,
                                 bool restore)
 {
     virSecurityDACChownList *list = virThreadLocalGet(&chownList);
+
     if (!list)
+        return 0;
+
+    if (src && !virStorageSourceIsLocalStorage(src))
         return 0;
 
     if (virSecurityDACChownListAppend(list, path, src,
