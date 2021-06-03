@@ -179,9 +179,6 @@ virSecurityDACTransactionAppend(const char *path,
     if (!list)
         return 0;
 
-    if (src && !virStorageSourceIsLocalStorage(src))
-        return 0;
-
     if (virSecurityDACChownListAppend(list, path, src,
                                       uid, gid, remember, restore) < 0)
         return -1;
@@ -763,11 +760,13 @@ virSecurityDACSetOwnership(virSecurityManager *mgr,
     /* Be aware that this function might run in a separate process.
      * Therefore, any driver state changes would be thrown away. */
 
-    if ((rc = virSecurityDACTransactionAppend(path, src,
-                                              uid, gid, remember, false)) < 0)
-        return -1;
-    else if (rc > 0)
-        return 0;
+    if (!priv !src || virStorageSourceIsLocalStorage(src)) {
+        if ((rc = virSecurityDACTransactionAppend(path, src,
+                                                  uid, gid, remember, false)) < 0)
+            return -1;
+        else if (rc > 0)
+            return 0;
+    }
 
     if (remember && path) {
         if (stat(path, &sb) < 0) {
@@ -843,10 +842,14 @@ virSecurityDACRestoreFileLabelInternal(virSecurityManager *mgr,
     /* Be aware that this function might run in a separate process.
      * Therefore, any driver state changes would be thrown away. */
 
-    if ((rv = virSecurityDACTransactionAppend(path, src, uid, gid, recall, true)) < 0)
-        return -1;
-    else if (rv > 0)
-        return 0;
+    /* Non local storage */
+    if (!src || virStorageSourceIsLocalStorage(src)) {
+        if ((rv = virSecurityDACTransactionAppend(path, src,
+                                                  uid, gid, recall, true)) < 0)
+            return -1;
+        else if (rv > 0)
+            return 0;
+    }
 
     if (recall && path) {
         rv = virSecurityDACRecallLabel(priv, path, &uid, &gid);
