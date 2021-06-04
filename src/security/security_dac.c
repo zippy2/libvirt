@@ -66,17 +66,20 @@ struct _virSecurityDACCallbackData {
     virSecurityLabelDef *secdef;
 };
 
+typedef struct _virSecurityDACChownList virSecurityDACChownList;
+
 typedef struct _virSecurityDACChownItem virSecurityDACChownItem;
 struct _virSecurityDACChownItem {
+    virSecurityDACChownList *list;
     char *path;
     virStorageSource *src;
+    bool srcInit;
     uid_t uid;
     gid_t gid;
     bool remember; /* Whether owner remembering should be done for @path/@src */
     bool restore; /* Whether current operation is 'set' or 'restore' */
 };
 
-typedef struct _virSecurityDACChownList virSecurityDACChownList;
 struct _virSecurityDACChownList {
     virSecurityManager *manager;
     virSecurityDACChownItem **items;
@@ -92,6 +95,16 @@ virSecurityDACChownItemFree(virSecurityDACChownItem *item)
 {
     if (!item)
         return;
+
+    if (item->srcInit) {
+        virSecurityDACData *priv;
+
+        priv = virSecurityManagerGetPrivateData(item->list->manager);
+
+        priv->chownCallback(&item->src,
+                            VIR_SECURITY_MANAGER_DAC_PHASE_DEINIT,
+                            item->uid, item->gid);
+    }
 
     g_free(item->path);
     virObjectUnref(item->src);
@@ -113,6 +126,7 @@ virSecurityDACChownListAppend(virSecurityDACChownList *list,
 
     item = g_new0(virSecurityDACChownItem, 1);
 
+    item->list = list;
     item->path = g_strdup(path);
     if (src)
         item->src = virStorageSourceCopy(src, false);
@@ -173,6 +187,7 @@ virSecurityDACTransactionAppend(const char *path,
                                 bool restore)
 {
     virSecurityDACChownList *list = virThreadLocalGet(&chownList);
+
     if (!list)
         return 0;
 
@@ -597,10 +612,11 @@ virSecurityDACTransactionStart(virSecurityManager *mgr)
  *         -1 otherwise.
  */
 static int
-virSecurityDACTransactionCommit(virSecurityManager *mgr G_GNUC_UNUSED,
+virSecurityDACTransactionCommit(virSecurityManager *mgr,
                                 pid_t pid,
                                 bool lock)
 {
+    virSecurityDACData *priv = virSecurityManagerGetPrivateData(mgr);
     g_autoptr(virSecurityDACChownList) list = NULL;
     int rc;
 
@@ -618,6 +634,22 @@ virSecurityDACTransactionCommit(virSecurityManager *mgr G_GNUC_UNUSED,
     }
 
     list->lock = lock;
+
+    if (priv->chownCallback) {
+        size_t i;
+
+        for (i = 0; i < list->nItems; i++) {
+            virSecurityDACChownItem *item = list->items[i];
+
+            if (!item->src)
+                continue;
+
+            if (priv->chownCallback(&item->src,
+                                    VIR_SECURITY_MANAGER_DAC_PHASE_INIT,
+                                    item->uid, item->gid) < 0)
+                return -1;
+        }
+    }
 
     if (pid != -1) {
         rc = virProcessRunInMountNamespace(pid,
@@ -677,7 +709,9 @@ virSecurityDACSetOwnershipInternal(const virSecurityDACData *priv,
      * Therefore, any driver state changes would be thrown away. */
 
     if (src && priv->chownCallback) {
-        rc = priv->chownCallback(src, uid, gid);
+        rc = priv->chownCallback(&src,
+                                 VIR_SECURITY_MANAGER_DAC_PHASE_CHOWN,
+                                 uid, gid);
 
         /* on -2 returned an error was already reported */
         if (rc == -2)
