@@ -194,33 +194,46 @@ qemuAutostartDomain(virDomainObj *vm,
 
 
 static int
-qemuSecurityChownCallback(const virStorageSource *src,
+qemuSecurityChownCallback(virStorageSource **src,
+                          int phase,
                           uid_t uid,
                           gid_t gid)
 {
     int save_errno = 0;
     int ret = -1;
-    int rv;
-    g_autoptr(virStorageSource) cpy = NULL;
 
-    if (virStorageSourceIsLocalStorage(src))
+    if (virStorageSourceIsLocalStorage(*src))
         return -3;
 
-    if ((rv = virStorageSourceSupportsSecurityDriver(src)) <= 0)
-        return rv;
+    switch ((virSecurityManagerDACChownCallbackPhase) phase) {
+    case VIR_SECURITY_MANAGER_DAC_PHASE_INIT: {
+        g_autoptr(virStorageSource) cpy = NULL;
+        int rv;
 
-    if (!(cpy = virStorageSourceCopy(src, false)))
-        return -1;
+        if ((rv = virStorageSourceSupportsSecurityDriver(*src)) <= 0)
+            return rv;
 
-    /* src file init reports errors, return -2 on failure */
-    if (virStorageSourceInit(cpy) < 0)
-        return -2;
+        if (!(cpy = virStorageSourceCopy(*src, false)))
+            return -1;
 
-    ret = virStorageSourceChown(cpy, uid, gid);
+        /* src file init reports errors, return -2 on failure */
+        if (virStorageSourceInit(cpy) < 0)
+            return -2;
 
-    save_errno = errno;
-    virStorageSourceDeinit(cpy);
-    errno = save_errno;
+        *src = g_steal_pointer(&cpy);
+        return 0;
+    }
+    case VIR_SECURITY_MANAGER_DAC_PHASE_CHOWN: {
+        return virStorageSourceChown(*src, uid, gid);
+    }
+
+    case VIR_SECURITY_MANAGER_DAC_PHASE_DEINIT: {
+        save_errno = errno;
+        virStorageSourceDeinit(*src);
+        g_clear_pointer(src, virObjectUnref);
+        errno = save_errno;
+    }
+    }
 
     return ret;
 }
