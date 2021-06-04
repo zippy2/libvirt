@@ -50,9 +50,16 @@ virSecurityManager *virSecurityManagerNewStack(virSecurityManager *primary);
 int virSecurityManagerStackAddNested(virSecurityManager *stack,
                                      virSecurityManager *nested);
 
+typedef enum {
+    VIR_SECURITY_MANAGER_DAC_PHASE_INIT,
+    VIR_SECURITY_MANAGER_DAC_PHASE_CHOWN,
+    VIR_SECURITY_MANAGER_DAC_PHASE_DEINIT
+} virSecurityManagerDACChownCallbackPhase;
+
 /**
  * virSecurityManagerDACChownCallback:
  * @src: Storage file to chown
+ * @phase: what phase is the callback called from
  * @uid: target uid
  * @gid: target gid
  *
@@ -61,13 +68,17 @@ int virSecurityManagerStackAddNested(virSecurityManager *stack,
  * and thus let DAC driver chown the file instead (signalled by
  * returning -3).
  *
+ * The callback will be called multiple times, each time with
+ * @phase set accordingly.
+ *
  * Returns: 0 on success,
  *         -1 on error and errno set (no libvirt error reported),
  *         -2 and a libvirt error reported.
  *         -3 if callback did not handle chown
  */
 typedef int
-(*virSecurityManagerDACChownCallback)(const virStorageSource *src,
+(*virSecurityManagerDACChownCallback)(virStorageSource **src,
+                                      int phase,
                                       uid_t uid,
                                       gid_t gid);
 
