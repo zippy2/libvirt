@@ -70,7 +70,7 @@ struct _virSecurityDACCallbackData {
 typedef struct _virSecurityDACChownItem virSecurityDACChownItem;
 struct _virSecurityDACChownItem {
     char *path;
-    const virStorageSource *src;
+    virStorageSource *src;
     uid_t uid;
     gid_t gid;
     bool remember; /* Whether owner remembering should be done for @path/@src */
@@ -97,6 +97,7 @@ virSecurityDACChownItemFree(virSecurityDACChownItem *item)
         return;
 
     g_free(item->path);
+    virObjectUnref(item->src);
     g_free(item);
 }
 
@@ -116,7 +117,8 @@ virSecurityDACChownListAppend(virSecurityDACChownList *list,
     item = g_new0(virSecurityDACChownItem, 1);
 
     item->path = g_strdup(path);
-    item->src = src;
+    if (src)
+        item->src = virStorageSourceCopy(src, false);
     item->uid = uid;
     item->gid = gid;
     item->remember = remember;
