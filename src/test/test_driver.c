@@ -1034,23 +1034,23 @@ testParseDomains(testDriver *privconn,
         testDomainNamespaceDef *nsdata;
 
         if (!(ctxt->node = testParseXMLDocFromFile(nodes[i], file)))
-            goto error;
+            goto cleabnup;
 
         def = virDomainDefParseNode(ctxt, privconn->xmlopt, NULL,
                                     VIR_DOMAIN_DEF_PARSE_INACTIVE);
         if (!def)
-            goto error;
+            goto cleanup;
 
         if (testDomainGenerateIfnames(def) < 0 ||
             !(obj = virDomainObjListAdd(privconn->domains,
                                         &def,
                                         privconn->xmlopt,
                                         0, NULL))) {
-            goto error;
+            goto cleanup;
         }
 
         if (testParseDomainSnapshots(privconn, obj, file, ctxt) < 0)
-            goto error;
+            goto cleanup;
 
         nsdata = obj->def->namespaceData;
         obj->persistent = !nsdata->transient;
@@ -1059,7 +1059,7 @@ testParseDomains(testDriver *privconn,
         if (nsdata->runstate != VIR_DOMAIN_SHUTOFF) {
             if (testDomainStartState(privconn, obj,
                                      VIR_DOMAIN_RUNNING_BOOTED) < 0)
-                goto error;
+                goto cleanup;
         } else {
             testDomainShutdownState(NULL, obj, 0);
         }
@@ -1073,7 +1073,7 @@ testParseDomains(testDriver *privconn,
     }
 
     ret = 0;
- error:
+ cleanup:
     virDomainObjEndAPI(&obj);
     return ret;
 }
