@@ -207,11 +207,13 @@ testDomainDefNamespaceFree(void *data)
     g_free(nsdata);
 }
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(testDomainNamespaceDef, testDomainDefNamespaceFree);
+
 static int
 testDomainDefNamespaceParse(xmlXPathContextPtr ctxt,
                             void **data)
 {
-    testDomainNamespaceDef *nsdata = NULL;
+    g_autoptr(testDomainNamespaceDef) nsdata = NULL;
     int tmp, n;
     size_t i;
     unsigned int tmpuint;
@@ -221,7 +223,7 @@ testDomainDefNamespaceParse(xmlXPathContextPtr ctxt,
 
     n = virXPathNodeSet("./test:domainsnapshot", ctxt, &nodes);
     if (n < 0)
-        goto error;
+        return -1;
 
     if (n)
         nsdata->snap_nodes = g_new0(xmlNodePtr, n);
@@ -231,7 +233,7 @@ testDomainDefNamespaceParse(xmlXPathContextPtr ctxt,
         if (!newnode) {
             virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
                            _("Failed to copy XML node"));
-            goto error;
+            return -1;
         }
 
         nsdata->snap_nodes[nsdata->num_snap_nodes] = newnode;
@@ -241,14 +243,14 @@ testDomainDefNamespaceParse(xmlXPathContextPtr ctxt,
     tmp = virXPathBoolean("boolean(./test:transient)", ctxt);
     if (tmp == -1) {
         virReportError(VIR_ERR_XML_ERROR, "%s", _("invalid transient"));
-        goto error;
+        return -1;
     }
     nsdata->transient = tmp;
 
     tmp = virXPathBoolean("boolean(./test:hasmanagedsave)", ctxt);
     if (tmp == -1) {
         virReportError(VIR_ERR_XML_ERROR, "%s", _("invalid hasmanagedsave"));
-        goto error;
+        return -1;
     }
     nsdata->hasManagedSave = tmp;
 
@@ -257,7 +259,7 @@ testDomainDefNamespaceParse(xmlXPathContextPtr ctxt,
         if (tmpuint >= VIR_DOMAIN_LAST) {
             virReportError(VIR_ERR_XML_ERROR,
                            _("runstate '%1$d' out of range'"), tmpuint);
-            goto error;
+            return -1;
         }
         nsdata->runstate = tmpuint;
     } else if (tmp == -1) {
@@ -265,26 +267,22 @@ testDomainDefNamespaceParse(xmlXPathContextPtr ctxt,
     } else if (tmp == -2) {
         virReportError(VIR_ERR_XML_ERROR, "%s",
                        _("invalid runstate"));
-        goto error;
+        return -1;
     }
 
     if (nsdata->transient && nsdata->runstate == VIR_DOMAIN_SHUTOFF) {
         virReportError(VIR_ERR_XML_ERROR, "%s",
             _("transient domain cannot have runstate 'shutoff'"));
-        goto error;
+        return -1;
     }
     if (nsdata->hasManagedSave && nsdata->runstate != VIR_DOMAIN_SHUTOFF) {
         virReportError(VIR_ERR_XML_ERROR, "%s",
             _("domain with managedsave data can only have runstate 'shutoff'"));
-        goto error;
+        return -1;
     }
 
-    *data = nsdata;
+    *data = g_steal_pointer(&nsdata);
     return 0;
-
- error:
-    testDomainDefNamespaceFree(nsdata);
-    return -1;
 }
 
 static virCaps *
