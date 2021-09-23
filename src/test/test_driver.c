@@ -290,10 +290,9 @@ testBuildCapabilities(virConnectPtr conn)
 {
     testDriver *privconn = conn->privateData;
     g_autoptr(virCaps) caps = NULL;
-    virCapsGuest *guest;
     int guest_types[] = { VIR_DOMAIN_OSTYPE_HVM,
                           VIR_DOMAIN_OSTYPE_XEN };
-    size_t i, j;
+    size_t i;
 
     if ((caps = virCapabilitiesNew(VIR_ARCH_I686, false, false)) == NULL)
         return NULL;
@@ -317,6 +316,7 @@ testBuildCapabilities(virConnectPtr conn)
         virCapsHostNUMACellCPU *cpu_cells;
         virCapsHostNUMACellPageInfo *pages;
         size_t nPages = caps->host.nPagesSize - 1;
+        size_t j;
 
         cpu_cells = g_new0(virCapsHostNUMACellCPU, privconn->cells[i].numCpus);
         pages = g_new0(virCapsHostNUMACellPageInfo, nPages);
@@ -343,6 +343,8 @@ testBuildCapabilities(virConnectPtr conn)
     }
 
     for (i = 0; i < G_N_ELEMENTS(guest_types); i++) {
+        virCapsGuest *guest;
+
         guest = virCapabilitiesAddGuest(caps, guest_types[i], VIR_ARCH_I686,
                                         TEST_EMULATOR, NULL, 0, NULL);
 
