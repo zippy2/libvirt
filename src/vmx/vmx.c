@@ -1356,6 +1356,9 @@ virVMXParseGenID(virConf *conf,
 {
     long long vmid[2] = { 0 };
     g_autofree char *uuidstr = NULL;
+    size_t i;
+    /* This mapping comes from virt-v2v sources. */
+    const int uuidmap[] = {8, 10, 12, 14, 4, 6, 0, 2, 30, 28, 26, 24, 22, 20, 18, 16};
 
     if (virVMXGetConfigLong(conf, "vm.genid", &vmid[0], 0, true) < 0 ||
         virVMXGetConfigLong(conf, "vm.genidX", &vmid[1], 0, true) < 0)
@@ -1365,10 +1368,15 @@ virVMXParseGenID(virConf *conf,
         return 0;
 
     uuidstr = g_strdup_printf("%.16llx%.16llx", vmid[0], vmid[1]);
-    if (virUUIDParse(uuidstr, def->genid) < 0) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("Could not parse UUID from string '%1$s'"), uuidstr);
-        return -1;
+    /* Ideally we would just call virUUIDParse() and be done, but it's not that
+     * simple. Some bytes in genid and genidX are swapped and we need to swap
+     * them back. This matches what virt-v2v does. */
+    for (i = 0; i < G_N_ELEMENTS(uuidmap); i++) {
+        int idx = uuidmap[i];
+        int val_hi = g_ascii_xdigit_value(uuidstr[idx]);
+        int val_lo = g_ascii_xdigit_value(uuidstr[idx + 1]);
+
+        def->genid[i] = 16 * val_hi + val_lo;
     }
     def->genidRequested = true;
 
