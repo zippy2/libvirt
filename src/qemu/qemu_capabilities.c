@@ -761,6 +761,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               /* 490 */
               "scsi-block.migrate-pr", /* QEMU_CAPS_DEVICE_SCSI_BLOCK_MIGRATE_PR */
               "iommufd", /* QEMU_CAPS_OBJECT_IOMMUFD */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1289,6 +1290,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
     { "qom-list-get", QEMU_CAPS_QOM_LIST_GET },
     { "query-accelerators", QEMU_CAPS_QUERY_ACCELERATORS },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
