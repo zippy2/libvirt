@@ -706,6 +706,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "blockjob.backing-mask-protocol", /* QEMU_CAPS_BLOCKJOB_BACKING_MASK_PROTOCOL */
               "display-reload", /* QEMU_CAPS_DISPLAY_RELOAD */
               "usb-mtp", /* QEMU_CAPS_DEVICE_USB_MTP */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1232,6 +1233,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "query-stats", QEMU_CAPS_QUERY_STATS },
     { "query-stats-schemas", QEMU_CAPS_QUERY_STATS_SCHEMAS },
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsMigration[] = {
