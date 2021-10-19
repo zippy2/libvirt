@@ -2490,6 +2490,42 @@ qemuProcessInitMonitor(virQEMUDriver *driver,
 
 
 static int
+qemuProcessPreconfigRun(virDomainObj *vm,
+                        int asyncJob)
+{
+    qemuDomainObjPrivate *priv = vm->privateData;
+    virQEMUCaps *qemuCaps = priv->qemuCaps;
+    int ret = -1;
+    int rc = -1;
+
+    if (!virQEMUCapsGet(qemuCaps, QEMU_CAPS_EXIT_PRECONFIG)) {
+        VIR_DEBUG("Skipping preconfigure phase vm=%p name='%s'",
+                  vm, vm->def->name);
+        return 0;
+    }
+
+    VIR_DEBUG("Entering preconfigure phase vm=%p name='%s'",
+              vm, vm->def->name);
+
+    if (qemuDomainObjEnterMonitorAsync(vm, asyncJob) < 0)
+        goto cleanup;
+
+    rc = qemuMonitorExitPreconfig(priv->mon);
+
+    qemuDomainObjExitMonitor(vm);
+
+    if (rc < 0)
+        goto cleanup;
+
+    ret = 0;
+ cleanup:
+    VIR_DEBUG("Exiting preconfigure phase vm=%p name='%s' ret=%d",
+              vm, vm->def->name, ret);
+    return ret;
+}
+
+
+static int
 qemuProcessWaitForMonitor(virQEMUDriver *driver,
                           virDomainObj *vm,
                           int asyncJob,
@@ -2500,6 +2536,9 @@ qemuProcessWaitForMonitor(virQEMUDriver *driver,
     VIR_DEBUG("Connect monitor to vm=%p name='%s'", vm, vm->def->name);
 
     if (qemuConnectMonitor(driver, vm, asyncJob, logCtxt, false) < 0)
+        goto cleanup;
+
+    if (qemuProcessPreconfigRun(vm, asyncJob) < 0)
         goto cleanup;
 
     if (qemuProcessInitMonitor(driver, vm, asyncJob) < 0)
