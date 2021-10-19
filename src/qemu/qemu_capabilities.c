@@ -755,6 +755,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "disk-timed-stats", /* QEMU_CAPS_DISK_TIMED_STATS */
               "query-accelerators", /* QEMU_CAPS_QUERY_ACCELERATORS */
               "mshv", /* QEMU_CAPS_MSHV */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1283,6 +1284,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
     { "qom-list-get", QEMU_CAPS_QOM_LIST_GET },
     { "query-accelerators", QEMU_CAPS_QUERY_ACCELERATORS },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
