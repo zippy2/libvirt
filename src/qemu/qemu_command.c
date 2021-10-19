@@ -10371,6 +10371,9 @@ qemuBuildCommandLine(virDomainObj *vm,
 
     virCommandAddArg(cmd, "-S"); /* freeze CPUs during startup */
 
+    if (virQEMUCapsGet(qemuCaps, QEMU_CAPS_EXIT_PRECONFIG))
+        virCommandAddArg(cmd, "-preconfig");
+
     if (qemuBuildMasterKeyCommandLine(cmd, priv) < 0)
         return NULL;
 
