@@ -746,6 +746,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
 
               /* 485 */
               "acpi-generic-initiator", /* QEMU_CAPS_ACPI_GENERIC_INITIATOR */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1261,6 +1262,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
     { "qom-list-get", QEMU_CAPS_QOM_LIST_GET },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
