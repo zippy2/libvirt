@@ -700,6 +700,7 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
     QEMU_CAPS_CHARDEV_RECONNECT_MILISECONDS, /* 'reconnect-ms' option for chardevs supported */
     QEMU_CAPS_VIRTIO_CCW_DEVICE_LOADPARM, /* loadparm available on CCW device for multi device boot */
     QEMU_CAPS_NETDEV_STREAM_RECONNECT_MILISECONDS, /* 'reconnect-ms' option for netdev stream supported */
+    QEMU_CAPS_EXIT_PRECONFIG, /* exit-preconfig QMP command */
 
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
