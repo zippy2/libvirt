@@ -764,6 +764,9 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "uefi-vars", /* QEMU_CAPS_DEVICE_UEFI_VARS */
               "query-block-flat", /* QEMU_CAPS_QUERY_BLOCK_FLAT */
               "amd-iommu.xtsup", /* QEMU_CAPS_AMD_IOMMU_XTSUP */
+
+              /* 495 */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1292,6 +1295,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
     { "qom-list-get", QEMU_CAPS_QOM_LIST_GET },
     { "query-accelerators", QEMU_CAPS_QUERY_ACCELERATORS },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
