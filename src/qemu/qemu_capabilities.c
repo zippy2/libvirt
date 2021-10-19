@@ -714,6 +714,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "netdev.user", /* QEMU_CAPS_NETDEV_USER */
               "acpi-erst", /* QEMU_CAPS_DEVICE_ACPI_ERST */
               "intel-iommu.dma-translation", /* QEMU_CAPS_INTEL_IOMMU_DMA_TRANSLATION */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1234,6 +1235,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "query-stats", QEMU_CAPS_QUERY_STATS },
     { "query-stats-schemas", QEMU_CAPS_QUERY_STATS_SCHEMAS },
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsMigration[] = {
