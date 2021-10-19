@@ -728,6 +728,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "machine.virt.aia", /* QEMU_CAPS_MACHINE_VIRT_AIA */
               "virtio-mem-ccw", /* QEMU_CAPS_DEVICE_VIRTIO_MEM_CCW */
               "blockdev-set-active", /* QEMU_CAPS_BLOCKDEV_SET_ACTIVE */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1250,6 +1251,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
     { "snapshot-save", QEMU_CAPS_SNAPSHOT_INTERNAL_QMP },
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsMigration[] = {
