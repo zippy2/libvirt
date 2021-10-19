@@ -783,6 +783,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "pcie-root-port.speed", /* QEMU_CAPS_PCIE_ROOT_PORT_SPEED */
               "pcie-root-port.width", /* QEMU_CAPS_PCIE_ROOT_PORT_WIDTH */
               "vfio-pci.ats", /* QEMU_CAPS_VFIO_PCI_ATS */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1313,6 +1314,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
     { "qom-list-get", QEMU_CAPS_QOM_LIST_GET },
     { "query-accelerators", QEMU_CAPS_QUERY_ACCELERATORS },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
