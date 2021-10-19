@@ -708,6 +708,7 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
     QEMU_CAPS_DEVICE_VIRTIO_MEM_CCW, /* -device virtio-mem-ccw */
     QEMU_CAPS_BLOCKDEV_SET_ACTIVE, /* blockdev-set-active QMP command supported */
     QEMU_CAPS_MACHINE_SHIM, /* -shim command line argument */
+    QEMU_CAPS_EXIT_PRECONFIG, /* exit-preconfig QMP command */
 
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
