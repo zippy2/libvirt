@@ -713,6 +713,7 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
 
     /* 475 */
     QEMU_CAPS_VIRTIO_SCSI_IOTHREAD_MAPPING, /* virtio-scsi supports per-virtqueue iothread mapping */
+    QEMU_CAPS_EXIT_PRECONFIG, /* exit-preconfig QMP command */
 
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
