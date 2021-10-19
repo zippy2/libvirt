@@ -732,6 +732,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
 
               /* 475 */
               "virtio-scsi.iothread-mapping", /* QEMU_CAPS_VIRTIO_SCSI_IOTHREAD_MAPPING */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1251,6 +1252,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "query-stats-schemas", QEMU_CAPS_QUERY_STATS_SCHEMAS },
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsMigration[] = {
