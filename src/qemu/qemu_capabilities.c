@@ -775,6 +775,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               /* 500 */
               "arm-smmuv3.cmdqv", /* QEMU_CAPS_ARM_SMMUV3_CMDQV */
               "iothread.poll-weight", /* QEMU_CAPS_IOTHREAD_POLL_WEIGHT */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1305,6 +1306,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
     { "qom-list-get", QEMU_CAPS_QOM_LIST_GET },
     { "query-accelerators", QEMU_CAPS_QUERY_ACCELERATORS },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
