@@ -719,6 +719,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               /* 465 */
               "snapshot-internal-qmp", /* QEMU_CAPS_SNAPSHOT_INTERNAL_QMP */
               "chardev-reconnect-miliseconds", /* QEMU_CAPS_CHARDEV_RECONNECT_MILISECONDS */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1240,6 +1241,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "query-stats-schemas", QEMU_CAPS_QUERY_STATS_SCHEMAS },
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
     { "snapshot-save", QEMU_CAPS_SNAPSHOT_INTERNAL_QMP },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsMigration[] = {
