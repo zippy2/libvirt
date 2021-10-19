@@ -736,6 +736,9 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "bus-floppy", /* QEMU_CAPS_BUS_FLOPPY */
               "nvme", /* QEMU_CAPS_DEVICE_NVME */
               "nvme-ns", /* QEMU_CAPS_DEVICE_NVME_NS */
+
+              /* 480 */
+              "exit-preconfig", /* QEMU_CAPS_EXIT_PRECONFIG */
     );
 
 
@@ -1255,6 +1258,7 @@ struct virQEMUCapsStringFlags virQEMUCapsCommands[] = {
     { "query-stats-schemas", QEMU_CAPS_QUERY_STATS_SCHEMAS },
     { "display-reload", QEMU_CAPS_DISPLAY_RELOAD },
     { "blockdev-set-active", QEMU_CAPS_BLOCKDEV_SET_ACTIVE },
+    { "exit-preconfig", QEMU_CAPS_EXIT_PRECONFIG },
 };
 
 struct virQEMUCapsStringFlags virQEMUCapsMigration[] = {
