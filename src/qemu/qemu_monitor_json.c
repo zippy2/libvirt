@@ -1548,6 +1548,26 @@ qemuMonitorJSONSetCapabilities(qemuMonitor *mon)
 
 
 int
+qemuMonitorJSONExitPreconfig(qemuMonitor *mon)
+{
+    g_autoptr(virJSONValue) cmd = NULL;
+    g_autoptr(virJSONValue) reply = NULL;
+
+    if (!(cmd = qemuMonitorJSONMakeCommand("exit-preconfig",
+                                           NULL)))
+        return -1;
+
+    if (qemuMonitorJSONCommand(mon, cmd, &reply) < 0)
+        return -1;
+
+    if (qemuMonitorJSONCheckError(cmd, reply) < 0)
+        return -1;
+
+    return 0;
+}
+
+
+int
 qemuMonitorJSONStartCPUs(qemuMonitor *mon)
 {
     int ret;
