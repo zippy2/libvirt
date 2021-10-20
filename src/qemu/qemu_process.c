@@ -2458,37 +2458,54 @@ qemuProcessRefreshBalloonState(virDomainObj *vm,
 
 
 static int
-qemuProcessWaitForMonitor(virQEMUDriver *driver,
-                          virDomainObj *vm,
-                          int asyncJob,
-                          domainLogContext *logCtxt)
+qemuProcessInitMonitor(virQEMUDriver *driver,
+                       virDomainObj *vm,
+                       int asyncJob)
 {
-    int ret = -1;
-    g_autoptr(GHashTable) info = NULL;
     qemuDomainObjPrivate *priv = vm->privateData;
-
-    VIR_DEBUG("Connect monitor to vm=%p name='%s'", vm, vm->def->name);
-
-    if (qemuConnectMonitor(driver, vm, asyncJob, logCtxt, false) < 0)
-        goto cleanup;
+    g_autoptr(GHashTable) info = NULL;
+    int rc;
 
     /* Try to get the pty path mappings again via the monitor. This is much more
      * reliable if it's available.
      * Note that the monitor itself can be on a pty, so we still need to try the
      * log output method. */
     if (qemuDomainObjEnterMonitorAsync(vm, asyncJob) < 0)
-        goto cleanup;
-    ret = qemuMonitorGetChardevInfo(priv->mon, &info);
-    VIR_DEBUG("qemuMonitorGetChardevInfo returned %i", ret);
+        return -1;
+
+    rc = qemuMonitorGetChardevInfo(priv->mon, &info);
+    VIR_DEBUG("qemuMonitorGetChardevInfo returned %d", rc);
     qemuDomainObjExitMonitor(vm);
 
-    if (ret == 0) {
-        if ((ret = qemuProcessFindCharDevicePTYsMonitor(vm, info)) < 0)
-            goto cleanup;
+    if (rc < 0)
+        return -1;
 
-         qemuProcessRefreshChannelVirtioState(driver, vm, info, true);
-    }
+    if (qemuProcessFindCharDevicePTYsMonitor(vm, info) < 0)
+        return -1;
 
+    qemuProcessRefreshChannelVirtioState(driver, vm, info, true);
+
+    return 0;
+}
+
+
+static int
+qemuProcessWaitForMonitor(virQEMUDriver *driver,
+                          virDomainObj *vm,
+                          int asyncJob,
+                          domainLogContext *logCtxt)
+{
+    int ret = -1;
+
+    VIR_DEBUG("Connect monitor to vm=%p name='%s'", vm, vm->def->name);
+
+    if (qemuConnectMonitor(driver, vm, asyncJob, logCtxt, false) < 0)
+        goto cleanup;
+
+    if (qemuProcessInitMonitor(driver, vm, asyncJob) < 0)
+        goto cleanup;
+
+    ret = 0;
  cleanup:
     if (logCtxt && kill(vm->pid, 0) == -1 && errno == ESRCH) {
         qemuProcessReportLogError(logCtxt,
