@@ -1883,8 +1883,8 @@ qemuProcessMonitorLogFree(void *opaque)
 
 
 static int
-qemuProcessInitMonitor(virDomainObj *vm,
-                       virDomainAsyncJob asyncJob)
+qemuProcessEnableQMP(virDomainObj *vm,
+                     virDomainAsyncJob asyncJob)
 {
     int ret;
 
@@ -1944,7 +1944,7 @@ qemuConnectMonitor(virQEMUDriver *driver,
         return -1;
     }
 
-    if (qemuProcessInitMonitor(vm, asyncJob) < 0)
+    if (qemuProcessEnableQMP(vm, asyncJob) < 0)
         return -1;
 
     if (qemuMigrationCapsCheck(vm, asyncJob, reconnect) < 0)
