@@ -422,6 +422,8 @@ virErrorPtr qemuMonitorLastError(qemuMonitor *mon);
 
 int qemuMonitorSetCapabilities(qemuMonitor *mon);
 
+int qemuMonitorExitPreconfig(qemuMonitor *mon);
+
 int qemuMonitorSetLink(qemuMonitor *mon,
                        const char *name,
                        virDomainNetInterfaceLinkState state)
