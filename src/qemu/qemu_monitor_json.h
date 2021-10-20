@@ -52,6 +52,9 @@ int
 qemuMonitorJSONSetCapabilities(qemuMonitor *mon);
 
 int
+qemuMonitorJSONExitPreconfig(qemuMonitor *mon);
+
+int
 qemuMonitorJSONStartCPUs(qemuMonitor *mon);
 int
 qemuMonitorJSONStopCPUs(qemuMonitor *mon);
