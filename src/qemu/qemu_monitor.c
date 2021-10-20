@@ -1413,6 +1413,15 @@ qemuMonitorSetCapabilities(qemuMonitor *mon)
 
 
 int
+qemuMonitorExitPreconfig(qemuMonitor *mon)
+{
+    QEMU_CHECK_MONITOR(mon);
+
+    return qemuMonitorJSONExitPreconfig(mon);
+}
+
+
+int
 qemuMonitorStartCPUs(qemuMonitor *mon)
 {
     QEMU_CHECK_MONITOR(mon);
