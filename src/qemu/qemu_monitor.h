@@ -768,6 +768,11 @@ qemuMonitorGetCPUInfo(qemuMonitor *mon,
                       size_t maxvcpus,
                       bool hotplug);
 
+int
+qemuMonitorGetHotpluggableCPUs(qemuMonitor *mon,
+                               struct qemuMonitorQueryHotpluggableCpusEntry **entries,
+                               size_t *nentries);
+
 virBitmap *qemuMonitorGetCpuHalted(qemuMonitor *mon,
                                    size_t maxvcpus);
 
