@@ -130,6 +130,9 @@ size_t virDomainNumaGetNodeDistance(virDomainNuma *numa,
 virBitmap *virDomainNumaGetNodeCpumask(virDomainNuma *numa,
                                          size_t node)
     ATTRIBUTE_NONNULL(1);
+ssize_t virDomainNumaGetNodeByCpuID(const virDomainNuma *numa,
+                                    size_t cpuid)
+    ATTRIBUTE_NONNULL(1);
 virDomainMemoryAccess virDomainNumaGetNodeMemoryAccessMode(virDomainNuma *numa,
                                                       size_t node)
     ATTRIBUTE_NONNULL(1);
