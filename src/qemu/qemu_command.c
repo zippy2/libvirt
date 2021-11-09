@@ -7979,7 +7979,9 @@ qemuBuildNumaCommandLine(virQEMUDriverConfig *cfg,
         virCommandAddArg(cmd, "-numa");
         virBufferAsprintf(&buf, "node,nodeid=%zu", i);
 
-        if (qemuBuildNumaCPUs(&buf, virDomainNumaGetNodeCpumask(def->numa, i)) < 0)
+        /* Configured at runtime, if possible. */
+        if (!virQEMUCapsGet(priv->qemuCaps, QEMU_CAPS_EXIT_PRECONFIG) &&
+            qemuBuildNumaCPUs(&buf, virDomainNumaGetNodeCpumask(def->numa, i)) < 0)
             goto cleanup;
 
         if (hmat) {

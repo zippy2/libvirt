@@ -2490,6 +2490,47 @@ qemuProcessInitMonitor(virQEMUDriver *driver,
 
 
 static int
+qemuProcessPreconfigInitNUMA(qemuDomainObjPrivate *priv,
+                             const virDomainDef *def)
+{
+    struct qemuMonitorQueryHotpluggableCpusEntry *hotplugcpus = NULL;
+    size_t nhotplugcpus = 0;
+    unsigned int maxvcpus = virDomainDefGetVcpusMax(def);
+    size_t i;
+    int ret = -1;
+
+    if (qemuMonitorGetHotpluggableCPUs(priv->mon, &hotplugcpus, &nhotplugcpus) < 0)
+        return -1;
+
+    if (nhotplugcpus != maxvcpus) {
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("Something went wrong: maxvcpus=%1$u nhotplugcpus=%2$zu"),
+                       maxvcpus, nhotplugcpus);
+        goto cleanup;
+    }
+
+    for (i = 0; i < maxvcpus;) {
+        struct qemuMonitorQueryHotpluggableCpusEntry *vcpu = &hotplugcpus[i];
+        ssize_t n = virDomainNumaGetNodeByCpuID(def->numa, i);
+
+        if (n < 0)
+            goto cleanup;
+
+        if (qemuMonitorSetNumaNode(priv->mon, n, vcpu->socket_id,
+                                   vcpu->die_id, vcpu->core_id, vcpu->thread_id) < 0)
+            goto cleanup;
+
+        i += vcpu->vcpus;
+    }
+
+    ret = 0;
+ cleanup:
+    qemuMonitorQueryHotpluggableCpusFree(hotplugcpus, nhotplugcpus);
+    return ret;
+}
+
+
+static int
 qemuProcessPreconfigRun(virDomainObj *vm,
                         int asyncJob)
 {
@@ -2510,8 +2551,12 @@ qemuProcessPreconfigRun(virDomainObj *vm,
     if (qemuDomainObjEnterMonitorAsync(vm, asyncJob) < 0)
         goto cleanup;
 
+    if (qemuProcessPreconfigInitNUMA(priv, vm->def) < 0)
+        goto exit_monitor;
+
     rc = qemuMonitorExitPreconfig(priv->mon);
 
+ exit_monitor:
     qemuDomainObjExitMonitor(vm);
 
     if (rc < 0)
