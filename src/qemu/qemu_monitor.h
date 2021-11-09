@@ -1624,6 +1624,7 @@ qemuMonitorDisplayReload(qemuMonitor *mon,
                          const char *type,
                          bool tlsCerts);
 
+int
 qemuMonitorSetNumaNode(qemuMonitor *mon,
                        unsigned int node,
                        int socket,
