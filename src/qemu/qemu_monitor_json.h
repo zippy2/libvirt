@@ -819,3 +819,11 @@ qemuMonitorJSONSnapshotDelete(qemuMonitor *mon,
                               const char *jobname,
                               const char *snapshotname,
                               const char **disks);
+
+int
+qemuMonitorJSONSetNumaNode(qemuMonitor *mon,
+                           unsigned int node,
+                           int socket,
+                           int die,
+                           int core,
+                           int thread);

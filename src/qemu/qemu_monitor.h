@@ -1633,7 +1633,6 @@ qemuMonitorDisplayReload(qemuMonitor *mon,
                          const char *type,
                          bool tlsCerts);
 
-
 int
 qemuMonitorSnapshotSave(qemuMonitor *mon,
                         const char *jobname,
@@ -1653,3 +1652,11 @@ qemuMonitorSnapshotDelete(qemuMonitor *mon,
                           const char *jobname,
                           const char *snapshotname,
                           const char **disks);
+
+int
+qemuMonitorSetNumaNode(qemuMonitor *mon,
+                       unsigned int node,
+                       int socket,
+                       int die,
+                       int core,
+                       int thread);
