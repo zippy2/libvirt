@@ -1426,6 +1426,21 @@ virDomainNumaGetNodeCpumask(virDomainNuma *numa,
 }
 
 
+ssize_t
+virDomainNumaGetNodeByCpuID(const virDomainNuma *numa,
+                            size_t cpuid)
+{
+    size_t i;
+
+    for (i = 0; i < numa->nmem_nodes; i++) {
+        if (virBitmapIsBitSet(numa->mem_nodes[i].cpumask, cpuid))
+            return i;
+    }
+
+    return -1;
+}
+
+
 void
 virDomainNumaSetNodeCpumask(virDomainNuma *numa,
                             size_t node,
