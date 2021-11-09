@@ -833,3 +833,11 @@ int
 qemuMonitorJSONBlockdevSetActive(qemuMonitor *mon,
                                  const char *nodename,
                                  bool active);
+
+int
+qemuMonitorJSONSetNumaNode(qemuMonitor *mon,
+                           unsigned int node,
+                           int socket,
+                           int die,
+                           int core,
+                           int thread);
