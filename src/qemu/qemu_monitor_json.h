@@ -834,3 +834,11 @@ qemuMonitorJSONAnnounceSelf(qemuMonitor *mon,
                             unsigned int max,
                             unsigned int rounds,
                             unsigned int step);
+
+int
+qemuMonitorJSONSetNumaNode(qemuMonitor *mon,
+                           unsigned int node,
+                           int socket,
+                           int die,
+                           int core,
+                           int thread);
