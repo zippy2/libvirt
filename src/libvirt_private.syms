@@ -950,6 +950,7 @@ virDomainNumaGetInterconnect;
 virDomainNumaGetInterconnectsCount;
 virDomainNumaGetMaxCPUID;
 virDomainNumaGetMemorySize;
+virDomainNumaGetNodeByCpuID;
 virDomainNumaGetNodeCache;
 virDomainNumaGetNodeCacheCount;
 virDomainNumaGetNodeCount;
