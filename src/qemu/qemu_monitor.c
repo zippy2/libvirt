@@ -4529,3 +4529,19 @@ qemuMonitorDisplayReload(qemuMonitor *mon,
 
     return qemuMonitorJSONDisplayReload(mon, type, tlsCerts);
 }
+
+int
+qemuMonitorSetNumaNode(qemuMonitor *mon,
+                       unsigned int node,
+                       int socket,
+                       int die,
+                       int core,
+                       int thread)
+{
+    VIR_DEBUG("node=%u socket=%d die=%d core=%d thread=%d",
+              node, socket, die, core, thread);
+
+    QEMU_CHECK_MONITOR(mon);
+
+    return qemuMonitorJSONSetNumaNode(mon, node, socket, die, core, thread);
+}

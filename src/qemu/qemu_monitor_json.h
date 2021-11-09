@@ -828,3 +828,11 @@ qemuMonitorJSONQueryStats(qemuMonitor *mon,
 int qemuMonitorJSONDisplayReload(qemuMonitor *mon,
                                  const char *type,
                                  bool tlsCerts);
+
+int
+qemuMonitorJSONSetNumaNode(qemuMonitor *mon,
+                           unsigned int node,
+                           int socket,
+                           int die,
+                           int core,
+                           int thread);
