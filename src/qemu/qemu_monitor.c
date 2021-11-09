@@ -1763,6 +1763,19 @@ qemuMonitorGetCPUInfo(qemuMonitor *mon,
 }
 
 
+int
+qemuMonitorGetHotpluggableCPUs(qemuMonitor *mon,
+                               struct qemuMonitorQueryHotpluggableCpusEntry **entries,
+                               size_t *nentries)
+{
+    VIR_DEBUG("entries=%p nentries=%p", entries, nentries);
+
+    QEMU_CHECK_MONITOR(mon);
+
+    return qemuMonitorJSONGetHotpluggableCPUs(mon, entries, nentries);
+}
+
+
 /**
  * qemuMonitorGetCpuHalted:
  *
