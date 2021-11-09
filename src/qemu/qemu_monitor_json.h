@@ -830,3 +830,11 @@ qemuMonitorJSONBlockLatencyHistogramSet(qemuMonitor *mon,
                                         unsigned int *boundaries_write,
                                         unsigned int *boundaries_zone,
                                         unsigned int *boundaries_flush);
+
+int
+qemuMonitorJSONSetNumaNode(qemuMonitor *mon,
+                           unsigned int node,
+                           int socket,
+                           int die,
+                           int core,
+                           int thread);

@@ -8872,6 +8872,34 @@ qemuMonitorJSONMigrateRecover(qemuMonitor *mon,
 }
 
 
+int
+qemuMonitorJSONSetNumaNode(qemuMonitor *mon,
+                           unsigned int node,
+                           int socket,
+                           int die,
+                           int core,
+                           int thread)
+{
+    g_autoptr(virJSONValue) cmd = NULL;
+    g_autoptr(virJSONValue) reply = NULL;
+
+    if (!(cmd = qemuMonitorJSONMakeCommand("set-numa-node",
+                                           "S:type", "cpu",
+                                           "u:node-id", node,
+                                           "k:socket-id", socket,
+                                           "k:die-id", die,
+                                           "k:core-id", core,
+                                           "k:thread-id", thread,
+                                           NULL)))
+        return -1;
+
+    if (qemuMonitorJSONCommand(mon, cmd, &reply) < 0)
+        return -1;
+
+    return qemuMonitorJSONCheckError(cmd, reply);
+}
+
+
 static GHashTable *
 qemuMonitorJSONExtractQueryStatsSchema(virJSONValue *json)
 {

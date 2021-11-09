@@ -1968,7 +1968,6 @@ qemuMonitorDisplayReload(qemuMonitor *mon,
                          const char *type,
                          bool tlsCerts);
 
-
 int
 qemuMonitorSnapshotSave(qemuMonitor *mon,
                         const char *jobname,
@@ -2002,3 +2001,11 @@ qemuMonitorBlockLatencyHistogramSet(qemuMonitor *mon,
                                     unsigned int *boundaries_write,
                                     unsigned int *boundaries_zone,
                                     unsigned int *boundaries_flush);
+
+int
+qemuMonitorSetNumaNode(qemuMonitor *mon,
+                       unsigned int node,
+                       int socket,
+                       int die,
+                       int core,
+                       int thread);
