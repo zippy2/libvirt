@@ -373,3 +373,4 @@ if wireshark_dep.found()
 endif
 
 subdir('ssh-proxy')
+subdir('dump-config')
