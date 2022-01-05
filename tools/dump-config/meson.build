@@ -13,6 +13,6 @@ executable(
     libvirt_lib,
   ],
   install: true,
-  install_dir: helper.get('install_dir', libexecdir),
+  install_dir: libexecdir,
   install_rpath: libvirt_rpath,
 )
