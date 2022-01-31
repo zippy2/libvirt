@@ -18,7 +18,6 @@ networkDnsmasqCreateXMLConf(void);
 
 int
 networkDnsmasqConfContents(virNetworkObj *obj,
-                           const char *pidfile,
                            char **configstr,
                            char **hostsfilestr,
                            dnsmasqContext *dctx,
