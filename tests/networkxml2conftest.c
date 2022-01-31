@@ -24,7 +24,6 @@ testCompareXMLToConfFiles(const char *inxml, const char *outconf,
     int ret = -1;
     virNetworkDef *def = NULL;
     virNetworkObj *obj = NULL;
-    g_autofree char *pidfile = NULL;
     g_autoptr(dnsmasqContext) dctx = NULL;
     g_autoptr(virNetworkXMLOption) xmlopt = NULL;
 
@@ -44,7 +43,7 @@ testCompareXMLToConfFiles(const char *inxml, const char *outconf,
     if (dctx == NULL)
         goto fail;
 
-    if (networkDnsmasqConfContents(obj, pidfile, &confactual,
+    if (networkDnsmasqConfContents(obj, &confactual,
                                    &hostsfileactual, dctx, caps) < 0)
         goto fail;
 
