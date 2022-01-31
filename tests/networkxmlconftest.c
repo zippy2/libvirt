@@ -120,7 +120,6 @@ testCompareXMLToConfFiles(const void *data)
     int ret = -1;
     virNetworkDef *def = NULL;
     virNetworkObj *obj = NULL;
-    g_autofree char *pidfile = NULL;
     g_autoptr(dnsmasqContext) dctx = NULL;
     bool compareFailed = false;
 
@@ -150,7 +149,7 @@ testCompareXMLToConfFiles(const void *data)
     if (dctx == NULL)
         goto fail;
 
-    if (networkDnsmasqConfContents(obj, pidfile, &confactual,
+    if (networkDnsmasqConfContents(obj, &confactual,
                                    &hostsfileactual, dctx, info->caps) < 0)
         goto fail;
 
