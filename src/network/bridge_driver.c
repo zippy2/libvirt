@@ -1137,7 +1137,6 @@ networkDnsmasqConfTFTP(virBuffer *buf,
 
 int
 networkDnsmasqConfContents(virNetworkObj *obj,
-                           const char *pidfile,
                            char **configstr,
                            char **hostsfilestr,
                            dnsmasqContext *dctx,
@@ -1248,9 +1247,6 @@ networkDnsmasqConfContents(virNetworkObj *obj,
          */
         virBufferAddLit(&configbuf, "local=//\n");
     }
-
-    if (pidfile)
-        virBufferAsprintf(&configbuf, "pid-file=%s\n", pidfile);
 
     /* dnsmasq will *always* listen on localhost unless told otherwise */
 #ifdef __linux__
@@ -1471,7 +1467,7 @@ networkBuildDhcpDaemonCommandLine(virNetworkDriverState *driver,
 
     virNetworkObjSetDnsmasqPid(obj, -1);
 
-    if (networkDnsmasqConfContents(obj, pidfile, &configstr, &hostsfilestr,
+    if (networkDnsmasqConfContents(obj, &configstr, &hostsfilestr,
                                    dctx, dnsmasq_caps) < 0)
         return -1;
     if (!configstr)
@@ -1501,6 +1497,8 @@ networkBuildDhcpDaemonCommandLine(virNetworkDriverState *driver,
     virCommandAddArgFormat(cmd, "--leasefile-ro");
     virCommandAddArgFormat(cmd, "--dhcp-script=%s", leaseshelper_path);
     virCommandAddEnvPair(cmd, "VIR_BRIDGE_NAME", def->bridge);
+    virCommandSetPidFile(cmd, pidfile);
+    virCommandDaemonize(cmd);
 
     *cmdout = g_steal_pointer(&cmd);
     return 0;
@@ -1567,14 +1565,6 @@ networkStartDhcpDaemon(virNetworkDriverState *driver,
 
     if (virCommandRun(cmd, NULL) < 0)
         return -1;
-
-    /*
-     * There really is no race here - when dnsmasq daemonizes, its
-     * leader process stays around until its child has actually
-     * written its pidfile. So by time virCommandRun exits it has
-     * waitpid'd and guaranteed the proess has started and written a
-     * pid
-     */
 
     if (virPidFileRead(cfg->pidDir, def->name, &dnsmasqPid) < 0)
         return -1;
