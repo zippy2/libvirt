@@ -10201,7 +10201,6 @@ qemuProcessQMPFree(qemuProcessQMP *proc)
     g_free(proc->monpath);
     g_free(proc->monarg);
     g_free(proc->pidfile);
-    g_free(proc->stdErr);
     g_free(proc);
 }
 
@@ -10319,7 +10318,9 @@ static int
 qemuProcessQMPLaunch(qemuProcessQMP *proc)
 {
     const char *machine;
-    int status = 0;
+    VIR_AUTOCLOSE errfd = -1;
+    virTimeBackOffVar timebackoff;
+    const unsigned long long timeout = 30 * 1000; /* ms */
     int rc;
 
     if (proc->forceTCG)
@@ -10344,9 +10345,7 @@ qemuProcessQMPLaunch(qemuProcessQMP *proc)
                                      "-nographic",
                                      "-machine", machine,
                                      "-qmp", proc->monarg,
-                                     "-pidfile", proc->pidfile,
-                                     "-daemonize",
-                                    NULL);
+                                     NULL);
     virCommandAddEnvPassCommon(proc->cmd);
     virCommandClearCaps(proc->cmd);
 
@@ -10360,26 +10359,53 @@ qemuProcessQMPLaunch(qemuProcessQMP *proc)
     virCommandSetGID(proc->cmd, proc->runGid);
     virCommandSetUID(proc->cmd, proc->runUid);
 
-    virCommandSetErrorBuffer(proc->cmd, &(proc->stdErr));
+    virCommandSetPidFile(proc->cmd, proc->pidfile);
+    virCommandSetErrorFD(proc->cmd, &errfd);
+    virCommandDaemonize(proc->cmd);
 
-    if (virCommandRun(proc->cmd, &status) < 0)
+    if (virCommandRun(proc->cmd, NULL) < 0)
         return -1;
-
-    if (status != 0) {
-        VIR_DEBUG("QEMU %s exited with status %d", proc->binary, status);
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("Failed to start QEMU binary %1$s for probing: %2$s"),
-                       proc->binary,
-                       proc->stdErr ? proc->stdErr : _("unknown error"));
-        return -1;
-    }
 
     if ((rc = virPidFileReadPath(proc->pidfile, &proc->pid)) < 0) {
         virReportSystemError(-rc, _("Failed to read pidfile %1$s"), proc->pidfile);
         return -1;
     }
 
+    if (virTimeBackOffStart(&timebackoff, 1, timeout) < 0)
+        goto error;
+    while (virTimeBackOffWait(&timebackoff)) {
+        char errbuf[1024] = { 0 };
+
+        if (virFileExists(proc->monpath))
+            break;
+
+        if (virProcessKill(proc->pid, 0) == 0)
+            continue;
+
+        ignore_value(saferead(errfd, errbuf, sizeof(errbuf) - 1));
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("Failed to start QEMU binary %s for probing: %s"),
+                       proc->binary,
+                       errbuf[0] ? errbuf : _("unknown error"));
+        goto error;
+    }
+
+    if (!virFileExists(proc->monpath)) {
+        virReportError(VIR_ERR_OPERATION_TIMEOUT, "%s",
+                       _("QEMU monitor did not show up"));
+        goto error;
+    }
+
     return 0;
+
+ error:
+    virCommandAbort(proc->cmd);
+    if (proc->pid >= 0)
+        virProcessKillPainfully(proc->pid, true);
+    if (proc->pidfile)
+        unlink(proc->pidfile);
+
+    return -1;
 }
 
 

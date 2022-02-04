@@ -233,7 +233,6 @@ struct _qemuProcessQMP {
     char *libDir;
     uid_t runUid;
     gid_t runGid;
-    char *stdErr;
     char *monarg;
     char *monpath;
     char *pidfile;
