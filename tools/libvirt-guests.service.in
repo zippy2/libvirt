@@ -14,7 +14,7 @@ After=virtxend.socket
 After=virt-guest-shutdown.target
 
 [Service]
-EnvironmentFile=-@initconfdir@/libvirt-guests
+EnvironmentFile=-/etc/libvirt/libvirt-guests.conf
 # Hack just call traditional service until we factor
 # out the code
 ExecStart=@libexecdir@/libvirt-guests.sh start

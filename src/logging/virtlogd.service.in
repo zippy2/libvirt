@@ -10,7 +10,6 @@ After=virtlogd-admin.socket
 [Service]
 Type=notify
 Environment=VIRTLOGD_ARGS=
-EnvironmentFile=-@initconfdir@/virtlogd
 ExecStart=@sbindir@/virtlogd $VIRTLOGD_ARGS
 ExecReload=/bin/kill -USR1 $MAINPID
 

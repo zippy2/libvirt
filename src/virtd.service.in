@@ -17,7 +17,6 @@ After=apparmor.service
 [Service]
 Type=notify-reload
 Environment=@SERVICE@_ARGS="--timeout 120"
-EnvironmentFile=-@initconfdir@/@service@
 ExecStart=@sbindir@/@service@ $@SERVICE@_ARGS
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
