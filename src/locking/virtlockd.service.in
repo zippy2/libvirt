@@ -10,7 +10,6 @@ After=virtlockd-admin.socket
 [Service]
 Type=notify
 Environment=VIRTLOCKD_ARGS=
-EnvironmentFile=-@initconfdir@/virtlockd
 ExecStart=@sbindir@/virtlockd $VIRTLOCKD_ARGS
 ExecReload=/bin/kill -USR1 $MAINPID
 
