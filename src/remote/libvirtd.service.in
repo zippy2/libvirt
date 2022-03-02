@@ -30,7 +30,6 @@ Conflicts=xendomains.service
 [Service]
 Type=notify-reload
 Environment=LIBVIRTD_ARGS="--timeout 120"
-EnvironmentFile=-@initconfdir@/libvirtd
 Environment=SECRETS_ENCRYPTION_KEY=%d/secrets-encryption-key
 LoadCredentialEncrypted=secrets-encryption-key:@localstatedir@/lib/libvirt/secrets/secrets-encryption-key
 ExecStart=@sbindir@/libvirtd $LIBVIRTD_ARGS
