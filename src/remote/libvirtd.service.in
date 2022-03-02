@@ -28,7 +28,6 @@ Conflicts=xendomains.service
 [Service]
 Type=notify
 Environment=LIBVIRTD_ARGS="--timeout 120"
-EnvironmentFile=-@initconfdir@/libvirtd
 ExecStart=@sbindir@/libvirtd $LIBVIRTD_ARGS
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
