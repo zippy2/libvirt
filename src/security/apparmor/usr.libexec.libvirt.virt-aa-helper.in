@@ -74,5 +74,5 @@ profile virt-aa-helper @libexecdir@/virt-aa-helper {
   /**.[iI][sS][oO] r,
   /**/disk{,.*} r,
 
-  include if exists <local/usr.lib.libvirt.virt-aa-helper>
+  include if exists <local/usr.libexec.libvirt.virt-aa-helper>
 }
