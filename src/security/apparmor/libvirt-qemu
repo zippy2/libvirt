@@ -97,6 +97,7 @@
   /usr/share/sgabios/** r,
   /usr/share/slof/** r,
   /usr/share/vgabios/** r,
+  /usr/share/seavgabios/** r,
 
   # pki for libvirt-vnc and libvirt-spice (LP: #901272, #1690140)
   /etc/pki/CA/ r,
