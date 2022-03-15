@@ -1,5 +1,5 @@
 apparmor_gen_profiles = [
-  'usr.lib.libvirt.virt-aa-helper',
+  'usr.libexec.libvirt.virt-aa-helper',
   'usr.sbin.libvirtd',
   'usr.sbin.virtqemud',
   'usr.sbin.virtxend',
@@ -82,8 +82,8 @@ if not conf.has('WITH_APPARMOR_3')
   # AppArmor 3.x, upstream's preference is to avoid creating these
   # files in order to limit the amount of filesystem clutter.
   install_data(
-    'usr.lib.libvirt.virt-aa-helper.local',
+    'usr.libexec.libvirt.virt-aa-helper.local',
     install_dir: apparmor_dir / 'local',
-    rename: 'usr.lib.libvirt.virt-aa-helper',
+    rename: 'usr.libexec.libvirt.virt-aa-helper',
   )
 endif
