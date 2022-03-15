@@ -41,7 +41,7 @@ profile virt-aa-helper @libexecdir@/virt-aa-helper {
   deny /dev/mapper/* r,
 
   @libexecdir@/virt-aa-helper mr,
-  /{usr/,}sbin/apparmor_parser Ux,
+  /{usr/,}{s,}bin/apparmor_parser Ux,
 
   @sysconfdir@/apparmor.d/libvirt/* r,
   @sysconfdir@/apparmor.d/libvirt/libvirt-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]*-[0-9a-f]* rw,
@@ -72,9 +72,9 @@ profile virt-aa-helper @libexecdir@/virt-aa-helper {
   /**/disk{,.*} r,
 
 @BEGIN_APPARMOR_3@
-  include if exists <local/usr.lib.libvirt.virt-aa-helper>
+  include if exists <local/usr.libexec.libvirt.virt-aa-helper>
 @END_APPARMOR_3@
 @BEGIN_APPARMOR_2@
-  #include <local/usr.lib.libvirt.virt-aa-helper>
+  #include <local/usr.libexec.libvirt.virt-aa-helper>
 @END_APPARMOR_2@
 }
