@@ -7,7 +7,7 @@ util_sources = [
   'viraudit.c',
   'virauth.c',
   'virauthconfig.c',
-  'virbitmap.c',
+  'virbitmap.cpp',
   'virbpf.c',
   'virbuffer.c',
   'virccw.c',

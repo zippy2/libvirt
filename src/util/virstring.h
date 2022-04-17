@@ -20,6 +20,10 @@
 
 #include "internal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VIR_INT64_STR_BUFLEN 21
 
 int virStrToLong_i(char const *s,
@@ -138,3 +142,7 @@ int virStringParseYesNo(const char *str,
 int virStringParseVersion(unsigned long long *version,
                           const char *str,
                           bool allowMissing);
+
+#ifdef __cplusplus
+}
+#endif

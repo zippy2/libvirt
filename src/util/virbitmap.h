@@ -25,6 +25,9 @@
 
 #include <sys/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _virBitmap virBitmap;
 
@@ -140,3 +143,7 @@ void virBitmapSubtract(virBitmap *a, virBitmap *b)
 void virBitmapShrink(virBitmap *map, size_t b);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(virBitmap, virBitmapFree);
+
+#ifdef __cplusplus
+}
+#endif

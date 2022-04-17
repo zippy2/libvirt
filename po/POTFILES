@@ -255,7 +255,7 @@ src/util/virarptable.c
 src/util/viraudit.c
 src/util/virauth.c
 src/util/virauthconfig.c
-src/util/virbitmap.c
+src/util/virbitmap.cpp
 src/util/vircgroup.c
 src/util/virccw.c
 src/util/vircgroupbackend.c

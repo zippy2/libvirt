@@ -23,6 +23,10 @@
 
 #include "internal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern virErrorFunc virErrorHandler;
 extern void *virUserData;
 
@@ -199,3 +203,7 @@ void virLastErrorPrefixMessage(const char *fmt, ...)
     G_GNUC_PRINTF(1, 2);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(virError, virFreeError);
+
+#ifdef __cplusplus
+}
+#endif
