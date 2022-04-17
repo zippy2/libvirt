@@ -1,5 +1,5 @@
 project(
-  'libvirt', 'c',
+  'libvirt', 'c', 'cpp',
   version: '10.2.0',
   license: 'LGPLv2+',
   meson_version: '>= 0.56.0',
@@ -7,6 +7,7 @@ project(
     'buildtype=debugoptimized',
     'b_pie=true',
     'c_std=gnu99',
+    'cpp_std=c++20',
     'warning_level=2',
   ],
 )
@@ -210,6 +211,8 @@ libvirt_lib_version = '@0@.@1@.@2@'.format(libvirt_so_version, libvirt_age, libv
 
 cc = meson.get_compiler('c')
 cc_flags = []
+
+cpp = meson.get_compiler('cpp')
 
 git_werror = get_option('git_werror')
 if (git_werror.enabled() or git_werror.auto()) and git and not get_option('werror')
@@ -439,8 +442,10 @@ if cc.get_id() == 'clang'
 endif
 
 supported_cc_flags = []
+supported_cpp_flags = []
 if get_option('warning_level') == '2'
   supported_cc_flags = cc.get_supported_arguments(cc_flags)
+  supported_cpp_flags = cpp.get_supported_arguments(cc_flags)
 
   # we prefer -fstack-protector-strong but fallback to -fstack-protector-all
   fstack_cflags = cc.first_supported_argument([
@@ -502,6 +507,7 @@ if get_option('warning_level') == '2'
 
 endif
 add_project_arguments(supported_cc_flags, language: 'c')
+add_project_arguments(supported_cpp_flags, language: 'cpp')
 
 if cc.has_argument('-Wsuggest-attribute=format')
   conf.set('WITH_SUGGEST_ATTRIBUTE_FORMAT', 1)
