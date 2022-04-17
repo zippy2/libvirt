@@ -36,6 +36,10 @@
     "libvirt version: " VERSION
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * To be made public
  */
@@ -193,3 +197,6 @@ int virLogParseOutputs(const char *src,
                        virLogOutput ***outputs) ATTRIBUTE_NONNULL(1);
 int virLogParseFilters(const char *src,
                        virLogFilter ***filters) ATTRIBUTE_NONNULL(1);
+#ifdef __cplusplus
+}
+#endif

@@ -28,14 +28,18 @@
 # include <sys/utsname.h>
 #endif
 
+#include <string>
+
 #include "virlog.h"
 #include "virarch.h"
+
+using namespace std;
 
 VIR_LOG_INIT("util.arch");
 
 /* The canonical names are used in XML documents. ie ABI sensitive */
 static const struct virArchData {
-    const char *name;
+    const string name;
     unsigned int wordsize;
     virArchEndian endian;
 } virArchData[] = {
@@ -129,7 +133,7 @@ const char *virArchToString(virArch arch)
     if (arch >= VIR_ARCH_LAST)
         arch = VIR_ARCH_NONE;
 
-    return virArchData[arch].name;
+    return virArchData[arch].name.c_str();
 }
 
 
@@ -144,8 +148,8 @@ virArch virArchFromString(const char *archstr)
 {
     size_t i;
     for (i = 1; i < VIR_ARCH_LAST; i++) {
-        if (STREQ(virArchData[i].name, archstr))
-            return i;
+        if (virArchData[i].name == archstr)
+            return static_cast<virArch>(i);
     }
 
     VIR_DEBUG("Unknown arch %s", archstr);

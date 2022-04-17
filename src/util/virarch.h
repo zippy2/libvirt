@@ -23,6 +23,10 @@
 
 #include "internal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     VIR_ARCH_NONE,
     VIR_ARCH_ALPHA,        /* Alpha       64 BE https://en.wikipedia.org/wiki/DEC_Alpha */
@@ -120,3 +124,7 @@ const char *virArchToString(virArch arch);
 virArch virArchFromString(const char *name);
 
 virArch virArchFromHost(void);
+
+#ifdef __cplusplus
+}
+#endif

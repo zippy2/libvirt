@@ -2,7 +2,7 @@ util_sources = [
   'glibcompat.c',
   'viracpi.c',
   'viralloc.c',
-  'virarch.c',
+  'virarch.cpp',
   'virarptable.c',
   'viraudit.c',
   'virauth.c',
