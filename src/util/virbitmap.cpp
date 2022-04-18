@@ -237,10 +237,25 @@ virBitmapGetBit(virBitmap *bitmap,
 char *
 virBitmapToString(virBitmap *bitmap)
 {
-    ostringstream os;
+    string ret;
+    const int buflen = sizeof(unsigned long) * CHAR_BIT / 4;
+    size_t len = bitmap->map.size() / buflen;
+    size_t i;
 
-    copy(bitmap->map.begin(), bitmap->map.end(), ostream_iterator<bool>(os, ""));
-    return g_strdup(os.str().c_str());
+    for (i = 0; i <= len; i++) {
+        char buf[buflen + 1] = { };
+        unsigned long val = 0;
+        size_t j;
+
+        for (j = 0; j < buflen; j++) {
+            val |= bitmap->map[i * buflen + j] << j;
+        }
+
+        snprintf(buf, buflen + 1, "%0*lx", buflen / 4, val);
+        ret = buf + ret;
+    }
+
+    return g_strdup(ret.c_str());
 }
 
 
