@@ -1253,8 +1253,8 @@ apply the above patch\n'
 # Generate a list of files in which to search for translatable strings.
 perl_translatable_files_list_ = \
   -e 'foreach $$file (@ARGV) {' \
-  -e '	\# Consider only file extensions with one or two letters' \
-  -e '	$$file =~ /\...?$$/ or next;' \
+  -e '	\# Consider only file extensions with one, two or three letters' \
+  -e '	$$file =~ /\...?.?$$/ or next;'\
   -e '	\# Ignore mk files' \
   -e '	$$file =~ /\.mk$$/ and next;' \
   -e '	\# Ignore a .c or .h file with a corresponding .l or .y file' \
