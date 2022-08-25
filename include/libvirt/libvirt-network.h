@@ -181,6 +181,10 @@ typedef enum {
     VIR_NETWORK_UPDATE_COMMAND_DELETE    = 2, /* delete an existing element (Since: 0.10.2) */
     VIR_NETWORK_UPDATE_COMMAND_ADD_LAST  = 3, /* add an element at end of list (Since: 0.10.2) */
     VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST = 4, /* add an element at start of list (Since: 0.10.2) */
+    VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST = 5, /* modify an existing element or add a new
+                                                          one at the end of list (Since: 8.7.0) */
+    VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST = 6, /* modify an existing element or add a new
+                                                           one at the start of list (Since: 8.7.0) */
 # ifdef VIR_ENUM_SENTINELS
     VIR_NETWORK_UPDATE_COMMAND_LAST /* (Since: 0.10.2) */
 # endif

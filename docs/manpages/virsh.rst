@@ -6274,7 +6274,8 @@ changes optionally taking effect immediately, without needing to
 destroy and re-start the network.
 
 *command* is one of "add-first", "add-last", "add" (a synonym for
-add-last), "delete", or "modify".
+add-last), "delete", "modify", "modify-or-add" (a synonym for
+modify-or-add-last), "modify-or-add-last", or "modify-or-add-first"
 
 *section* is one of "bridge", "domain", "ip", "ip-dhcp-host",
 "ip-dhcp-range", "forward", "forward-interface", "forward-pf",
