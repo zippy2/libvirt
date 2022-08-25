@@ -119,7 +119,6 @@ virDomainCheckpointDefParse(xmlXPathContextPtr ctxt,
                             void *parseOpaque,
                             unsigned int flags)
 {
-    virDomainCheckpointDef *ret = NULL;
     size_t i;
     int n;
     g_autofree xmlNodePtr *nodes = NULL;
@@ -179,8 +178,7 @@ virDomainCheckpointDefParse(xmlXPathContextPtr ctxt,
             return NULL;
     }
 
-    ret = g_steal_pointer(&def);
-    return ret;
+    return g_steal_pointer(&def);
 }
 
 

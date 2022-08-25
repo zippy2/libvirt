@@ -7753,7 +7753,6 @@ testNodeDeviceCreateXML(virConnectPtr conn,
 static int
 testNodeDeviceDestroy(virNodeDevicePtr dev)
 {
-    int ret = 0;
     testDriver *driver = dev->conn->privateData;
     virNodeDeviceObj *obj = NULL;
     virNodeDeviceObj *parentobj = NULL;
@@ -7796,7 +7795,7 @@ testNodeDeviceDestroy(virNodeDevicePtr dev)
  cleanup:
     virNodeDeviceObjEndAPI(&obj);
     virObjectEventStateQueue(driver->eventState, event);
-    return ret;
+    return 0;
 }
 
 static int
@@ -9578,25 +9577,24 @@ testDomainChgIOThread(virDomainObj *vm,
                       unsigned int flags)
 {
     virDomainDef *def;
-    int ret = -1;
 
     if (!(def = virDomainObjGetOneDef(vm, flags)))
-        return ret;
+        return -1;
 
     if (def) {
         switch (action) {
         case VIR_DOMAIN_IOTHREAD_ACTION_ADD:
             if (virDomainDriverAddIOThreadCheck(def, iothread_id) < 0)
-                return ret;
+                return -1;
 
             if (!virDomainIOThreadIDAdd(def, iothread_id))
-                return ret;
+                return -1;
 
             break;
 
         case VIR_DOMAIN_IOTHREAD_ACTION_DEL:
             if (virDomainDriverDelIOThreadCheck(def, iothread_id) < 0)
-                return ret;
+                return -1;
 
             virDomainIOThreadIDDel(def, iothread_id);
 
@@ -9607,16 +9605,14 @@ testDomainChgIOThread(virDomainObj *vm,
                 virReportError(VIR_ERR_INVALID_ARG,
                                _("cannot find IOThread '%1$u' in iothreadids"),
                                iothread_id);
-                return ret;
+                return -1;
             }
 
             break;
         }
     }
 
-    ret = 0;
-
-    return ret;
+    return 0;
 }
 
 static int
