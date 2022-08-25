@@ -2744,6 +2744,7 @@ virNetworkDefUpdateIPDHCPHost(virNetworkDef *def,
     virNetworkIPDef *ipdef = virNetworkIPDefByIndex(def, parentIndex);
     virNetworkDHCPHostDef host = { 0 };
     bool partialOkay = (command == VIR_NETWORK_UPDATE_COMMAND_DELETE);
+    bool hasModified = false;
 
     if (virNetworkDefUpdateCheckElementName(def, ctxt->node, "host") < 0)
         goto cleanup;
@@ -2764,7 +2765,9 @@ virNetworkDefUpdateIPDHCPHost(virNetworkDef *def,
         goto cleanup;
     }
 
-    if (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY) {
+    if (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY ||
+        command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST) {
 
         /* search for the entry with this (ip|mac|name),
          * and update the IP+(mac|name) */
@@ -2780,24 +2783,32 @@ virNetworkDefUpdateIPDHCPHost(virNetworkDef *def,
         }
 
         if (i == ipdef->nhosts) {
-            g_autofree char *ip = virSocketAddrFormat(&host.ip);
-            virReportError(VIR_ERR_OPERATION_INVALID,
-                           _("couldn't locate an existing dhcp host entry with \"mac='%1$s'\" \"name='%2$s'\" \"ip='%3$s'\" in network '%4$s'"),
-                           host.mac ? host.mac : _("unknown"), host.name,
-                           ip ? ip : _("unknown"), def->name);
-            goto cleanup;
+            if (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY) {
+                g_autofree char *ip = virSocketAddrFormat(&host.ip);
+                virReportError(VIR_ERR_OPERATION_INVALID,
+                               _("couldn't locate an existing dhcp host entry with \"mac='%1$s'\" \"name='%2$s'\" \"ip='%3$s'\" in network '%4$s'"),
+                               host.mac ? host.mac : _("unknown"), host.name,
+                               ip ? ip : _("unknown"), def->name);
+                goto cleanup;
+            }
+        } else {
+            /* clear the existing hosts entry, move the new one in its place,
+             * then clear out the extra copy to get rid of the duplicate pointers
+             * to its data (mac and name strings).
+             */
+            virNetworkDHCPHostDefClear(&ipdef->hosts[i]);
+            ipdef->hosts[i] = host;
+            memset(&host, 0, sizeof(host));
+            hasModified = true;
         }
+    }
 
-        /* clear the existing hosts entry, move the new one in its place,
-         * then clear out the extra copy to get rid of the duplicate pointers
-         * to its data (mac and name strings).
-         */
-        virNetworkDHCPHostDefClear(&ipdef->hosts[i]);
-        ipdef->hosts[i] = host;
-        memset(&host, 0, sizeof(host));
-
-    } else if ((command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST) ||
-               (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST)) {
+    if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+        (!hasModified &&
+         (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+          command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST))) {
+        size_t indx = 0;
 
         if (virNetworkDefUpdateCheckMultiDHCP(def, ipdef) < 0)
             goto cleanup;
@@ -2820,11 +2831,12 @@ virNetworkDefUpdateIPDHCPHost(virNetworkDef *def,
             }
         }
 
+        if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+            command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST)
+            indx = ipdef->nhosts;
+
         /* add to beginning/end of list */
-        if (VIR_INSERT_ELEMENT(ipdef->hosts,
-                               command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST
-                               ? 0 : ipdef->nhosts,
-                               ipdef->nhosts, host) < 0)
+        if (VIR_INSERT_ELEMENT(ipdef->hosts, indx, ipdef->nhosts, host) < 0)
             goto cleanup;
     } else if (command == VIR_NETWORK_UPDATE_COMMAND_DELETE) {
 
@@ -2850,7 +2862,9 @@ virNetworkDefUpdateIPDHCPHost(virNetworkDef *def,
         virNetworkDHCPHostDefClear(&ipdef->hosts[i]);
         VIR_DELETE_ELEMENT(ipdef->hosts, i, ipdef->nhosts);
 
-    } else {
+    } else if (command != VIR_NETWORK_UPDATE_COMMAND_MODIFY &&
+               command != VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST &&
+               command != VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST) {
         virNetworkDefUpdateUnknownCommand(command);
         goto cleanup;
     }
