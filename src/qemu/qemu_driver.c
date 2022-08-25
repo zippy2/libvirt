@@ -5855,7 +5855,6 @@ qemuDomainRestoreParams(virConnectPtr conn,
 {
     const char *path = NULL;
     const char *dxml = NULL;
-    int ret = -1;
 
     if (virTypedParamsValidate(params, nparams,
                                VIR_DOMAIN_SAVE_PARAM_FILE, VIR_TYPED_PARAM_STRING,
@@ -5876,9 +5875,8 @@ qemuDomainRestoreParams(virConnectPtr conn,
         return -1;
     }
 
-    ret = qemuDomainRestoreInternal(conn, path, dxml, flags,
-                                    virDomainRestoreParamsEnsureACL);
-    return ret;
+    return qemuDomainRestoreInternal(conn, path, dxml, flags,
+                                     virDomainRestoreParamsEnsureACL);
 }
 
 static char *

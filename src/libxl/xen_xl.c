@@ -1329,7 +1329,6 @@ xenFormatXLVnuma(virConfValue *list,
                  size_t node,
                  size_t nr_nodes)
 {
-    int ret = -1;
     size_t i;
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
     virConfValue *numaVnode;
@@ -1376,9 +1375,7 @@ xenFormatXLVnuma(virConfValue *list,
         tmp->next = numaVnode;
     else
         list->list = numaVnode;
-    ret = 0;
-
-    return ret;
+    return 0;
 }
 
 static int
