@@ -2897,7 +2897,6 @@ virNetworkDefUpdateIPDHCPRange(virNetworkDef *def,
 
     /* parse the xml into a virSocketAddrRange */
     if (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY) {
-
         virReportError(VIR_ERR_OPERATION_UNSUPPORTED, "%s",
                        _("dhcp ranges cannot be modified, only added or deleted"));
         return -1;
@@ -2922,29 +2921,41 @@ virNetworkDefUpdateIPDHCPRange(virNetworkDef *def,
         }
     }
 
-    if ((command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST) ||
-        (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST)) {
+    if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST) {
+        size_t pos = 0;
 
         if (virNetworkDefUpdateCheckMultiDHCP(def, ipdef) < 0)
             return -1;
 
         if (i < ipdef->nranges) {
-            g_autofree char *startip = virSocketAddrFormat(&range.addr.start);
-            g_autofree char *endip = virSocketAddrFormat(&range.addr.end);
+            if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+                command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST) {
+                g_autofree char *startip = virSocketAddrFormat(&range.addr.start);
+                g_autofree char *endip = virSocketAddrFormat(&range.addr.end);
 
-            virReportError(VIR_ERR_OPERATION_INVALID,
-                           _("there is an existing dhcp range entry in network '%1$s' that matches \"<range start='%2$s' end='%3$s'/>\""),
-                           def->name,
-                           startip ? startip : "unknown",
-                           endip ? endip : "unknown");
+                virReportError(VIR_ERR_OPERATION_INVALID,
+                               _("there is an existing dhcp range entry in network '%1$s' that matches \"<range start='%2$s' end='%3$s'/>\""),
+                               def->name,
+                               startip ? startip : "unknown",
+                               endip ? endip : "unknown");
+            } else {
+                virReportError(VIR_ERR_OPERATION_UNSUPPORTED, "%s",
+                               _("dhcp ranges cannot be modified, only added or deleted"));
+            }
+
             return -1;
         }
 
+        if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+            command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST) {
+            pos = ipdef->nranges;
+        }
+
         /* add to beginning/end of list */
-        if (VIR_INSERT_ELEMENT(ipdef->ranges,
-                               command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST
-                               ? 0 : ipdef->nranges,
-                               ipdef->nranges, range) < 0)
+        if (VIR_INSERT_ELEMENT(ipdef->ranges, pos, ipdef->nranges, range) < 0)
             return -1;
     } else if (command == VIR_NETWORK_UPDATE_COMMAND_DELETE) {
 
