@@ -3001,7 +3001,6 @@ qemuProcessUpdateVideoRamSize(virQEMUDriver *driver,
                               virDomainObj *vm,
                               int asyncJob)
 {
-    int ret = -1;
     ssize_t i;
     qemuDomainObjPrivate *priv = vm->privateData;
     virDomainVideoDef *video = NULL;
@@ -3069,9 +3068,7 @@ qemuProcessUpdateVideoRamSize(virQEMUDriver *driver,
     qemuDomainObjExitMonitor(vm);
 
     cfg = virQEMUDriverGetConfig(driver);
-    ret = virDomainObjSave(vm, driver->xmlopt, cfg->stateDir);
-
-    return ret;
+    return virDomainObjSave(vm, driver->xmlopt, cfg->stateDir);
 
  error:
     qemuDomainObjExitMonitor(vm);
