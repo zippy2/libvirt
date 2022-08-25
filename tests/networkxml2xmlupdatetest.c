@@ -177,6 +177,30 @@ mymain(void)
                        "nat-network",
                        VIR_NETWORK_UPDATE_COMMAND_DELETE,
                        0);
+    DO_TEST_INDEX("modify-or-add-first (existing record)",
+                  "host-updated",
+                  "nat-network",
+                  "nat-network-host-updated",
+                  VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST,
+                  0);
+    DO_TEST_INDEX("modify-or-add-last (existing record)",
+                  "host-updated",
+                  "nat-network",
+                  "nat-network-host-updated",
+                  VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST,
+                  0);
+    DO_TEST_INDEX("modify-or-add-first (non-existing record)",
+                  "host-new",
+                  "nat-network",
+                  "nat-network-hosts-first",
+                  VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST,
+                  0);
+    DO_TEST_INDEX("modify-or-add-last (non-existing record)",
+                  "host-new",
+                  "nat-network",
+                  "nat-network-hosts",
+                  VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST,
+                  0);
 
 
     section = VIR_NETWORK_SECTION_IP_DHCP_RANGE;
