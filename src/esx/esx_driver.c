@@ -2663,7 +2663,6 @@ esxConnectDomainXMLToNative(virConnectPtr conn, const char *nativeFormat,
     virVMXContext ctx;
     esxVMX_Data data = { 0 };
     g_autoptr(virDomainDef) def = NULL;
-    char *vmx = NULL;
 
     virCheckFlags(0, NULL);
 
@@ -2695,9 +2694,7 @@ esxConnectDomainXMLToNative(virConnectPtr conn, const char *nativeFormat,
     ctx.datacenterPath = NULL;
     ctx.moref = NULL;
 
-    vmx = virVMXFormatConfig(&ctx, priv->xmlopt, def, virtualHW_version);
-
-    return vmx;
+    return virVMXFormatConfig(&ctx, priv->xmlopt, def, virtualHW_version);
 }
 
 

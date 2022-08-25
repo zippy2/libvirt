@@ -752,7 +752,6 @@ static int
 openvzLocateConfFileDefault(int vpsid, char **conffile, const char *ext)
 {
     g_autofree char *confdir = NULL;
-    int ret = 0;
 
     confdir = openvzLocateConfDir();
     if (confdir == NULL)
@@ -760,7 +759,7 @@ openvzLocateConfFileDefault(int vpsid, char **conffile, const char *ext)
 
     *conffile = g_strdup_printf("%s/%d.%s", confdir, vpsid, ext ? ext : "conf");
 
-    return ret;
+    return 0;
 }
 
 static char *
