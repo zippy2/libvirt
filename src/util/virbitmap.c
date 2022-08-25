@@ -330,9 +330,7 @@ virBitmapFormat(virBitmap *bitmap)
     int start, cur, prev;
 
     if (!bitmap || (cur = virBitmapNextSetBit(bitmap, -1)) < 0) {
-        char *ret;
-        ret = g_strdup("");
-        return ret;
+        return g_strdup("");
     }
 
     start = prev = cur;

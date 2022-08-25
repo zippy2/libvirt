@@ -199,7 +199,6 @@ static int
 virCopyError(virErrorPtr from,
              virErrorPtr to)
 {
-    int ret = 0;
     if (!to)
         return 0;
     virResetError(to);
@@ -217,7 +216,7 @@ virCopyError(virErrorPtr from,
     /*
      * Deliberately not setting 'conn', 'dom', 'net' references
      */
-    return ret;
+    return 0;
 }
 
 
