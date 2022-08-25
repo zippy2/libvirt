@@ -3029,20 +3029,32 @@ virNetworkDefUpdateForwardInterface(virNetworkDef *def,
             break;
     }
 
-    if ((command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST) ||
-        (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST)) {
+    if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+        command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST) {
+        size_t pos = 0;
 
         if (i < def->forward.nifs) {
-            virReportError(VIR_ERR_OPERATION_INVALID,
-                           _("there is an existing interface entry in network '%1$s' that matches \"<interface dev='%2$s'>\""),
-                           def->name, iface.device.dev);
+            if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+                command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST) {
+                virReportError(VIR_ERR_OPERATION_INVALID,
+                               _("there is an existing interface entry in network '%1$s' that matches \"<interface dev='%2$s'>\""),
+                               def->name, iface.device.dev);
+            } else {
+                virReportError(VIR_ERR_OPERATION_UNSUPPORTED, "%s",
+                               _("forward interface entries cannot be modified, only added or deleted"));
+            }
             goto cleanup;
         }
 
+        if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+            command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST) {
+            pos = def->forward.nifs;
+        }
+
         /* add to beginning/end of list */
-        if (VIR_INSERT_ELEMENT(def->forward.ifs,
-                               command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST
-                               ? 0 : def->forward.nifs,
+        if (VIR_INSERT_ELEMENT(def->forward.ifs, pos,
                                def->forward.nifs, iface) < 0)
             goto cleanup;
     } else if (command == VIR_NETWORK_UPDATE_COMMAND_DELETE) {
