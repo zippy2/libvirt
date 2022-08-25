@@ -29787,7 +29787,6 @@ virSecurityLabelDef *
 virDomainDefGetSecurityLabelDef(const virDomainDef *def, const char *model)
 {
     size_t i;
-    virSecurityLabelDef *seclabel = NULL;
 
     if (def == NULL || model == NULL)
         return NULL;
@@ -29799,7 +29798,7 @@ virDomainDefGetSecurityLabelDef(const virDomainDef *def, const char *model)
             return def->seclabels[i];
     }
 
-    return seclabel;
+    return NULL;
 }
 
 
@@ -31616,7 +31615,6 @@ virDomainObjGetMessages(virDomainObj *vm,
     size_t i = 0;
     size_t n = 0;
     int nmsgs = 0;
-    int rv = -1;
 
     *msgs = NULL;
 
@@ -31647,9 +31645,7 @@ virDomainObjGetMessages(virDomainObj *vm,
     if (*msgs)
         (*msgs)[nmsgs] = NULL;
 
-    rv = nmsgs;
-
-    return rv;
+    return nmsgs;
 }
 
 bool
