@@ -1252,7 +1252,8 @@ static const vshCmdOptDef opts_network_update[] = {
 
 VIR_ENUM_IMPL(virshNetworkUpdateCommand,
               VIR_NETWORK_UPDATE_COMMAND_LAST,
-              "none", "modify", "delete", "add-last", "add-first");
+              "none", "modify", "delete", "add-last", "add-first",
+              "modify-or-add-last", "modify-or-add-first");
 
 VIR_ENUM_IMPL(virshNetworkSection,
               VIR_NETWORK_SECTION_LAST,
@@ -1287,6 +1288,9 @@ cmdNetworkUpdate(vshControl *ctl, const vshCmd *cmd)
     if (STREQ(commandStr, "add")) {
         /* "add" is a synonym for "add-last" */
         command = VIR_NETWORK_UPDATE_COMMAND_ADD_LAST;
+    } else if (STREQ(commandStr, "modify-or-add")) {
+        /* "modify-or-add" is a synonym for "modify-or-add-last" */
+        command = VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST;
     } else {
         command = virshNetworkUpdateCommandTypeFromString(commandStr);
         if (command <= 0) {
