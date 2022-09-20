@@ -394,6 +394,15 @@ mymain(void)
             "dns-txt-record-modify-fail",
             "nat-network-dns-txt-record",
             VIR_NETWORK_UPDATE_COMMAND_MODIFY);
+    DO_TEST("insert-dns-txt-record",
+            "dns-txt-record-snowman",
+            "nat-network-dns-txt-record",
+            "nat-network-dns-txt-records",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
+    DO_TEST_FAIL("append-duplicate-dns-txt-record",
+                 "dns-txt-record-example",
+                 "nat-network-dns-txt-record",
+                 VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST);
 
 
     section = VIR_NETWORK_SECTION_DNS_SRV;
