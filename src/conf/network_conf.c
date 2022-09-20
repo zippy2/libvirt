@@ -3158,20 +3158,30 @@ virNetworkDefUpdatePortGroup(virNetworkDef *def,
         goto cleanup;
     }
 
-    if (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY) {
+    if (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY ||
+        (foundName >= 0 &&
+         (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+          command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST))) {
 
         /* replace existing entry */
         virPortGroupDefClear(&def->portGroups[foundName]);
         def->portGroups[foundName] = portgroup;
         memset(&portgroup, 0, sizeof(portgroup));
 
-    } else if ((command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST) ||
-        (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST)) {
+    } else if ((command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+                command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST) ||
+               (foundName == -1 &&
+                (command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+                 command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST))) {
 
         /* add to beginning/end of list */
-        if (VIR_INSERT_ELEMENT(def->portGroups,
-                               command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST
-                               ? 0 : def->nPortGroups,
+        size_t pos = 0;
+
+        if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+            command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST)
+            pos = def->nPortGroups;
+
+        if (VIR_INSERT_ELEMENT(def->portGroups, pos,
                                def->nPortGroups, portgroup) < 0)
             goto cleanup;
     } else if (command == VIR_NETWORK_UPDATE_COMMAND_DELETE) {
