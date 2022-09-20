@@ -3428,7 +3428,9 @@ virNetworkDefUpdateDNSTxt(virNetworkDef *def,
     virNetworkDNSDef *dns = &def->dns;
     virNetworkDNSTxtDef txt = { 0 };
     bool isAdd = (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
-                  command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST);
+                  command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+                  command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+                  command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST);
 
     if (virNetworkDefUpdateCheckElementName(def, ctxt->node, "txt") < 0)
         goto cleanup;
@@ -3442,18 +3444,29 @@ virNetworkDefUpdateDNSTxt(virNetworkDef *def,
     }
 
     if (isAdd) {
+        size_t pos = 0;
 
         if (foundIdx < dns->ntxts) {
-            virReportError(VIR_ERR_OPERATION_INVALID,
-                           _("there is already a DNS TXT record with name '%1$s' in network %2$s"),
-                           txt.name, def->name);
+            if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+                command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST) {
+                virReportError(VIR_ERR_OPERATION_INVALID,
+                               _("there is already a DNS TXT record with name '%1$s' in network %2$s"),
+                               txt.name, def->name);
+            } else {
+                virReportError(VIR_ERR_OPERATION_UNSUPPORTED, "%s",
+                               _("DNS TXT records cannot be modified, only added or deleted"));
+            }
+
             goto cleanup;
         }
 
+        if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+            command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST) {
+            pos = dns->ntxts;
+        }
+
         /* add to beginning/end of list */
-        if (VIR_INSERT_ELEMENT(dns->txts,
-                               command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST
-                               ? 0 : dns->ntxts, dns->ntxts, txt) < 0)
+        if (VIR_INSERT_ELEMENT(dns->txts, pos, dns->ntxts, txt) < 0)
             goto cleanup;
     } else if (command == VIR_NETWORK_UPDATE_COMMAND_DELETE) {
 
