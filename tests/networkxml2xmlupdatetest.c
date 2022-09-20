@@ -355,6 +355,15 @@ mymain(void)
                  "dns-host-modify-not-existing",
                  "nat-network-dns-hosts",
                  VIR_NETWORK_UPDATE_COMMAND_MODIFY);
+    DO_TEST_FAIL("insert-incomplete-host",
+                 "dns-host-gateway-incomplete",
+                 "nat-network-dns-hosts",
+                 VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
+    DO_TEST("insert-host",
+            "dns-host-pudding",
+            "nat-network-dns-hosts",
+            "nat-network-dns-more-hosts",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
 
 
     section = VIR_NETWORK_SECTION_DNS_TXT;
