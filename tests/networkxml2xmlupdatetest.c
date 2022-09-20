@@ -305,6 +305,26 @@ mymain(void)
                  "portgroup-alice-new",
                  "nat-network-dns-srv-record",
                  VIR_NETWORK_UPDATE_COMMAND_DELETE);
+    DO_TEST("insert-portgroup (non-existing record)",
+            "portgroup-alison",
+            "openvswitch-net",
+            "openvswitch-net-more-portgroups",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
+    DO_TEST("append-duplicate-portgroup (existing record)",
+            "portgroup-alice-new",
+            "openvswitch-net",
+            "openvswitch-net-modified",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST);
+    DO_TEST("modify-portgroup (existing record)",
+            "portgroup-alice-new",
+            "openvswitch-net",
+            "openvswitch-net-modified",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
+    DO_TEST("modify-missing-portgroup (non-existing record)",
+            "portgroup-alison",
+            "openvswitch-net",
+            "openvswitch-net-more-portgroups",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
 
 
     section = VIR_NETWORK_SECTION_DNS_HOST;
