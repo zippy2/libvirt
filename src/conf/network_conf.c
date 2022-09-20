@@ -3217,7 +3217,9 @@ virNetworkDefUpdateDNSHost(virNetworkDef *def,
     virNetworkDNSDef *dns = &def->dns;
     virNetworkDNSHostDef host = { 0 };
     bool isAdd = (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
-                  command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST);
+                  command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+                  command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST ||
+                  command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST);
     int foundCt = 0;
 
     if (virNetworkDefUpdateCheckElementName(def, ctxt->node, "host") < 0)
@@ -3256,18 +3258,28 @@ virNetworkDefUpdateDNSHost(virNetworkDef *def,
     }
 
     if (isAdd) {
+        size_t pos = 0;
 
         if (foundCt > 0) {
-            virReportError(VIR_ERR_OPERATION_INVALID,
-                           _("there is already at least one DNS HOST record with a matching field in network %1$s"),
-                           def->name);
+            if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST ||
+                command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST) {
+                virReportError(VIR_ERR_OPERATION_INVALID,
+                               _("there is already at least one DNS HOST record with a matching field in network %1$s"),
+                               def->name);
+            } else {
+                virReportError(VIR_ERR_OPERATION_UNSUPPORTED, "%s",
+                               _("DNS HOST records cannot be modified only added or deleted"));
+            }
             goto cleanup;
         }
 
+        if (command == VIR_NETWORK_UPDATE_COMMAND_ADD_LAST ||
+            command == VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST) {
+            pos = dns->nhosts;
+        }
+
         /* add to beginning/end of list */
-        if (VIR_INSERT_ELEMENT(dns->hosts,
-                               command == VIR_NETWORK_UPDATE_COMMAND_ADD_FIRST
-                               ? 0 : dns->nhosts, dns->nhosts, host) < 0)
+        if (VIR_INSERT_ELEMENT(dns->hosts, pos, dns->nhosts, host) < 0)
             goto cleanup;
     } else if (command == VIR_NETWORK_UPDATE_COMMAND_DELETE) {
 
