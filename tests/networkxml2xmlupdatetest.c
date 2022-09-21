@@ -232,6 +232,23 @@ mymain(void)
                        "nat-network",
                        VIR_NETWORK_UPDATE_COMMAND_DELETE,
                        0);
+    DO_TEST_INDEX("add-dhcp-range",
+                  "dhcp-range",
+                  "dhcp6host-routed-network",
+                  "dhcp6host-routed-network-range",
+                  VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST,
+                  0);
+    DO_TEST_INDEX_FAIL("add-dhcp-range-outside-net",
+                       "dhcp-range-10",
+                       "dhcp6host-routed-network",
+                       VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST,
+                       0);
+    DO_TEST_INDEX("append-dhcp-range",
+                  "dhcp-range",
+                  "dhcp6host-routed-network",
+                  "dhcp6host-routed-network-another-range",
+                  VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_LAST,
+                  1);
 
 
     section = VIR_NETWORK_SECTION_FORWARD_INTERFACE;
