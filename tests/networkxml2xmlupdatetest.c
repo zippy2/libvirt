@@ -266,6 +266,15 @@ mymain(void)
                  "interface-eth47",
                  "nat-network-dns-srv-record",
                  VIR_NETWORK_UPDATE_COMMAND_DELETE);
+    DO_TEST("insert-forward-interface",
+            "interface-eth47",
+            "nat-network-dns-srv-record",
+            "nat-network-forward-ifaces",
+            VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
+    DO_TEST_FAIL("insert-forward-interface",
+                 "interface-eth1",
+                 "nat-network-dns-srv-record",
+                 VIR_NETWORK_UPDATE_COMMAND_MODIFY_OR_ADD_FIRST);
 
 
     section = VIR_NETWORK_SECTION_PORTGROUP;
