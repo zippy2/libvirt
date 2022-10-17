@@ -656,7 +656,8 @@ static virDomainDefParserConfig virVMXDomainDefParserConfig = {
     .features = (VIR_DOMAIN_DEF_FEATURE_WIDE_SCSI |
                  VIR_DOMAIN_DEF_FEATURE_NAME_SLASH |
                  VIR_DOMAIN_DEF_FEATURE_FW_AUTOSELECT |
-                 VIR_DOMAIN_DEF_FEATURE_NO_BOOT_ORDER),
+                 VIR_DOMAIN_DEF_FEATURE_NO_BOOT_ORDER |
+                 VIR_DOMAIN_DEF_FEATURE_MEMORY_HOTPLUG),
     .defArch = VIR_ARCH_I686,
 };
 
@@ -1320,6 +1321,7 @@ virVMXGatherSCSIControllers(virVMXContext *ctx, virDomainDef *def,
 
 struct virVMXConfigScanResults {
     int networks_max_index;
+    int mem_devices;
 };
 
 static int
@@ -1328,23 +1330,32 @@ virVMXConfigScanResultsCollector(const char* name,
                                  void *opaque)
 {
     struct virVMXConfigScanResults *results = opaque;
+    int idx;
+    int *max = NULL;
     const char *suffix = NULL;
+    char *p = NULL;
 
     if ((suffix = STRCASESKIP(name, "ethernet"))) {
-        int idx;
-        char *p;
-
-        if (virStrToLong_i(suffix, &p, 10, &idx) < 0 ||
-            *p != '.' || idx < 0) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("failed to parse the index of the VMX key '%1$s'"),
-                           name);
-            return -1;
-        }
-
-        if (idx > results->networks_max_index)
-            results->networks_max_index = idx;
+        max = &results->networks_max_index;
+    } else if ((suffix = STRCASESKIP(name, "nvdimm0:"))) {
+        /* Per vSphere docs, there can be only one NVDIMM controller per
+         * domain. This simplifies things. */
+        max = &results->mem_devices;
+    } else {
+        /* Not interested. */
+        return 0;
     }
+
+    if (virStrToLong_i(suffix, &p, 10, &idx) < 0 ||
+        *p != '.' || idx < 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("failed to parse the index of the VMX key '%s'"),
+                       name);
+        return -1;
+    }
+
+    if (idx > *max)
+        *max = idx;
 
     return 0;
 }
@@ -1375,6 +1386,63 @@ virVMXParseGenID(virConf *conf,
     return 0;
 }
 
+
+static int
+virVMXParseMemoryDevice(virConf *conf,
+                        virDomainMemoryDef **mem,
+                        int index)
+{
+    virDomainMemoryDef *def = NULL;
+    g_autofree char *prefix = NULL;
+    char present_name[32] = "";
+    bool present = false;
+    char size_name[32] = "";
+    long long size = 0;
+    char fileName_name[32] = "";
+    g_autofree char *fileName = NULL;
+    int ret = -1;
+
+    *mem = NULL;
+
+    /* Per vSphere docs, there can be only one NVDIMM controller. */
+    prefix = g_strdup_printf("nvdimm0:%d", index);
+
+    VMX_BUILD_NAME(present);
+
+    if (virVMXGetConfigBoolean(conf, present_name, &present, false, true) < 0)
+        return -1;
+
+    if (!present)
+        return 0;
+
+    VMX_BUILD_NAME(size);
+    VMX_BUILD_NAME(fileName);
+
+    if (virVMXGetConfigLong(conf, size_name, &size, 0, false) < 0)
+        goto cleanup;
+
+    if (size <= 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("Invalid size for NVDIMM, key='%s' size='%lld'"),
+                       size_name, size);
+        goto cleanup;
+    }
+
+    size *= 1024; /* We store size in KiB, .vmx in MiB. */
+
+    if (virVMXGetConfigString(conf, fileName_name, &fileName, false) < 0)
+        goto cleanup;
+
+    def = virDomainMemoryDefNew(VIR_DOMAIN_MEMORY_MODEL_NVDIMM);
+    def->size = size;
+    def->nvdimmPath = g_steal_pointer(&fileName);
+
+    *mem = g_steal_pointer(&def);
+    ret = 0;
+ cleanup:
+    virDomainMemoryDefFree(def);
+    return ret;
+}
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -1411,11 +1479,12 @@ virVMXParseConfig(virVMXContext *ctx,
     int unit;
     bool hgfs_disabled = true;
     long long sharedFolder_maxNum = 0;
-    struct virVMXConfigScanResults results = { -1 };
+    struct virVMXConfigScanResults results = { -1, -1 };
     long long coresPerSocket = 0;
     virCPUDef *cpu = NULL;
     char *firmware = NULL;
     size_t saved_ndisks = 0;
+    size_t i;
 
     if (ctx->parseFileName == NULL) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -2018,6 +2087,21 @@ virVMXParseConfig(virVMXContext *ctx,
         features[VIR_DOMAIN_OS_DEF_FIRMWARE_FEATURE_SECURE_BOOT] =
             features[VIR_DOMAIN_OS_DEF_FIRMWARE_FEATURE_ENROLLED_KEYS] =
             VIR_TRISTATE_BOOL_YES;
+    }
+
+    /* def:mems */
+    if (results.mem_devices >= 0) {
+        for (i = 0; i <= results.mem_devices; i++) {
+            virDomainMemoryDef *mem = NULL;
+
+            if (virVMXParseMemoryDevice(conf, &mem, i) < 0)
+                goto cleanup;
+
+            if (!mem)
+                continue;
+
+            VIR_APPEND_ELEMENT(def->mems, def->nmems, mem);
+        }
     }
 
     if (virDomainDefPostParse(def, VIR_DOMAIN_DEF_PARSE_ABI_UPDATE,
