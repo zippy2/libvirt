@@ -247,6 +247,8 @@ mymain(void)
 
     DO_TEST("vtpm");
 
+    DO_TEST("nvdimm");
+
     ctx.datacenterPath = "folder1/folder2/datacenter1";
 
     DO_TEST("datacenterpath");
