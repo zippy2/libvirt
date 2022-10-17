@@ -29,5 +29,13 @@
     <video>
       <model type='vmvga' vram='8192' primary='yes'/>
     </video>
+    <memory model='nvdimm'>
+      <source>
+        <path>/vmfs/volumes/pmem:63339f4c-3cb91e32-022e-2cea7fe6eca0/esx7.0-rhel8.4-x86_64/esx7.0-rhel8.4-x86_64_1.vmdk</path>
+      </source>
+      <target>
+        <size unit='KiB'>4096</size>
+      </target>
+    </memory>
   </devices>
 </domain>
