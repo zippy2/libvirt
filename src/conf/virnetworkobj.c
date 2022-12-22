@@ -1056,7 +1056,7 @@ virNetworkObjLoadAllState(virNetworkObjList *nets,
                           const char *stateDir,
                           virNetworkXMLOption *xmlopt)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret = -1;
     int rc;
@@ -1090,7 +1090,7 @@ virNetworkObjLoadAllConfigs(virNetworkObjList *nets,
                             const char *autostartDir,
                             virNetworkXMLOption *xmlopt)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret = -1;
     int rc;
@@ -1673,7 +1673,7 @@ virNetworkObjDeleteAllPorts(virNetworkObj *net,
                             const char *stateDir)
 {
     g_autofree char *dir = NULL;
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     struct dirent *de;
     int rc;
 
@@ -1820,7 +1820,7 @@ virNetworkObjLoadAllPorts(virNetworkObj *net,
                           const char *stateDir)
 {
     g_autofree char *dir = NULL;
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     struct dirent *de;
     int rc;
     char uuidstr[VIR_UUID_STRING_BUFLEN];
