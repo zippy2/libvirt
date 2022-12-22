@@ -2317,6 +2317,7 @@ virDirIsEmpty;
 virDirOpen;
 virDirOpenIfExists;
 virDirOpenQuiet;
+virDirOpenSorted;
 virDirRead;
 virFileAccessibleAs;
 virFileActivateDirOverrideForLib;
