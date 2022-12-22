@@ -1129,7 +1129,7 @@ static int
 testConfXMLEnumerate(GHashTable *existingTestCases)
 {
     struct dirent *ent;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int rc;
 
     /* If VIR_TEST_RANGE is in use don't bother filling in the data, which

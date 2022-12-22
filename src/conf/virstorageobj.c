@@ -1687,7 +1687,7 @@ int
 virStoragePoolObjLoadAllState(virStoragePoolObjList *pools,
                               const char *stateDir)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret = -1;
     int rc;
@@ -1715,7 +1715,7 @@ virStoragePoolObjLoadAllConfigs(virStoragePoolObjList *pools,
                                 const char *configDir,
                                 const char *autostartDir)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret;
     int rc;

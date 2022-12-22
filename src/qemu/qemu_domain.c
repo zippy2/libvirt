@@ -10956,7 +10956,7 @@ qemuDomainRemoveLogs(virQEMUDriver *driver,
     g_autoptr(virQEMUDriverConfig) cfg = NULL;
     g_autofree char *format = NULL;
     g_autofree char *main_log = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int rc;
 

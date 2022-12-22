@@ -153,7 +153,7 @@ char *
 virVHBAFindVportHost(const char *sysfs_prefix)
 {
     const char *prefix = sysfs_prefix ? sysfs_prefix : SYSFS_FC_HOST_PATH;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry = NULL;
 
     if (virDirOpen(&dir, prefix) < 0)
@@ -341,7 +341,7 @@ virVHBAGetHostByWWN(const char *sysfs_prefix,
 {
     const char *prefix = sysfs_prefix ? sysfs_prefix : SYSFS_FC_HOST_PATH;
     struct dirent *entry = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
 
     if (virDirOpen(&dir, prefix) < 0)
         return NULL;
@@ -383,7 +383,7 @@ virVHBAGetHostByFabricWWN(const char *sysfs_prefix,
 {
     const char *prefix = sysfs_prefix ? sysfs_prefix : SYSFS_FC_HOST_PATH;
     struct dirent *entry = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
 
     if (virDirOpen(&dir, prefix) < 0)
         return NULL;

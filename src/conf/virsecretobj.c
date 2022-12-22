@@ -984,7 +984,7 @@ virSecretLoadAllConfigs(virSecretObjList *secrets,
                         uint8_t *secretsEncryptionKey,
                         size_t secretsKeyLen)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *de;
     int rc;
 
