@@ -96,7 +96,7 @@ testSchemaDir(const char *schema,
               const char *dir_path,
               const struct testSchemaEntry *entry)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *ent;
     int ret = 0;
     int rc;
