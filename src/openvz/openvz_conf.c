@@ -915,7 +915,7 @@ openvzSetUUID(int vpsid)
 
 static int openvzAssignUUIDs(void)
 {
-    g_autoptr(DIR) dp = NULL;
+    g_autoptr(virDir) dp = NULL;
     struct dirent *dent;
     g_autofree char *conf_dir = NULL;
     int vpsid;

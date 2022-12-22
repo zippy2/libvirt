@@ -283,7 +283,7 @@ int virHostValidateIOMMU(const char *hvname,
     } else if (ARCH_IS_PPC64(arch)) {
         virValidatePass();
     } else if (ARCH_IS_S390(arch)) {
-        g_autoptr(DIR) dir = NULL;
+        g_autoptr(virDir) dir = NULL;
 
         /* On s390x, we skip the IOMMU check if there are no PCI
          * devices (which is quite usual on s390x). If there are
