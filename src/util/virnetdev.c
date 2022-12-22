@@ -2956,7 +2956,7 @@ virNetDevRDMAFeature(const char *ifname,
 {
     g_autofree char *eth_devpath = NULL;
     g_autofree char *eth_res_buf = NULL;
-    g_autoptr(DIR) dirp = NULL;
+    g_autoptr(virDir) dirp = NULL;
     struct dirent *dp;
 
     if (!virFileExists(SYSFS_INFINIBAND_DIR))
