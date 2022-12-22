@@ -481,7 +481,7 @@ static int
 virCommandMassCloseGetFDsLinux(virCommand *cmd G_GNUC_UNUSED,
                                virBitmap *fds)
 {
-    g_autoptr(DIR) dp = NULL;
+    g_autoptr(virDir) dp = NULL;
     struct dirent *entry;
     const char *dirName = "/proc/self/fd";
     int rc;
