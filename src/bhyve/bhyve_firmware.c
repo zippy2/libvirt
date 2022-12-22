@@ -114,7 +114,7 @@ bhyveFirmwareFillDomain(bhyveConn *driver,
                         virDomainDef *def,
                         unsigned int flags)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     g_autoptr(virBhyveDriverConfig) cfg = virBhyveDriverGetConfig(driver);
     virDomainLoaderDef *loader = def->os.loader;
     const char *firmware_dir = cfg->firmwareDir;

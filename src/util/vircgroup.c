@@ -2577,7 +2577,7 @@ virCgroupGetCpuacctPercpuUsage(virCgroup *group, char **usage)
 int
 virCgroupRemoveRecursively(char *grppath)
 {
-    g_autoptr(DIR) grpdir = NULL;
+    g_autoptr(virDir) grpdir = NULL;
     struct dirent *ent;
     int rc = 0;
     int direrr;
@@ -2742,7 +2742,7 @@ virCgroupKillRecursiveInternal(virCgroup *group,
     int controller;
     bool killedAny = false;
     g_autofree char *keypath = NULL;
-    g_autoptr(DIR) dp = NULL;
+    g_autoptr(virDir) dp = NULL;
     struct dirent *ent;
     int direrr;
     VIR_DEBUG("group=%p signum=%d pids=%p taskFile=%s dormdir=%d",
