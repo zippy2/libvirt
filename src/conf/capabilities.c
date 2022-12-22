@@ -1594,7 +1594,7 @@ static int
 virCapabilitiesGetNodeCache(int node,
                             GArray **cachesRet)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int direrr = 0;
     struct dirent *entry;
     g_autofree char *path = NULL;
@@ -1781,7 +1781,7 @@ virCapabilitiesHostNUMAInitInterconnectsNode(GArray *interconnects,
 {
     g_autofree char *path = NULL;
     g_autofree char *initPath = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int direrr = 0;
     struct dirent *entry;
     unsigned int read_bandwidth;
@@ -1885,7 +1885,7 @@ virCapsHostNUMAInterconnectComparator(const void *a,
 static int
 virCapabilitiesHostNUMAInitInterconnects(virCapsHostNUMA *caps)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int direrr = 0;
     struct dirent *entry;
     const char *path = SYSFS_SYSTEM_PATH "/node/";
@@ -2167,7 +2167,7 @@ virCapabilitiesInitCaches(virCaps *caps)
 
     while ((pos = virBitmapNextSetBit(cpus, pos)) >= 0) {
         int rv = -1;
-        g_autoptr(DIR) dirp = NULL;
+        g_autoptr(virDir) dirp = NULL;
         g_autofree char *path = g_strdup_printf("%s/cpu/cpu%zd/cache/", SYSFS_SYSTEM_PATH, pos);
 
         rv = virDirOpenIfExists(&dirp, path);

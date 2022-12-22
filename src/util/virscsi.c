@@ -104,7 +104,7 @@ virSCSIDeviceGetSgName(const char *sysfs_prefix,
                        unsigned int target,
                        unsigned long long unit)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     g_autofree char *path = NULL;
     unsigned int adapter_id;
@@ -136,7 +136,7 @@ virSCSIDeviceGetDevName(const char *sysfs_prefix,
                         unsigned int target,
                         unsigned long long unit)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     g_autofree char *path = NULL;
     unsigned int adapter_id;

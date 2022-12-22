@@ -477,7 +477,7 @@ static int
 virCommandMassCloseGetFDsDir(virBitmap *fds,
                              const char *dirName)
 {
-    g_autoptr(DIR) dp = NULL;
+    g_autoptr(virDir) dp = NULL;
     struct dirent *entry;
     int rc;
 

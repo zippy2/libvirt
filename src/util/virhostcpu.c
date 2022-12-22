@@ -318,7 +318,7 @@ virHostCPUParseNode(const char *node,
 {
     int ret = -1;
     int processors = 0;
-    g_autoptr(DIR) cpudir = NULL;
+    g_autoptr(virDir) cpudir = NULL;
     struct dirent *cpudirent = NULL;
     g_autoptr(virBitmap) sockets_map = virBitmapNew(0);
     virBitmap **cores_maps = NULL;
@@ -664,7 +664,7 @@ virHostCPUGetInfoPopulateLinux(FILE *cpuinfo,
 {
     g_autoptr(virBitmap) present_cpus_map = NULL;
     g_autoptr(virBitmap) online_cpus_map = NULL;
-    g_autoptr(DIR) nodedir = NULL;
+    g_autoptr(virDir) nodedir = NULL;
     struct dirent *nodedirent = NULL;
     int nodecpus, nodecores, nodesockets, nodethreads, offline = 0;
     int threads_per_subcore = 0;
@@ -1767,7 +1767,7 @@ virHostCPUGetHaltPollTime(pid_t pid,
     g_autofree char *debugFsPath = NULL;
     g_autofree char *kvmPath = NULL;
     struct dirent *ent = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     bool found = false;
 
     if (!(debugFsPath = virFileFindMountPoint("debugfs")))

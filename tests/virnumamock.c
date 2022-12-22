@@ -176,7 +176,7 @@ virNumaGetNodeCPUs(int node, virBitmap **cpus)
 int
 virNumaGetNodeOfCPU(int cpu)
 {
-    g_autoptr(DIR) cpuDir = NULL;
+    g_autoptr(virDir) cpuDir = NULL;
     g_autofree char *sysfs_cpu_path = NULL;
     struct dirent *ent = NULL;
     int dirErr = 0;

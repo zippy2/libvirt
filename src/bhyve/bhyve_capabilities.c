@@ -145,7 +145,7 @@ virBhyveDomainCapsBuild(struct _bhyveConn *conn,
 {
     virDomainCaps *caps = NULL;
     unsigned int bhyve_caps = 0;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     size_t firmwares_alloc = 0;
     struct _virBhyveDriverConfig *cfg = virBhyveDriverGetConfig(conn);

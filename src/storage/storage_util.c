@@ -1970,7 +1970,7 @@ virStorageBackendStablePath(virStoragePoolObj *pool,
                             bool loop)
 {
     virStoragePoolDef *def = virStoragePoolObjGetDef(pool);
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     struct dirent *dent;
     char *stablepath;
     int opentries = 0;
@@ -3527,7 +3527,7 @@ int
 virStorageBackendRefreshLocal(virStoragePoolObj *pool)
 {
     virStoragePoolDef *def = virStoragePoolObjGetDef(pool);
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *ent;
     struct statvfs sb;
     struct stat statbuf;
@@ -3743,7 +3743,7 @@ getNewStyleBlockDevice(const char *lun_path,
                        const char *block_name G_GNUC_UNUSED,
                        char **block_device)
 {
-    g_autoptr(DIR) block_dir = NULL;
+    g_autoptr(virDir) block_dir = NULL;
     struct dirent *block_dirent = NULL;
     int direrr;
     g_autofree char *block_path = NULL;
@@ -3809,7 +3809,7 @@ getBlockDevice(uint32_t host,
                uint32_t lun,
                char **block_device)
 {
-    g_autoptr(DIR) lun_dir = NULL;
+    g_autoptr(virDir) lun_dir = NULL;
     struct dirent *lun_dirent = NULL;
     int direrr;
     g_autofree char *lun_path = NULL;
@@ -3927,7 +3927,7 @@ virStorageBackendSCSIFindLUs(virStoragePoolObj *pool,
     int retval = 0;
     uint32_t bus, target, lun;
     const char *device_path = "/sys/bus/scsi/devices";
-    g_autoptr(DIR) devicedir = NULL;
+    g_autoptr(virDir) devicedir = NULL;
     struct dirent *lun_dirent = NULL;
     char devicepattern[64];
     int found = 0;

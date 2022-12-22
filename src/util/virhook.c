@@ -142,7 +142,7 @@ static int
 virHookCheck(int no, const char *driver)
 {
     int ret;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     g_autofree char *path = NULL;
     g_autofree char *dir_path = NULL;
@@ -333,7 +333,7 @@ virHookCall(int driver,
             char **output)
 {
     int ret, script_ret;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     g_autofree char *path = NULL;
     g_autofree char *dir_path = NULL;

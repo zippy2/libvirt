@@ -539,7 +539,7 @@ virResctrlUnlock(int fd G_GNUC_UNUSED)
 /* virResctrlInfo-related definitions */
 static int
 virResctrlGetCacheInfo(virResctrlInfo *resctrl,
-                       DIR *dirp)
+                       virDir *dirp)
 {
     int rv = -1;
     struct dirent *ent = NULL;
@@ -774,7 +774,7 @@ virResctrlGetMonitorInfo(virResctrlInfo *resctrl)
 static int
 virResctrlGetInfo(virResctrlInfo *resctrl)
 {
-    g_autoptr(DIR) dirp = NULL;
+    g_autoptr(virDir) dirp = NULL;
     int ret = -1;
 
     ret = virDirOpenIfExists(&dirp, SYSFS_RESCTRL_PATH "/info");
@@ -1882,7 +1882,7 @@ virResctrlAllocGetUnused(virResctrlInfo *resctrl)
     g_autoptr(virResctrlAlloc) ret = NULL;
     g_autoptr(virResctrlAlloc) alloc_default = NULL;
     struct dirent *ent = NULL;
-    g_autoptr(DIR) dirp = NULL;
+    g_autoptr(virDir) dirp = NULL;
     int rv = -1;
 
     if (virResctrlInfoIsEmpty(resctrl)) {
@@ -2572,7 +2572,7 @@ virResctrlMonitorGetStats(virResctrlMonitor *monitor,
     int ret = -1;
     size_t i = 0;
     unsigned long long val = 0;
-    g_autoptr(DIR) dirp = NULL;
+    g_autoptr(virDir) dirp = NULL;
     g_autofree char *datapath = NULL;
     struct dirent *ent = NULL;
     virResctrlMonitorStats *stat = NULL;

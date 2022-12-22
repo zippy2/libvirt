@@ -600,7 +600,7 @@ int
 virNWFilterObjListLoadAllConfigs(virNWFilterObjList *nwfilters,
                                  const char *configDir)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret = -1;
     int rc;

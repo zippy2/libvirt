@@ -1289,7 +1289,7 @@ udevGetVDPACharDev(const char *sysfs_path,
                    virNodeDevCapData *data)
 {
     struct dirent *entry;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int direrr;
 
     if (virDirOpenIfExists(&dir, sysfs_path) <= 0)

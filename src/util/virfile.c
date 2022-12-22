@@ -903,7 +903,7 @@ static int virFileLoopDeviceOpenLoopCtl(char **dev_name, int *fd)
 static int virFileLoopDeviceOpenSearch(char **dev_name)
 {
     int fd = -1;
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     struct dirent *de;
     char *looppath = NULL;
     struct loop_info64 lo;
@@ -1064,7 +1064,7 @@ virFileNBDDeviceIsBusy(const char *dev_name)
 static char *
 virFileNBDDeviceFindUnused(void)
 {
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     struct dirent *de;
     int direrr;
 
@@ -1197,7 +1197,7 @@ int virFileNBDDeviceAssociate(const char *file,
  */
 int virFileDeleteTree(const char *dir)
 {
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     struct dirent *de;
     int direrr;
 
@@ -3026,11 +3026,16 @@ virFileRemove(const char *path,
 }
 #endif /* WIN32 */
 
+struct _virDir {
+    DIR *dir;
+};
+
 static int
-virDirOpenInternal(DIR **dirp, const char *name, bool ignoreENOENT, bool quiet)
+virDirOpenInternal(virDir **dirp, const char *name, bool ignoreENOENT, bool quiet)
 {
-    *dirp = opendir(name); /* exempt from syntax-check */
-    if (!*dirp) {
+    DIR *dir = opendir(name); /* exempt from syntax-check */
+
+    if (!dir) {
         if (quiet)
             return -1;
 
@@ -3039,6 +3044,9 @@ virDirOpenInternal(DIR **dirp, const char *name, bool ignoreENOENT, bool quiet)
         virReportSystemError(errno, _("cannot open directory '%1$s'"), name);
         return -1;
     }
+
+    *dirp = g_new(virDir, 1);
+    (*dirp)->dir = g_steal_pointer(&dir);
     return 1;
 }
 
@@ -3051,7 +3059,7 @@ virDirOpenInternal(DIR **dirp, const char *name, bool ignoreENOENT, bool quiet)
  * On failure, -1 is returned and an error is reported.
  */
 int
-virDirOpen(DIR **dirp, const char *name)
+virDirOpen(virDir **dirp, const char *name)
 {
     return virDirOpenInternal(dirp, name, false, false);
 }
@@ -3066,7 +3074,7 @@ virDirOpen(DIR **dirp, const char *name)
  * On other errors, -1 is returned and an error is reported.
  */
 int
-virDirOpenIfExists(DIR **dirp, const char *name)
+virDirOpenIfExists(virDir **dirp, const char *name)
 {
     return virDirOpenInternal(dirp, name, true, false);
 }
@@ -3082,7 +3090,7 @@ virDirOpenIfExists(DIR **dirp, const char *name)
  * Does not report any errors and errno is preserved.
  */
 int
-virDirOpenQuiet(DIR **dirp, const char *name)
+virDirOpenQuiet(virDir **dirp, const char *name)
 {
     return virDirOpenInternal(dirp, name, false, true);
 }
@@ -3094,7 +3102,7 @@ virDirOpenQuiet(DIR **dirp, const char *name)
  * @name: if non-NULL, the name related to @dirp for use in error reporting
  *
  * Wrapper around readdir. Typical usage:
- *   g_autoptr(DIR) dir = NULL;
+ *   g_autoptr(virDir) dir = NULL;
  *   struct dirent *ent;
  *   int rc;
  *   if (virDirOpen(&dir, name) < 0)
@@ -3107,11 +3115,11 @@ virDirOpenQuiet(DIR **dirp, const char *name)
  * Returns -1 on error, with error already reported if @name was
  * supplied.  On success, returns 1 for entry read, 0 for end-of-dir.
  */
-int virDirRead(DIR *dirp, struct dirent **ent, const char *name)
+int virDirRead(virDir *dirp, struct dirent **ent, const char *name)
 {
     do {
         errno = 0;
-        *ent = readdir(dirp); /* exempt from syntax-check */
+        *ent = readdir(dirp->dir); /* exempt from syntax-check */
         if (!*ent && errno) {
             if (name)
                 virReportSystemError(errno, _("Unable to read directory '%1$s'"),
@@ -3123,12 +3131,12 @@ int virDirRead(DIR *dirp, struct dirent **ent, const char *name)
     return !!*ent;
 }
 
-void virDirClose(DIR *dirp)
+void virDirClose(virDir *dirp)
 {
-    if (!dirp)
+    if (!dirp || !dirp->dir)
         return;
 
-    closedir(dirp); /* exempt from syntax-check */
+    closedir(dirp->dir); /* exempt from syntax-check */
 }
 
 /**
@@ -3149,7 +3157,7 @@ void virDirClose(DIR *dirp)
 int virDirIsEmpty(const char *path,
                   bool hidden)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *ent;
     int direrr;
 
@@ -3188,7 +3196,7 @@ int virFileChownFiles(const char *name,
 {
     struct dirent *ent;
     int direrr;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
 
     if (virDirOpen(&dir, name) < 0)
         return -1;

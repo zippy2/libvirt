@@ -156,7 +156,7 @@ virCCWGroupDeviceGetMembers(const char *sysfs_path,
 {
     virCCWGroupMemberType *member = NULL;
     g_autofree char *ccwdevpath = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int direrr;
 

@@ -621,7 +621,7 @@ virProcessGetAffinity(pid_t pid G_GNUC_UNUSED)
 int virProcessGetPids(pid_t pid, size_t *npids, pid_t **pids)
 {
     int ret = -1;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int value;
     struct dirent *ent;
     g_autofree char *taskPath = NULL;

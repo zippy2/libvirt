@@ -235,7 +235,7 @@ static void
 virSecuritySELinuxForgetLabels(const char *path)
 {
     struct dirent *ent;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     g_autofree char *con = NULL;
 
     if (virSecuritySELinuxRecallLabel(path, &con) < 0)
@@ -3658,7 +3658,7 @@ virSecuritySELinuxSetFileLabels(virSecurityManager *mgr,
     int ret = 0;
     struct dirent *ent;
     char *filename = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
 
     if ((ret = virSecuritySELinuxSetFilecon(mgr, path, seclabel->imagelabel, true)))
         return ret;
@@ -3701,7 +3701,7 @@ virSecuritySELinuxRestoreFileLabels(virSecurityManager *mgr,
 {
     int ret = 0;
     struct dirent *ent;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
 
     if ((ret = virSecuritySELinuxRestoreFileLabel(mgr, path, true, false)))
         return ret;

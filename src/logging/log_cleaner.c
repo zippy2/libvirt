@@ -166,7 +166,7 @@ virLogCleanerProcessFolder(virLogCleanerData *data,
                            const char *path,
                            int depth_left)
 {
-    DIR *dir;
+    virDir *dir;
     struct dirent *entry;
     struct stat sb;
 
