@@ -543,7 +543,7 @@ virPCIDeviceIterDevices(virPCIDeviceIterPredicate predicate,
                         virPCIDevice **matched,
                         void *data)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret = 0;
     int rc;
@@ -2232,7 +2232,7 @@ int virPCIDeviceFileIterate(virPCIDevice *dev,
                             void *opaque)
 {
     g_autofree char *pcidir = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *ent;
     int direrr;
 
@@ -2278,7 +2278,7 @@ virPCIDeviceAddressIOMMUGroupIterate(virPCIDeviceAddress *orig,
                                      void *opaque)
 {
     g_autofree char *groupPath = NULL;
-    g_autoptr(DIR) groupDir = NULL;
+    g_autoptr(virDir) groupDir = NULL;
     struct dirent *ent;
     int direrr;
 
@@ -2927,7 +2927,7 @@ virPCIGetNetName(const char *device_link_sysfs_path,
     g_autofree char *physPortID = NULL;
     g_autofree char *pcidev_sysfs_net_path = NULL;
     g_autofree char *firstEntryName = NULL;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry = NULL;
     size_t i = 0;
 

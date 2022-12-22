@@ -931,7 +931,7 @@ virCgroupV1SetOwner(virCgroup *cgroup,
     for (i = 0; i < VIR_CGROUP_CONTROLLER_LAST; i++) {
         g_autofree char *base = NULL;
         struct dirent *de;
-        g_autoptr(DIR) dh = NULL;
+        g_autoptr(virDir) dh = NULL;
 
         if (!((1 << i) & controllers))
             continue;
