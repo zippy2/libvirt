@@ -35,7 +35,7 @@ VIR_LOG_INIT("qemu.qemu_configs");
 static int
 qemuBuildFileList(GHashTable *files, const char *dir)
 {
-    g_autoptr(DIR) dirp = NULL;
+    g_autoptr(virDir) dirp = NULL;
     struct dirent *ent = NULL;
     int rc;
 

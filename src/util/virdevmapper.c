@@ -169,7 +169,7 @@ virDMGetDeviceName(const char *path)
     g_autofree char *dmDirPath = NULL;
     struct dirent *ent = NULL;
     struct stat sb[2];
-    g_autoptr(DIR) dh = NULL;
+    g_autoptr(virDir) dh = NULL;
     const char *p;
 
     /* If a path is NOT provided then assume it's DM name */
