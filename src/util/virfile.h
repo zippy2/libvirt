@@ -290,6 +290,8 @@ int virDirOpenIfExists(virDir **dirp, const char *dirname)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) G_GNUC_WARN_UNUSED_RESULT;
 int virDirOpenQuiet(virDir **dirp, const char *dirname)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) G_GNUC_WARN_UNUSED_RESULT;
+int virDirOpenSorted(virDir **dirp, const char *dirname)
+    ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) G_GNUC_WARN_UNUSED_RESULT;
 int virDirRead(virDir *dirp, struct dirent **ent, const char *dirname)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) G_GNUC_WARN_UNUSED_RESULT;
 int virDirIsEmpty(const char *path,

@@ -3028,12 +3028,19 @@ virFileRemove(const char *path,
 
 struct _virDir {
     DIR *dir;
+    bool sorted;
+    size_t pos;
+    size_t len;
+    GSList *ents;
 };
+
 
 static int
 virDirOpenInternal(virDir **dirp, const char *name, bool ignoreENOENT, bool quiet)
 {
     DIR *dir = opendir(name); /* exempt from syntax-check */
+
+    *dirp = NULL;
 
     if (!dir) {
         if (quiet)
@@ -3045,7 +3052,7 @@ virDirOpenInternal(virDir **dirp, const char *name, bool ignoreENOENT, bool quie
         return -1;
     }
 
-    *dirp = g_new(virDir, 1);
+    *dirp = g_new0(virDir, 1);
     (*dirp)->dir = g_steal_pointer(&dir);
     return 1;
 }
@@ -3096,6 +3103,57 @@ virDirOpenQuiet(virDir **dirp, const char *name)
 }
 
 /**
+ * virDirOpenSorted:
+ * @dirp: directory stream
+ * @name: path of the directory:
+ *
+ * Like virDirOpen() except subsequent virDirRead() returns
+ * directory content sorted alphabetically (as defined by
+ * strcmp()).
+ *
+ * Returns 1 on success.
+ *        -1 on failure.
+ */
+int virDirOpenSorted(virDir **dirp, const char *dirname)
+{
+    int rc = virDirOpen(dirp, dirname);
+
+    if (rc <= 0)
+        return rc;
+
+    (*dirp)->sorted = true;
+    return rc;
+}
+
+static int
+virDirReadImpl(DIR *dir, struct dirent **ent, const char *name)
+{
+    do {
+        errno = 0;
+        *ent = readdir(dir); /* exempt from syntax-check */
+        if (!*ent && errno) {
+            if (name)
+                virReportSystemError(errno,
+                                     _("Unable to read directory '%1$s'"),
+                                     name);
+            return -1;
+        }
+    } while (*ent && (STREQ((*ent)->d_name, ".") ||
+                      STREQ((*ent)->d_name, "..")));
+
+    return !!*ent;
+}
+
+static int
+virDirEntsSorter(const void *a, const void *b)
+{
+    const struct dirent *da = a;
+    const struct dirent *db = b;
+
+    return strcmp(da->d_name, db->d_name);
+}
+
+/**
  * virDirRead:
  * @dirp: directory to read
  * @ent: output one entry
@@ -3117,17 +3175,42 @@ virDirOpenQuiet(virDir **dirp, const char *name)
  */
 int virDirRead(virDir *dirp, struct dirent **ent, const char *name)
 {
-    do {
-        errno = 0;
-        *ent = readdir(dirp->dir); /* exempt from syntax-check */
-        if (!*ent && errno) {
-            if (name)
-                virReportSystemError(errno, _("Unable to read directory '%1$s'"),
-                                     name);
-            return -1;
-        }
-    } while (*ent && (STREQ((*ent)->d_name, ".") ||
-                      STREQ((*ent)->d_name, "..")));
+    if (dirp->sorted && !dirp->ents) {
+        int rc;
+
+        do {
+            struct dirent *tmp = NULL;
+
+            rc = virDirReadImpl(dirp->dir, &tmp, name);
+            if (rc < 0)
+                return rc;
+
+            if (rc > 0) {
+                struct dirent *copy;
+                size_t len;
+
+                /* Thing is, struct dirent is not of a static size. It also
+                 * contains the d_name as a variable sized array. */
+                len = offsetof(struct dirent, d_name) + strlen(tmp->d_name) + 1;
+                copy = g_memdup(tmp, len);
+
+                dirp->ents = g_slist_prepend(dirp->ents, copy);
+            }
+        } while (rc > 0);
+
+        dirp->len = g_slist_length(dirp->ents);
+        dirp->ents = g_slist_sort(dirp->ents, virDirEntsSorter);
+    }
+
+    if (dirp->sorted) {
+        if (dirp->pos < dirp->len)
+            *ent = g_slist_nth_data(dirp->ents, dirp->pos++);
+        else
+            *ent = NULL;
+    } else {
+        return virDirReadImpl(dirp->dir, ent, name);
+    }
+
     return !!*ent;
 }
 
@@ -3136,7 +3219,11 @@ void virDirClose(virDir *dirp)
     if (!dirp || !dirp->dir)
         return;
 
+    if (dirp->sorted)
+        g_slist_free_full(dirp->ents, free);
+
     closedir(dirp->dir); /* exempt from syntax-check */
+    VIR_FREE(dirp);
 }
 
 /**
