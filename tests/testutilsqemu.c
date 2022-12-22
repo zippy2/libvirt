@@ -509,7 +509,7 @@ testQemuGetLatestCaps(void)
 {
     g_autoptr(GHashTable) caps = virHashNew((GDestroyNotify)testQemuCapsFileFree);
     struct dirent *ent;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int rc;
 
     if (virDirOpen(&dir, TEST_QEMU_CAPS_PATH) < 0)
@@ -570,7 +570,7 @@ testQemuCapsIterate(const char *suffix,
                     void *opaque)
 {
     struct dirent *ent;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     int rc;
     bool fail = false;
 
