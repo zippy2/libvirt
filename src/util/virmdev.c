@@ -544,7 +544,7 @@ int
 virMediatedDeviceParentGetAddress(const char *sysfspath,
                                   char **address)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     if (virDirOpen(&dir, MDEV_BUS_DIR) < 0)
         return -1;
@@ -574,7 +574,7 @@ virMediatedDeviceGetMdevTypes(const char *sysfspath,
 {
     ssize_t ret = -1;
     int dirret = -1;
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     g_autofree char *types_path = NULL;
     g_autoptr(virMediatedDeviceType) mdev_type = NULL;
