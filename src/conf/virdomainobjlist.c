@@ -570,7 +570,7 @@ virDomainObjListLoadAllConfigs(virDomainObjList *doms,
                                virDomainLoadConfigNotify notify,
                                void *opaque)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *entry;
     int ret = -1;
     int rc;
