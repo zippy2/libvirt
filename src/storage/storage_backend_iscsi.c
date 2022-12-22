@@ -88,7 +88,7 @@ static int
 virStorageBackendISCSIGetHostNumber(const char *sysfs_path,
                                     uint32_t *host)
 {
-    g_autoptr(DIR) sysdir = NULL;
+    g_autoptr(virDir) sysdir = NULL;
     struct dirent *dirent = NULL;
     int direrr;
 

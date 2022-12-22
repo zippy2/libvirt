@@ -1509,7 +1509,7 @@ virMemoryMaxValue(bool capped)
 bool
 virHostHasIOMMU(void)
 {
-    g_autoptr(DIR) iommuDir = NULL;
+    g_autoptr(virDir) iommuDir = NULL;
     struct dirent *iommuGroup = NULL;
 
     if (virDirOpenQuiet(&iommuDir, "/sys/kernel/iommu_groups/") < 0)
@@ -1536,7 +1536,7 @@ virHostHasIOMMU(void)
 char *
 virHostGetDRMRenderNode(void)
 {
-    g_autoptr(DIR) driDir = NULL;
+    g_autoptr(virDir) driDir = NULL;
     const char *driPath = "/dev/dri";
     struct dirent *ent = NULL;
     int dirErr = 0;
