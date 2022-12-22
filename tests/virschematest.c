@@ -102,7 +102,7 @@ testSchemaDir(const char *schema,
     int rc;
     g_autoptr(GRegex) filter = NULL;
 
-    if (virDirOpen(&dir, dir_path) < 0) {
+    if (virDirOpenSorted(&dir, dir_path) < 0) {
         virTestPropagateLibvirtError();
         return -1;
     }
