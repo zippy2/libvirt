@@ -896,7 +896,7 @@ int
 virSecretLoadAllConfigs(virSecretObjList *secrets,
                         const char *configDir)
 {
-    g_autoptr(DIR) dir = NULL;
+    g_autoptr(virDir) dir = NULL;
     struct dirent *de;
     int rc;
 
