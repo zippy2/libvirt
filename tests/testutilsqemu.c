@@ -499,7 +499,7 @@ testQemuGetLatestCaps(void)
     g_autoptr(virDir) dir = NULL;
     int rc;
 
-    if (virDirOpen(&dir, TEST_QEMU_CAPS_PATH) < 0)
+    if (virDirOpenSorted(&dir, TEST_QEMU_CAPS_PATH) < 0)
         return NULL;
 
     while ((rc = virDirRead(dir, &ent, TEST_QEMU_CAPS_PATH)) > 0) {
@@ -570,7 +570,7 @@ testQemuCapsIterate(const char *suffix,
         return -1;
     }
 
-    if (virDirOpen(&dir, TEST_QEMU_CAPS_PATH) < 0)
+    if (virDirOpenSorted(&dir, TEST_QEMU_CAPS_PATH) < 0)
         return -1;
 
     while ((rc = virDirRead(dir, &ent, TEST_QEMU_CAPS_PATH)) > 0) {
