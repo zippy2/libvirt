@@ -1015,6 +1015,9 @@ udevKludgeStorageType(virNodeDeviceDef *def)
          * controller not a disk, this function is called if and
          * only if @def is of VIR_NODE_DEV_CAP_STORAGE type. */
         { "/dev/nvme", "disk" },
+
+        /* SD card reader attached to a PCI bus. */
+        { "/dev/mmcblk", "sd" },
     };
 
     VIR_DEBUG("Could not find definitive storage type for device "
