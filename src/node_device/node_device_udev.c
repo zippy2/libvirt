@@ -990,6 +990,14 @@ udevFixupStorageType(virNodeDeviceDef *def,
 }
 
 
+static int
+udevProcessVirtioPMem(struct udev_device *device,
+                      virNodeDeviceDef *def)
+{
+    return udevProcessDisk(device, def);
+}
+
+
 /* This function exists to deal with the case in which a driver does
  * not provide a device type in the usual place, but udev told us it's
  * a storage device, and we can make a good guess at what kind of
@@ -1018,6 +1026,8 @@ udevKludgeStorageType(virNodeDeviceDef *def)
 
         /* SD card reader attached to a PCI bus. */
         { "/dev/mmcblk", "sd" },
+        /* virtio-pmem is a memory with a persistent storage capability. */
+        { "/dev/pmem", "virtio-pmem" },
     };
 
     VIR_DEBUG("Could not find definitive storage type for device "
@@ -1098,6 +1108,8 @@ udevProcessStorage(struct udev_device *device,
         rv = udevProcessSD(device, def);
     } else if (STREQ(def->caps->data.storage.drive_type, "dasd")) {
         rv = udevProcessDASD(device, def);
+    } else if (STREQ(def->caps->data.storage.drive_type, "virtio-pmem")) {
+        rv = udevProcessVirtioPMem(device, def);
     } else {
         VIR_DEBUG("Unsupported storage type '%s'",
                   def->caps->data.storage.drive_type);
