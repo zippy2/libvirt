@@ -55,7 +55,7 @@ include:
         run_rpmbuild;
       else
         run_build;
-        if test "$CROSS" = "i686";
+        if test "$CROSS" = "i686"  || test "$CROSS" = "mingw32" || test "$CROSS" = "mingw64"
         then
           run_test;
         fi;
