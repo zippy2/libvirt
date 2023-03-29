@@ -2181,6 +2181,12 @@ virFileExists(const char *path)
 bool
 virFileIsExecutable(const char *file)
 {
+#ifdef WIN32
+    if (virStringHasCaseSuffix(file, ".exe") ||
+        virStringHasCaseSuffix(file, ".dll"))
+        return true;
+    errno = EACCES;
+#else
     struct stat sb;
 
     /* We would also want to check faccessat if we cared about ACLs,
@@ -2190,6 +2196,8 @@ virFileIsExecutable(const char *file)
     if (S_ISREG(sb.st_mode) && (sb.st_mode & 0111) != 0)
         return true;
     errno = S_ISDIR(sb.st_mode) ? EISDIR : EACCES;
+#endif
+
     return false;
 }
 
