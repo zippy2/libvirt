@@ -128,6 +128,10 @@ int virTestMain(int argc,
 # define FORCE_FLAT_NAMESPACE \
             g_setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", TRUE);
 # define MOCK_EXT ".dylib"
+#elif defined(WIN32)
+# define PRELOAD_VAR "LD_PRELOAD"
+# define FORCE_FLAT_NAMESPACE
+# define MOCK_EXT ".dll"
 #else
 # define PRELOAD_VAR "LD_PRELOAD"
 # define LD_LIBRARY_PATH "LD_LIBRARY_PATH"
