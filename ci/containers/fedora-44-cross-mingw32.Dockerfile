@@ -60,6 +60,7 @@ ENV MAKE="/usr/bin/make"
 ENV NINJA="/usr/bin/ninja"
 ENV PYTHON="/usr/bin/python3"
 
+<<<<<<< HEAD
 RUN nosync dnf --quiet install -y \
                        mingw32-curl \
                        mingw32-dlfcn \
@@ -74,10 +75,57 @@ RUN nosync dnf --quiet install -y \
                        mingw32-portablexdr \
                        mingw32-readline && \
     nosync dnf --quiet clean all -y && \
+=======
+RUN nosync dnf install -y \
+               mingw32-curl \
+               mingw32-dlfcn \
+               mingw32-gcc \
+               mingw32-gettext \
+               mingw32-glib2 \
+               mingw32-gnutls \
+               mingw32-headers \
+               mingw32-libssh2 \
+               mingw32-libxml2 \
+               mingw32-pkg-config \
+               mingw32-portablexdr \
+               mingw32-readline \
+               wine && \
+    nosync dnf clean all -y && \
+    mkdir -p /usr/local/share/meson/cross && \
+    printf "[binaries]\n\
+c = '/usr/bin/i686-w64-mingw32-gcc'\n\
+cpp = '/usr/bin/i686-w64-mingw32-g++'\n\
+fortran = '/usr/bin/i686-w64-mingw32-gfortran'\n\
+rust = ['rustc', '--target', 'i686-pc-windows-msvc', '-C', 'linker=/usr/bin/i686-w64-mingw32-gcc']\n\
+ar = '/usr/bin/i686-w64-mingw32-ar'\n\
+pkgconfig = '/usr/bin/i686-w64-mingw32-pkg-config'\n\
+ranlib = '/usr/bin/x86_64-w64-mingw32-ranlib'\n\
+strip = '/usr/bin/i686-w64-mingw32-strip'\n\
+windres = '/usr/bin/i686-w64-mingw32-windres'\n\
+dlltool = '/usr/bin/i686-w64-mingw32-dlltool'\n\
+libgcrypt-config = '/usr/i686-w64-mingw32/sys-root/mingw/bin/libgcrypt-config'\n\
+glib-mkenums = '/usr/i686-w64-mingw32/sys-root/mingw/bin/glib-mkenums'\n\
+exe_wrapper = 'wine'\n\
+\n\
+[properties]\n\
+root = '/usr/i686-w64-mingw32/sys-root/mingw'\n\
+needs_exe_wrapper = true\n\
+\n\
+[host_machine]\n\
+system = 'windows'\n\
+cpu_family = 'x86'\n\
+cpu = 'i686'\n\
+endian = 'little'\n" > /usr/local/share/meson/cross/i686-w64-mingw32 && \
+>>>>>>> 68c4fe9177 (ci: Regenerate files)
     rpm -qa | sort > /packages.txt && \
     mkdir -p /usr/libexec/ccache-wrappers && \
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/i686-w64-mingw32-cc && \
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/i686-w64-mingw32-gcc
 
+<<<<<<< HEAD
 ENV ABI="i686-w64-mingw32"
 ENV MESON_OPTS="--cross-file=/usr/share/mingw/toolchain-mingw32.meson"
+=======
+ENV ABI "i686-w64-mingw32"
+ENV MESON_OPTS "--cross-file=i686-w64-mingw32"
+>>>>>>> 3f5cae2ca8 (ci: Regenerate files)
