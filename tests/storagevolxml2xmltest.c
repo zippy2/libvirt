@@ -93,7 +93,10 @@ mymain(void)
     DO_TEST("pool-logical", "vol-logical");
     DO_TEST("pool-logical", "vol-logical-backing");
     DO_TEST("pool-gluster", "vol-gluster-dir");
+#ifndef WIN32
+    /* This XML relies on 64bit uid_t, which is not the case on Windows. */
     DO_TEST("pool-gluster", "vol-gluster-dir-neg-uid");
+#endif
     DO_TEST_FULL("pool-dir", "vol-qcow2-nocapacity",
                  VIR_VOL_XML_PARSE_NO_CAPACITY);
 
