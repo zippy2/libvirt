@@ -109,6 +109,7 @@ testVshTableRowAppend(const void *opaque G_GNUC_UNUSED)
     return 0;
 }
 
+#ifndef WIN32
 static int
 testUnicode(const void *opaque G_GNUC_UNUSED)
 {
@@ -257,6 +258,7 @@ testUnicodeNonPrintableChar(const void *opaque G_GNUC_UNUSED)
 
     return 0;
 }
+#endif /* WIN32 */
 
 static int
 testNTables(const void *opaque G_GNUC_UNUSED)
@@ -333,6 +335,10 @@ mymain(void)
     if (virTestRun("testVshTableRowAppend", testVshTableRowAppend, NULL) < 0)
         ret = -1;
 
+#ifndef WIN32
+    /* setlocale() doesn't work really under wine. These Unicode
+     * tests would just fail. */
+
     if (virTestRun("testUnicode", testUnicode, NULL) < 0)
         ret = -1;
 
@@ -353,6 +359,7 @@ mymain(void)
                    testUnicodeNonPrintableChar,
                    NULL) < 0)
         ret = -1;
+#endif
 
     if (virTestRun("testNTables", testNTables, NULL) < 0)
         ret = -1;
