@@ -1943,6 +1943,11 @@ virFileFindResource(const char *filename,
     return virFileFindResourceFull(filename, NULL, NULL, builddir, installdir, NULL);
 }
 
+#define SKIP_WINDOWS_DRIVE(path) \
+    if (g_ascii_isalpha(path[0]) && \
+        path[1] == ':' && G_IS_DIR_SEPARATOR(path[2])) { \
+        path += 2; \
+    }
 
 /**
  * virFileActivateDirOverrideForProg:
@@ -1955,17 +1960,24 @@ void
 virFileActivateDirOverrideForProg(const char *argv0)
 {
     g_autofree char *path = virFileCanonicalizePath(argv0);
+    g_autofree char *builddir = virFileCanonicalizePath(abs_top_builddir);
 
     if (!path) {
         VIR_DEBUG("Failed to get canonicalized path errno=%d", errno);
         return;
     }
 
-    if (STRPREFIX(path, abs_top_builddir)) {
+#ifdef WIN32
+    SKIP_WINDOWS_DRIVE(path);
+#endif
+
+    if (STRPREFIX(path, builddir)) {
         useDirOverride = true;
         VIR_DEBUG("Activating build dir override for %s", path);
     }
 }
+
+#undef SKIP_WINDOWS_DRIVE
 
 
 /**
