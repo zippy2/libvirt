@@ -281,7 +281,6 @@ tests += [
   { 'name': 'secretxml2xmltest' },
   { 'name': 'sockettest' },
   { 'name': 'storagevolxml2xmltest' },
-  { 'name': 'sysinfotest' },
   { 'name': 'utiltest' },
   { 'name': 'viralloctest' },
   { 'name': 'virauthconfigtest' },
@@ -297,18 +296,15 @@ tests += [
   { 'name': 'virfirewalltest', 'include': virfirewalltest_include, 'link_with': virfirewalltest_link_with },
   { 'name': 'virhostcputest', 'link_whole': [ test_file_wrapper_lib ] },
   { 'name': 'virhostdevtest' },
-  { 'name': 'viridentitytest' },
   { 'name': 'viriscsitest' },
   { 'name': 'virkeycodetest' },
   { 'name': 'virkmodtest' },
-  { 'name': 'virlockspacetest' },
   { 'name': 'virlogtest' },
   { 'name': 'virnetdevtest' },
   { 'name': 'virnetworkportxml2xmltest' },
   { 'name': 'virnwfilterbindingxml2xmltest' },
   { 'name': 'virpcitest' },
   { 'name': 'virportallocatortest' },
-  { 'name': 'virrotatingfiletest' },
   { 'name': 'virschematest' },
   { 'name': 'virstringtest' },
   { 'name': 'virsystemdtest' },
@@ -352,6 +348,15 @@ if conf.has('WITH_TEST')
     { 'name': 'objecteventtest' },
     { 'name': 'shunloadtest', 'deps': [ thread_dep ] },
     { 'name': 'virshtest', 'depends': [ virsh_prog ] },
+  ]
+endif
+
+if host_machine.system() != 'windows'
+  tests += [
+    { 'name': 'sysinfotest' },
+    { 'name': 'viridentitytest' },
+    { 'name': 'virlockspacetest' },
+    { 'name': 'virrotatingfiletest' },
   ]
 endif
 
