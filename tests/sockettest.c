@@ -496,8 +496,14 @@ mymain(void)
     DO_TEST_LOCALHOST("::1", true);
     DO_TEST_LOCALHOST("0::1", true);
     DO_TEST_LOCALHOST("0:0:0::1", true);
+#ifdef WIN32
+    /* Windows strips brackets. */
+    DO_TEST_LOCALHOST("[00:0::1]", true);
+    DO_TEST_LOCALHOST("[::1]", true);
+#else
     DO_TEST_LOCALHOST("[00:0::1]", false);
     DO_TEST_LOCALHOST("[::1]", false);
+#endif
     DO_TEST_LOCALHOST("128.0.0.1", false);
     DO_TEST_LOCALHOST("0.0.0.1", false);
     DO_TEST_LOCALHOST("hello", false);
