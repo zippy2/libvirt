@@ -18,13 +18,9 @@
 
 #include <config.h>
 
-#ifndef WIN32
-
-# include "internal.h"
-# include "virrandom.h"
-# include "virmock.h"
-
-# define VIR_FROM_THIS VIR_FROM_NONE
+#include "internal.h"
+#include "virrandom.h"
+#include "virmock.h"
 
 int
 virRandomBytes(unsigned char *buf,
@@ -46,7 +42,3 @@ uint64_t virRandomBits(int nbits)
         ret &= ((1ULL << nbits) - 1);
     return ret;
 }
-
-#else /* WIN32 */
-/* Can't mock on WIN32 */
-#endif
