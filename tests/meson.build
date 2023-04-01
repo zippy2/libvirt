@@ -75,6 +75,7 @@ endif
 mock_libs = [
   { 'name': 'domaincapsmock' },
   { 'name': 'shunload', 'sources': [ 'shunloadhelper.c' ] },
+  { 'name': 'virarchmock' },
   { 'name': 'vircgroupmock' },
   { 'name': 'virdnsmasqmock' },
   { 'name': 'virfilecachemock' },
