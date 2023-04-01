@@ -261,4 +261,5 @@ mymain(void)
 }
 
 VIR_TEST_MAIN_PRELOAD(mymain,
-                      VIR_TEST_MOCK("domaincaps"))
+                      VIR_TEST_MOCK("domaincaps"),
+                      VIR_TEST_MOCK("virarch"))

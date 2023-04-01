@@ -3405,7 +3405,8 @@ VIR_TEST_MAIN_PRELOAD(mymain,
                       VIR_TEST_MOCK("domaincaps"),
                       VIR_TEST_MOCK("virrandom"),
                       VIR_TEST_MOCK("qemucpu"),
-                      VIR_TEST_MOCK("virnuma"))
+                      VIR_TEST_MOCK("virnuma"),
+                      VIR_TEST_MOCK("virarch"))
 
 #else
 
