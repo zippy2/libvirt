@@ -146,6 +146,5 @@ mymain(void)
 }
 
 #undef TEST
-#undef TEST_FULL
 
 VIR_TEST_MAIN(mymain)
