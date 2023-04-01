@@ -835,4 +835,5 @@ VIR_TEST_MAIN_PRELOAD(mymain,
                       VIR_TEST_MOCK("domaincaps"),
                       VIR_TEST_MOCK("virprocess"),
                       VIR_TEST_MOCK("qemuhotplug"),
-                      VIR_TEST_MOCK("virnetdev"));
+                      VIR_TEST_MOCK("virnetdev"),
+                      VIR_TEST_MOCK("virarch"));
