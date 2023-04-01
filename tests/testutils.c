@@ -51,18 +51,15 @@ static size_t testCounter;
 static virBitmap *testBitmap;
 static virBitmap *failedTests;
 
-static virArch virTestHostArch = VIR_ARCH_X86_64;
-
-virArch
-virArchFromHost(void)
-{
-    return virTestHostArch;
-}
-
 void
 virTestSetHostArch(virArch arch)
 {
-    virTestHostArch = arch;
+    const char *archStr = virArchToString(arch);
+
+    if (g_setenv("VIR_TEST_HOST_ARCH", archStr, TRUE) == FALSE) {
+        perror("g_setenv");
+        abort();
+    }
 }
 
 static int virTestUseTerminalColors(void)
