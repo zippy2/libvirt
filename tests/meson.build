@@ -73,6 +73,7 @@ endif
 #   * deps - additional dependencies (optional, default [])
 
 mock_libs = [
+  { 'name': 'virarchmock' },
   { 'name': 'vircgroupmock' },
   { 'name': 'virdnsmasqmock' },
   { 'name': 'virfilecachemock' },
