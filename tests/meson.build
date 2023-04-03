@@ -59,6 +59,10 @@ if host_machine.system() != 'darwin'
   tests_env += ['G_DEBUG=fatal-warnings']
 endif
 
+if host_machine.system() == 'windows'
+  tests_env += ['WINEDEBUG=-all']
+endif
+
 if use_expensive_tests
   tests_env += 'VIR_TEST_EXPENSIVE=1'
 else
