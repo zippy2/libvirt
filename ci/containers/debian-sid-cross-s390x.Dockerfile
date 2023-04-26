@@ -43,6 +43,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
                       perl-base \
                       pkgconf \
                       polkitd \
+                      procps \
                       python3 \
                       python3-docutils \
                       python3-pytest \
@@ -114,6 +115,7 @@ system = 'linux'\n\
 cpu_family = 's390x'\n\
 cpu = 's390x'\n\
 endian = 'big'\n" > /usr/local/share/meson/cross/s390x-linux-gnu && \
+    sysctl vm.max_map_count=2147483642 && \
     dpkg-query --showformat '${Package}_${Version}_${Architecture}\n' --show > /packages.txt && \
     mkdir -p /usr/libexec/ccache-wrappers && \
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/s390x-linux-gnu-cc && \
