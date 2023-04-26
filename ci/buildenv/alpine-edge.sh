@@ -56,6 +56,7 @@ function install_buildenv() {
         perl \
         pkgconf \
         polkit \
+        procps-ng \
         py3-docutils \
         py3-flake8 \
         py3-pytest \

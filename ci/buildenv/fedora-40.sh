@@ -68,6 +68,7 @@ function install_buildenv() {
         perl-base \
         pkgconfig \
         polkit \
+        procps-ng \
         python3 \
         python3-black \
         python3-docutils \

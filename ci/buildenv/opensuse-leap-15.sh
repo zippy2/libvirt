@@ -70,6 +70,7 @@ function install_buildenv() {
            perl-base \
            pkgconfig \
            polkit \
+           procps-ng \
            python3-base \
            python3-docutils \
            python3-flake8 \
