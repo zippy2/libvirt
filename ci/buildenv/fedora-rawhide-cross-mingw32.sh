@@ -68,6 +68,7 @@ function install_buildenv() {
         mingw32-libxml2 \
         mingw32-pkg-config \
         mingw32-portablexdr \
+<<<<<<< HEAD
         mingw32-readline \
         wine
     mkdir -p /usr/local/share/meson/cross
@@ -96,6 +97,9 @@ cpu_family = 'x86'\n\
 cpu = 'i686'\n\
 endian = 'little'\n" > /usr/local/share/meson/cross/i686-w64-mingw32
 >>>>>>> 68c4fe9177 (ci: Regenerate files)
+=======
+        mingw32-readline
+>>>>>>> 7507cf0ac8 (sysctl)
     rpm -qa | sort > /packages.txt
     mkdir -p /usr/libexec/ccache-wrappers
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/i686-w64-mingw32-cc
@@ -109,4 +113,4 @@ export NINJA="/usr/bin/ninja"
 export PYTHON="/usr/bin/python3"
 
 export ABI="i686-w64-mingw32"
-export MESON_OPTS="--cross-file=i686-w64-mingw32"
+export MESON_OPTS="--cross-file=/usr/share/mingw/toolchain-mingw32.meson"
