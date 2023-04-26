@@ -74,6 +74,7 @@ function install_buildenv() {
             perl-base \
             pkgconf \
             policykit-1 \
+            procps \
             python3 \
             python3-docutils \
             python3-pytest \

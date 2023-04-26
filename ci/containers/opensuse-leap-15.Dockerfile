@@ -70,6 +70,7 @@ RUN zypper update -y && \
            perl-base \
            pkgconfig \
            polkit \
+           procps-ng \
            python3-base \
            python3-docutils \
            python3-flake8 \

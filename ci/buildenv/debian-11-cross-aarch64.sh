@@ -39,6 +39,7 @@ function install_buildenv() {
             perl-base \
             pkgconf \
             policykit-1 \
+            procps \
             python3 \
             python3-docutils \
             python3-pytest \
@@ -100,6 +101,7 @@ system = 'linux'\n\
 cpu_family = 'aarch64'\n\
 cpu = 'aarch64'\n\
 endian = 'little'\n" > /usr/local/share/meson/cross/aarch64-linux-gnu
+    sysctl vm.max_map_count=2147483642
     dpkg-query --showformat '${Package}_${Version}_${Architecture}\n' --show > /packages.txt
     mkdir -p /usr/libexec/ccache-wrappers
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/aarch64-linux-gnu-cc

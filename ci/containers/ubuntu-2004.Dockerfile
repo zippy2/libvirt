@@ -76,6 +76,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
                       perl-base \
                       pkgconf \
                       policykit-1 \
+                      procps \
                       python3 \
                       python3-docutils \
                       python3-pip \

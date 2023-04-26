@@ -70,6 +70,7 @@ RUN zypper dist-upgrade -y && \
            perl-base \
            pkgconfig \
            polkit \
+           procps-ng \
            python3-base \
            python3-black \
            python3-docutils \

@@ -36,9 +36,9 @@ function install_buildenv() {
         meson \
         nfs-utils \
         ninja-build \
-        numad \
         perl-base \
         polkit \
+        procps-ng \
         python3 \
         python3-black \
         python3-docutils \
@@ -88,6 +88,7 @@ system = 'windows'\n\
 cpu_family = 'x86'\n\
 cpu = 'i686'\n\
 endian = 'little'\n" > /usr/local/share/meson/cross/i686-w64-mingw32
+    sysctl vm.max_map_count=2147483642
     rpm -qa | sort > /packages.txt
     mkdir -p /usr/libexec/ccache-wrappers
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/i686-w64-mingw32-cc

@@ -71,6 +71,7 @@ RUN dnf update -y && \
         perl \
         pkgconfig \
         polkit \
+        procps-ng \
         python3 \
         python3-docutils \
         python3-flake8 \
