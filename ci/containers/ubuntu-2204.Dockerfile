@@ -78,6 +78,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
                       perl-base \
                       pkgconf \
                       polkitd \
+                      procps \
                       python3 \
                       python3-docutils \
                       python3-pytest \
