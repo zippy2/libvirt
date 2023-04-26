@@ -76,11 +76,11 @@ exec "$@"\n' > /usr/bin/nosync && \
                nfs-utils \
                ninja-build \
                numactl-devel \
-               numad \
                parted-devel \
                perl-base \
                pkgconfig \
                polkit \
+               procps-ng \
                python3 \
                python3-black \
                python3-docutils \
