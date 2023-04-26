@@ -88,9 +88,9 @@ RUN nosync dnf install -y \
                mingw64-libxml2 \
                mingw64-pkg-config \
                mingw64-portablexdr \
-               mingw64-readline \
-               wine && \
+               mingw64-readline && \
     nosync dnf clean all -y && \
+<<<<<<< HEAD
     mkdir -p /usr/local/share/meson/cross && \
     printf "[binaries]\n\
 c = '/usr/bin/x86_64-w64-mingw32-gcc'\n\
@@ -117,6 +117,8 @@ cpu_family = 'x86_64'\n\
 cpu = 'x86_64'\n\
 endian = 'little'\n" > /usr/local/share/meson/cross/x86_64-w64-mingw32 && \
 >>>>>>> 68c4fe9177 (ci: Regenerate files)
+=======
+>>>>>>> 7507cf0ac8 (sysctl)
     rpm -qa | sort > /packages.txt && \
     mkdir -p /usr/libexec/ccache-wrappers && \
     ln -s /usr/bin/ccache /usr/libexec/ccache-wrappers/x86_64-w64-mingw32-cc && \
@@ -127,5 +129,9 @@ ENV ABI="x86_64-w64-mingw32"
 ENV MESON_OPTS="--cross-file=/usr/share/mingw/toolchain-mingw64.meson"
 =======
 ENV ABI "x86_64-w64-mingw32"
+<<<<<<< HEAD
 ENV MESON_OPTS "--cross-file=x86_64-w64-mingw32"
 >>>>>>> 3f5cae2ca8 (ci: Regenerate files)
+=======
+ENV MESON_OPTS "--cross-file=/usr/share/mingw/toolchain-mingw64.meson"
+>>>>>>> f7f38b0d87 (sysctl)
