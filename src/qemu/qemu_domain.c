@@ -12749,6 +12749,19 @@ syncNicRxFilterMulticast(char *ifname,
 }
 
 
+/**
+ * qemuDomainSyncRxFilter:
+ * @vm: domain object
+ * @def: domain interface definition
+ * @asyncJob: async job type
+ *
+ * Fetch new state of RX Filter and set host side of the interface
+ * accordingly (e.g. reflect MAC address change on macvtap).
+ *
+ * Reflect changed MAC address in the domain definition.
+ *
+ * Returns: 0 on success, -1 on error.
+ */
 int
 qemuDomainSyncRxFilter(virDomainObj *vm,
                        virDomainNetDef *def,
@@ -12800,6 +12813,11 @@ qemuDomainSyncRxFilter(virDomainObj *vm,
             virNetDevBandwidthUpdateFilter(brname, &guestFilter->mac,
                                            def->data.network.actual->class_id) < 0)
             return -1;
+    }
+
+    /* Reflect changed MAC address in the domain XML. */
+    if (virMacAddrCmp(&def->mac, &guestFilter->mac)) {
+        virMacAddrSet(&def->mac, &guestFilter->mac);
     }
 
     return 0;
