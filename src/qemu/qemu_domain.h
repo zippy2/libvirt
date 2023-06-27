@@ -1143,7 +1143,8 @@ qemuDomainRefreshStatsSchema(virDomainObj *dom);
 int
 qemuDomainSyncRxFilter(virDomainObj *vm,
                        virDomainNetDef *def,
-                       virDomainAsyncJob asyncJob);
+                       virDomainAsyncJob asyncJob,
+                       virObjectEvent **event);
 
 int
 qemuDomainSchedCoreStart(virQEMUDriverConfig *cfg,
