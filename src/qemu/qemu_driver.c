@@ -3669,9 +3669,11 @@ processNetdevStreamDisconnectedEvent(virDomainObj *vm,
 
 
 static void
-processNicRxFilterChangedEvent(virDomainObj *vm,
+processNicRxFilterChangedEvent(virQEMUDriver *driver,
+                               virDomainObj *vm,
                                const char *devAlias)
 {
+    virObjectEvent *event = NULL;
     virDomainDeviceDef dev;
     virDomainNetDef *def;
 
@@ -3716,11 +3718,12 @@ processNicRxFilterChangedEvent(virDomainObj *vm,
     VIR_DEBUG("process NIC_RX_FILTER_CHANGED event for network "
               "device %s in domain %s", def->info.alias, vm->def->name);
 
-    if (qemuDomainSyncRxFilter(vm, def, VIR_ASYNC_JOB_NONE) < 0)
+    if (qemuDomainSyncRxFilter(vm, def, VIR_ASYNC_JOB_NONE, &event) < 0)
         goto endjob;
 
  endjob:
     virDomainObjEndJob(vm);
+    virObjectEventStateQueue(driver->domainEventState, event);
 }
 
 
@@ -4064,7 +4067,7 @@ static void qemuProcessEventHandler(void *data, void *opaque)
         processNetdevStreamDisconnectedEvent(vm, processEvent->data);
         break;
     case QEMU_PROCESS_EVENT_NIC_RX_FILTER_CHANGED:
-        processNicRxFilterChangedEvent(vm, processEvent->data);
+        processNicRxFilterChangedEvent(driver, vm, processEvent->data);
         break;
     case QEMU_PROCESS_EVENT_SERIAL_CHANGED:
         processSerialChangedEvent(driver, vm, processEvent->data,
