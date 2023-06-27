@@ -8175,7 +8175,7 @@ qemuProcessRefreshRxFilters(virDomainObj *vm,
             continue;
         }
 
-        if (qemuDomainSyncRxFilter(vm, def, asyncJob) < 0)
+        if (qemuDomainSyncRxFilter(vm, def, asyncJob, NULL) < 0)
             return -1;
     }
 
