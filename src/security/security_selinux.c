@@ -865,14 +865,6 @@ virSecuritySELinuxGenLabel(virSecurityManager *mgr,
         return rc;
     }
 
-    if (seclabel->model &&
-        STRNEQ(seclabel->model, SECURITY_SELINUX_NAME)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label model %1$s is not supported with selinux"),
-                       seclabel->model);
-        return rc;
-    }
-
     VIR_DEBUG("type=%d", seclabel->type);
 
     switch (seclabel->type) {
@@ -2956,13 +2948,6 @@ virSecuritySELinuxVerify(virSecurityManager *mgr G_GNUC_UNUSED,
     if (secdef == NULL)
         return 0;
 
-    if (STRNEQ(SECURITY_SELINUX_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: '%1$s' model configured for domain, but hypervisor driver is '%2$s'."),
-                       secdef->model, SECURITY_SELINUX_NAME);
-        return -1;
-    }
-
     if (secdef->type == VIR_DOMAIN_SECLABEL_STATIC) {
         if (security_check_context(secdef->label) != 0) {
             virReportError(VIR_ERR_XML_ERROR,
@@ -2985,13 +2970,6 @@ virSecuritySELinuxSetProcessLabel(virSecurityManager *mgr G_GNUC_UNUSED,
         return 0;
 
     VIR_DEBUG("label=%s", secdef->label);
-    if (STRNEQ(SECURITY_SELINUX_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: '%1$s' model configured for domain, but hypervisor driver is '%2$s'."),
-                       secdef->model, SECURITY_SELINUX_NAME);
-        if (security_getenforce() == 1)
-            return -1;
-    }
 
     if (setexeccon_raw(secdef->label) == -1) {
         virReportSystemError(errno,
@@ -3020,13 +2998,6 @@ virSecuritySELinuxSetChildProcessLabel(virSecurityManager *mgr G_GNUC_UNUSED,
         return 0;
 
     VIR_DEBUG("label=%s", secdef->label);
-    if (STRNEQ(SECURITY_SELINUX_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: '%1$s' model configured for domain, but hypervisor driver is '%2$s'."),
-                       secdef->model, SECURITY_SELINUX_NAME);
-        if (security_getenforce() == 1)
-            return -1;
-    }
 
     /* pick either the common label used by most binaries exec'ed by
      * libvirt, or the specific label of this binary.
@@ -3069,13 +3040,6 @@ virSecuritySELinuxSetDaemonSocketLabel(virSecurityManager *mgr G_GNUC_UNUSED,
     if (!secdef || !secdef->label)
         return 0;
 
-    if (STRNEQ(SECURITY_SELINUX_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: '%1$s' model configured for domain, but hypervisor driver is '%2$s'."),
-                       secdef->model, SECURITY_SELINUX_NAME);
-        goto done;
-    }
-
     if (getcon_raw(&scon) == -1) {
         virReportSystemError(errno,
                              _("unable to get current process context '%1$s'"),
@@ -3114,13 +3078,6 @@ virSecuritySELinuxSetSocketLabel(virSecurityManager *mgr G_GNUC_UNUSED,
     if (!secdef || !secdef->label)
         return 0;
 
-    if (STRNEQ(SECURITY_SELINUX_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: '%1$s' model configured for domain, but hypervisor driver is '%2$s'."),
-                       secdef->model, SECURITY_SELINUX_NAME);
-        goto done;
-    }
-
     VIR_DEBUG("Setting VM %s socket context %s",
               vm->name, secdef->label);
     if (setsockcreatecon_raw(secdef->label) == -1) {
@@ -3149,14 +3106,6 @@ virSecuritySELinuxClearSocketLabel(virSecurityManager *mgr G_GNUC_UNUSED,
     secdef = virDomainDefGetSecurityLabelDef(def, SECURITY_SELINUX_NAME);
     if (!secdef || !secdef->label)
         return 0;
-
-    if (STRNEQ(SECURITY_SELINUX_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: '%1$s' model configured for domain, but hypervisor driver is '%2$s'."),
-                       secdef->model, SECURITY_SELINUX_NAME);
-        if (security_getenforce() == 1)
-            return -1;
-    }
 
     if (setsockcreatecon_raw(NULL) == -1) {
         virReportSystemError(errno,
