@@ -3574,6 +3574,34 @@ virSecuritySELinuxDomainSetPathLabelRO(virSecurityManager *mgr,
 }
 
 static int
+virSecuritySELinuxDomainSetHelperPathLabel(virSecurityManager *mgr,
+                                           virDomainDef *def,
+                                           const char *path,
+                                           virCommand *cmd)
+{
+    virSecurityLabelDef *secdef;
+    g_autofree char *tmpLabel = NULL;
+    const char *binaryPath = virCommandGetBinaryPath(cmd);
+
+    secdef = virDomainDefGetSecurityLabelDef(def, SECURITY_SELINUX_NAME);
+    if (!secdef || !secdef->label)
+        return 0;
+
+    VIR_DEBUG("label=%s", secdef->label);
+
+    if (!binaryPath)
+        return -1; /* error was already logged */
+
+    tmpLabel = virSecuritySELinuxContextSetFromFile(secdef->label,
+                                                    binaryPath);
+    if (!tmpLabel)
+        return -1;
+
+    return virSecuritySELinuxSetFilecon(mgr, path, tmpLabel, true);
+}
+
+
+static int
 virSecuritySELinuxDomainRestorePathLabel(virSecurityManager *mgr,
                                          virDomainDef *def,
                                          const char *path)
@@ -3800,6 +3828,7 @@ virSecurityDriver virSecurityDriverSELinux = {
 
     .domainSetPathLabel                 = virSecuritySELinuxDomainSetPathLabel,
     .domainSetPathLabelRO               = virSecuritySELinuxDomainSetPathLabelRO,
+    .domainSetHelperPathLabel           = virSecuritySELinuxDomainSetHelperPathLabel,
     .domainRestorePathLabel             = virSecuritySELinuxDomainRestorePathLabel,
 
     .domainSetSecurityChardevLabel      = virSecuritySELinuxSetChardevLabel,
