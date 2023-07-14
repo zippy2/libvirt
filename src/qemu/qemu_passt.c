@@ -224,7 +224,23 @@ qemuPasstBuildCommand(char **socketName,
     if (net->sourceDev)
         virCommandAddArgList(cmd, "--interface", net->sourceDev, NULL);
 
-    if (net->backend.logFile)
+    if (net->backend.logFile) {
+        VIR_AUTOCLOSE logfd = -1;
+        /* The logFile location is not restricted to a per-domain directory. It
+         * can be anywhere. Pre-create it as passt may not have enough perms to
+         * do so. */
+        if ((logfd = qemuDomainOpenFile(cfg, vm->def, net->backend.logFile,
+                                        O_CREAT | O_TRUNC | O_APPEND | O_RDWR,
+                                        &needUnlink)) < 0) {
+            return -1;
+        }
+
+        if (qemuSecurityDomainSetHelperPathLabel(driver->securityManager, vm->def,
+                                                 net->backend.logFile, cmd) < 0) {
+            goto error;
+        }
+
+        /* Worse, passt deliberately doesn't support FD passing. */
         virCommandAddArgList(cmd, "--log-file", net->backend.logFile, NULL);
 
     if (net->backend.hostname)
