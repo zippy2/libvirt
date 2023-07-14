@@ -1655,7 +1655,7 @@ struct _virSecurityDACChardevCallbackData {
 
 static int
 virSecurityDACRestoreChardevCallback(virDomainDef *def,
-                                     virDomainChrDef *dev G_GNUC_UNUSED,
+                                     virDomainChrDef *dev,
                                      void *opaque)
 {
     struct _virSecurityDACChardevCallbackData *data = opaque;
@@ -2001,7 +2001,7 @@ virSecurityDACRestoreAllLabel(virSecurityManager *mgr,
 
 static int
 virSecurityDACSetChardevCallback(virDomainDef *def,
-                                 virDomainChrDef *dev G_GNUC_UNUSED,
+                                 virDomainChrDef *dev,
                                  void *opaque)
 {
     struct _virSecurityDACChardevCallbackData *data = opaque;
