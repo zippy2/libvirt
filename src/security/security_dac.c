@@ -2653,6 +2653,25 @@ virSecurityDACDomainSetPathLabel(virSecurityManager *mgr,
 }
 
 static int
+virSecurityDACDomainSetHelperPathLabel(virSecurityManager *mgr,
+                                       virDomainDef *def,
+                                       const char *path,
+                                       virCommand *cmd G_GNUC_UNUSED)
+{
+    virSecurityDACData *priv = virSecurityManagerGetPrivateData(mgr);
+    virSecurityLabelDef *secdef;
+    uid_t user;
+    gid_t group;
+
+    secdef = virDomainDefGetSecurityLabelDef(def, SECURITY_DAC_NAME);
+
+    if (virSecurityDACGetIds(secdef, priv, &user, &group, NULL, NULL) < 0)
+        return -1;
+
+    return virSecurityDACSetOwnership(mgr, NULL, path, user, group, true);
+}
+
+static int
 virSecurityDACDomainRestorePathLabel(virSecurityManager *mgr,
                                      virDomainDef *def G_GNUC_UNUSED,
                                      const char *path)
@@ -2715,6 +2734,7 @@ virSecurityDriver virSecurityDriverDAC = {
     .getBaseLabel                       = virSecurityDACGetBaseLabel,
 
     .domainSetPathLabel                 = virSecurityDACDomainSetPathLabel,
+    .domainSetHelperPathLabel           = virSecurityDACDomainSetHelperPathLabel,
     .domainRestorePathLabel             = virSecurityDACDomainRestorePathLabel,
 
     .domainSetSecurityChardevLabel      = virSecurityDACSetChardevLabel,
