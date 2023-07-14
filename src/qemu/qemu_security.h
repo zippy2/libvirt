@@ -153,3 +153,4 @@ int qemuSecurityCommandRun(virQEMUDriver *driver,
 #define qemuSecurityVerify virSecurityManagerVerify
 #define qemuSecurityStackLock virSecurityManagerStackLock
 #define qemuSecurityStackUnlock virSecurityManagerStackUnlock
+#define qemuSecurityDomainSetHelperPathLabel virSecurityManagerDomainSetHelperPathLabel
