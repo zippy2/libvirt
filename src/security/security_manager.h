@@ -203,6 +203,11 @@ int virSecurityManagerDomainSetPathLabelRO(virSecurityManager *mgr,
                                            virDomainDef *vm,
                                            const char *path);
 
+int virSecurityManagerDomainSetHelperPathLabel(virSecurityManager *mgr,
+                                               virDomainDef *def,
+                                               const char *path,
+                                               virCommand *cmd);
+
 int virSecurityManagerDomainRestorePathLabel(virSecurityManager *mgr,
                                              virDomainDef *def,
                                              const char *path);

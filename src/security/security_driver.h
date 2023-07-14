@@ -140,6 +140,10 @@ typedef int (*virSecurityDomainSetPathLabel) (virSecurityManager *mgr,
                                               virDomainDef *def,
                                               const char *path,
                                               bool allowSubtree);
+typedef int (*virSecurityDomainSetHelperPathLabel) (virSecurityManager *mgr,
+                                                    virDomainDef *def,
+                                                    const char *path,
+                                                    virCommand *cmd);
 typedef int (*virSecurityDomainSetPathLabelRO) (virSecurityManager *mgr,
                                                 virDomainDef *def,
                                                 const char *path);
@@ -226,6 +230,7 @@ struct _virSecurityDriver {
 
     virSecurityDomainSetPathLabel domainSetPathLabel;
     virSecurityDomainSetPathLabelRO domainSetPathLabelRO;
+    virSecurityDomainSetHelperPathLabel domainSetHelperPathLabel;
     virSecurityDomainRestorePathLabel domainRestorePathLabel;
 
     virSecurityDomainSetChardevLabel domainSetSecurityChardevLabel;
