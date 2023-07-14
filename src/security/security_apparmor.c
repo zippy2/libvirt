@@ -349,7 +349,7 @@ AppArmorSecurityManagerGetDOI(virSecurityManager *mgr G_GNUC_UNUSED)
  * called on shutdown.
 */
 static int
-AppArmorGenSecurityLabel(virSecurityManager *mgr G_GNUC_UNUSED,
+AppArmorGenSecurityLabel(virSecurityManager *mgr,
                          virDomainDef *def)
 {
     g_autofree char *profile_name = NULL;
