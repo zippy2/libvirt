@@ -1496,7 +1496,7 @@ virSecuritySELinuxFSetFilecon(int fd, char *tcon)
 
 /* Set fcon to the appropriate label for path and mode, or return -1.  */
 static int
-getContext(virSecurityManager *mgr G_GNUC_UNUSED,
+getContext(virSecurityManager *mgr,
            const char *newpath, mode_t mode, char **fcon)
 {
     virSecuritySELinuxData *data = virSecurityManagerGetPrivateData(mgr);
@@ -2842,7 +2842,7 @@ struct _virSecuritySELinuxChardevCallbackData {
 
 static int
 virSecuritySELinuxRestoreSecurityChardevCallback(virDomainDef *def,
-                                                 virDomainChrDef *dev G_GNUC_UNUSED,
+                                                 virDomainChrDef *dev,
                                                  void *opaque)
 {
     struct _virSecuritySELinuxChardevCallbackData *data = opaque;
@@ -3117,7 +3117,7 @@ virSecuritySELinuxSetProcessLabel(virSecurityManager *mgr G_GNUC_UNUSED,
 static int
 virSecuritySELinuxSetChildProcessLabel(virSecurityManager *mgr G_GNUC_UNUSED,
                                        virDomainDef *def,
-                                       bool useBinarySpecificLabel G_GNUC_UNUSED,
+                                       bool useBinarySpecificLabel,
                                        virCommand *cmd)
 {
     /* TODO: verify DOI */
@@ -3278,7 +3278,7 @@ virSecuritySELinuxClearSocketLabel(virSecurityManager *mgr G_GNUC_UNUSED,
 
 static int
 virSecuritySELinuxSetSecurityChardevCallback(virDomainDef *def,
-                                             virDomainChrDef *dev G_GNUC_UNUSED,
+                                             virDomainChrDef *dev,
                                              void *opaque)
 {
     struct _virSecuritySELinuxChardevCallbackData *data = opaque;
