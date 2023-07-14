@@ -1089,6 +1089,40 @@ virSecurityManagerDomainSetPathLabelRO(virSecurityManager *mgr,
     return mgr->drv->domainSetPathLabelRO(mgr, vm, path);
 }
 
+
+/*
+ * virSecurityManagerDomainSetHelperPathLabel:
+ * @mgr: security manager object
+ * @def: domain definition
+ * @path: path to label
+ * @cmd: helper process
+ *
+ * In some cases, a helper process is running under its own label (as set by
+ * virSecurityManagerSetChildProcessLabel(useBinarySpecificLabel=true)). And
+ * this helper might then use some temporary files which should be accessible
+ * only to the helper process and nobody else, not hypervisor or domain even
+ * (for instance log file of the helper process). Yet, helper process might
+ * deliberately drop its own privileges so it is unable to create the file in
+ * some locations, in which case we create the file. Use this function to label
+ * the file so that the helper process might access it then.
+ *
+ * Returns: 0 on success, -1 on error.
+ */
+int
+virSecurityManagerDomainSetHelperPathLabel(virSecurityManager *mgr,
+                                           virDomainDef *def,
+                                           const char *path,
+                                           virCommand *cmd)
+{
+    VIR_LOCK_GUARD lock = virObjectLockGuard(mgr);
+
+    if (!mgr->drv->domainSetHelperPathLabel)
+        return 0;
+
+    return mgr->drv->domainSetHelperPathLabel(mgr, def, path, cmd);
+}
+
+
 /**
  * virSecurityManagerDomainRestorePathLabel:
  * @mgr: security manager object
