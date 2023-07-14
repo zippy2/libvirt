@@ -844,6 +844,26 @@ virSecurityStackDomainSetPathLabelRO(virSecurityManager *mgr,
 
 
 static int
+virSecurityStackDomainSetHelperPathLabel(virSecurityManager *mgr,
+                                         virDomainDef *def,
+                                         const char *path,
+                                         virCommand *cmd)
+{
+    virSecurityStackData *priv = virSecurityManagerGetPrivateData(mgr);
+    virSecurityStackItem *item = priv->itemsHead;
+    int rc = 0;
+
+    for (; item; item = item->next) {
+        if (virSecurityManagerDomainSetHelperPathLabel(item->securityManager,
+                                                       def, path, cmd) < 0)
+            rc = -1;
+    }
+
+    return rc;
+}
+
+
+static int
 virSecurityStackDomainRestorePathLabel(virSecurityManager *mgr,
                                        virDomainDef *vm,
                                        const char *path)
@@ -1074,6 +1094,7 @@ virSecurityDriver virSecurityDriverStack = {
 
     .domainSetPathLabel                 = virSecurityStackDomainSetPathLabel,
     .domainSetPathLabelRO               = virSecurityStackDomainSetPathLabelRO,
+    .domainSetHelperPathLabel           = virSecurityStackDomainSetHelperPathLabel,
     .domainRestorePathLabel             = virSecurityStackDomainRestorePathLabel,
 
     .domainSetSecurityChardevLabel      = virSecurityStackDomainSetChardevLabel,
