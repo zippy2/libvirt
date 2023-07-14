@@ -1805,6 +1805,7 @@ virSecurityDriverLookup;
 virSecurityManagerCheckAllLabel;
 virSecurityManagerClearSocketLabel;
 virSecurityManagerDomainRestorePathLabel;
+virSecurityManagerDomainSetHelperPathLabel;
 virSecurityManagerDomainSetPathLabel;
 virSecurityManagerDomainSetPathLabelRO;
 virSecurityManagerGenLabel;
