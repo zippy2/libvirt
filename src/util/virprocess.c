@@ -850,7 +850,7 @@ virProcessGetLimit(pid_t pid,
                    struct rlimit *old_limit)
 {
     pid_t current_pid = getpid();
-    bool same_process = (pid == current_pid);
+    bool same_process = (pid == current_pid) || (pid == 0);
 
     if (virProcessPrLimit(pid, resource, NULL, old_limit) == 0)
         return 0;
