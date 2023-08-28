@@ -984,6 +984,33 @@ virProcessGetMaxMemLock(pid_t pid G_GNUC_UNUSED,
 }
 #endif /* ! (WITH_GETRLIMIT && defined(RLIMIT_MEMLOCK)) */
 
+
+#if WITH_SETRLIMIT && defined(RLIMIT_NOFILE)
+int
+virProcessGetMaxFiles(pid_t pid, unsigned long long *nofiles)
+{
+    struct rlimit rlim;
+
+    if (virProcessGetLimit(pid, RLIMIT_NOFILE, &rlim) < 0)
+        return -1;
+
+    if (rlim.rlim_max == RLIM_INFINITY)
+        *nofiles = 0;
+
+    return 0;
+}
+#else /* ! (WITH_GETRLIMIT && defined(RLIMIT_NOFILE)) */
+int
+virProcessGetMaxFiles(pid_t pid G_GNUC_UNUSED,
+                      unsigned long long *nofiles G_GNUC_UNUSED)
+{
+    errno = ENOSYS;
+    return -1;
+}
+#endif /* ! (WITH_GETRLIMIT && defined(RLIMIT_NOFILE)) */
+
+
+
 #if WITH_SETRLIMIT && defined(RLIMIT_NPROC)
 /**
  * virProcessSetMaxProcesses:
