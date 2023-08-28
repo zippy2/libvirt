@@ -3259,6 +3259,7 @@ virProcessAbort;
 virProcessActivateMaxFiles;
 virProcessExitWithStatus;
 virProcessGetAffinity;
+virProcessGetMaxFiles;
 virProcessGetMaxMemLock;
 virProcessGetNamespaces;
 virProcessGetPids;
