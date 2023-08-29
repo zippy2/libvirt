@@ -511,6 +511,8 @@ virCommandMassCloseGetFDs(virBitmap *fds)
      * onto child process (well, the one we will exec soon since this
      * is called from the child). */
     return virCommandMassCloseGetFDsDir(fds, "/proc/self/fd");
+# elif defined(__APPLE__) || defined(__FreeBSD__)
+    return virCommandMassCloseGetFDsDir(fds, "/dev/fd");
 # else
     virBitmapSetAll(fds);
     return 0;
