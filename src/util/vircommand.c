@@ -493,7 +493,7 @@ virCommandMassCloseGetFDsDir(virBitmap *fds,
             return -1;
         }
 
-        ignore_value(virBitmapSetBit(fds, fd));
+        virBitmapSetBitExpand(fds, fd);
     }
 
     if (rc < 0)
@@ -537,10 +537,8 @@ virCommandMassCloseFrom(virCommand *cmd,
      * Therefore we can safely allocate memory here (and transitively call
      * opendir/readdir) without a deadlock. */
 
-    if (openmax < 0) {
-        virReportSystemError(errno, "%s", _("sysconf(_SC_OPEN_MAX) failed"));
-        return -1;
-    }
+    if (openmax <= 0)
+        openmax = 1024;
 
     fds = virBitmapNew(openmax);
 
