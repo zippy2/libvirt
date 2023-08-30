@@ -84,7 +84,7 @@ int virProcessSetMaxCoreSize(pid_t pid, unsigned long long bytes);
 void virProcessActivateMaxFiles(void);
 
 int virProcessGetMaxMemLock(pid_t pid, unsigned long long *bytes) ATTRIBUTE_MOCKABLE;
-int virProcessGetMaxFiles(pid_t pid, unsigned long long *nofiles);
+long virProcessGetMaxFiles(void);
 
 /* Callback to run code within the mount namespace tied to the given
  * pid.  This function must use only async-signal-safe functions, as
