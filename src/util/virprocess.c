@@ -61,7 +61,7 @@
 # include <sys/prctl.h>
 #endif
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
 # include <sys/syslimits.h>
 #endif
 
@@ -984,32 +984,20 @@ virProcessGetMaxMemLock(pid_t pid G_GNUC_UNUSED,
 }
 #endif /* ! (WITH_GETRLIMIT && defined(RLIMIT_MEMLOCK)) */
 
-
-#if WITH_SETRLIMIT && defined(RLIMIT_NOFILE)
-int
-virProcessGetMaxFiles(pid_t pid, unsigned long long *nofiles)
+long
+virProcessGetMaxFiles(void)
 {
-    struct rlimit rlim;
+    long openmax = sysconf(_SC_OPEN_MAX);
 
-    if (virProcessGetLimit(pid, RLIMIT_NOFILE, &rlim) < 0)
-        return -1;
+#ifdef __APPLE__
+    /* macOS BigSurf started reporting -1, which is treated as an
+     * error. Fall back to some sensible value. */
+    if (openmax < 0)
+        openmax = OPEN_MAX;
+#endif
 
-    if (rlim.rlim_max == RLIM_INFINITY)
-        *nofiles = 0;
-
-    return 0;
+    return openmax;
 }
-#else /* ! (WITH_GETRLIMIT && defined(RLIMIT_NOFILE)) */
-int
-virProcessGetMaxFiles(pid_t pid G_GNUC_UNUSED,
-                      unsigned long long *nofiles G_GNUC_UNUSED)
-{
-    errno = ENOSYS;
-    return -1;
-}
-#endif /* ! (WITH_GETRLIMIT && defined(RLIMIT_NOFILE)) */
-
-
 
 #if WITH_SETRLIMIT && defined(RLIMIT_NPROC)
 /**
