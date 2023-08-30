@@ -322,7 +322,7 @@ static int lxcContainerSetupFDs(int *ttyfd,
 
     /* Just in case someone forget to set FD_CLOEXEC, explicitly
      * close all remaining FDs before executing the container */
-    open_max = sysconf(_SC_OPEN_MAX);
+    open_max = virProcessGetMaxFiles();
     if (open_max < 0) {
         virReportSystemError(errno, "%s",
                              _("sysconf(_SC_OPEN_MAX) failed"));
