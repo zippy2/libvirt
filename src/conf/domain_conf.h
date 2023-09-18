@@ -1533,7 +1533,7 @@ struct _virDomainTPMDef {
 };
 
 typedef enum {
-    VIR_DOMAIN_INPUT_TYPE_MOUSE,
+    VIR_DOMAIN_INPUT_TYPE_MOUSE = 0,
     VIR_DOMAIN_INPUT_TYPE_TABLET,
     VIR_DOMAIN_INPUT_TYPE_KBD,
     VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH,
@@ -1583,7 +1583,7 @@ typedef enum {
 } virDomainInputSourceGrabToggle;
 
 struct _virDomainInputDef {
-    int type;
+    virDomainInputType type;
     int bus;
     int model; /* virDomainInputModel */
     struct {
