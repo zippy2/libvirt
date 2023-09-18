@@ -11664,7 +11664,6 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
     VIR_XPATH_NODE_AUTORESTORE(ctxt)
     virDomainInputDef *def;
     g_autofree char *bus = NULL;
-    g_autofree char *model = NULL;
     xmlNodePtr source = NULL;
 
     def = g_new0(virDomainInputDef, 1);
@@ -11672,7 +11671,6 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
     ctxt->node = node;
 
     bus = virXMLPropString(node, "bus");
-    model = virXMLPropString(node, "model");
 
     if (virXMLPropEnum(node, "type",
                        virDomainInputTypeFromString,
@@ -11681,11 +11679,10 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
         goto error;
     }
 
-    if (model &&
-        ((def->model = virDomainInputModelTypeFromString(model)) < 0 ||
-         def->model == VIR_DOMAIN_INPUT_MODEL_DEFAULT)) {
-        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                       _("unknown input model '%1$s'"), model);
+    if (virXMLPropEnum(node, "model",
+                       virDomainInputModelTypeFromString,
+                       VIR_XML_PROP_NONZERO,
+                       &def->model) < 0) {
         goto error;
     }
 
