@@ -940,7 +940,7 @@ qemuDomainDeviceCalculatePCIConnectFlags(virDomainDeviceDef *dev,
         return pciFlags;
 
     case VIR_DOMAIN_DEVICE_INPUT:
-        switch ((virDomainInputBus) dev->data.input->bus) {
+        switch (dev->data.input->bus) {
         case VIR_DOMAIN_INPUT_BUS_VIRTIO:
             switch (dev->data.input->model) {
             case VIR_DOMAIN_INPUT_MODEL_VIRTIO_TRANSITIONAL:
