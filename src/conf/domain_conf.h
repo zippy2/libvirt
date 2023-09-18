@@ -1600,7 +1600,7 @@ typedef enum {
 struct _virDomainInputDef {
     virDomainInputType type;
     int bus;
-    int model; /* virDomainInputModel */
+    virDomainInputModel model;
     struct {
         char *evdev;
         virDomainInputSourceGrab grab;
