@@ -942,7 +942,7 @@ qemuDomainDeviceCalculatePCIConnectFlags(virDomainDeviceDef *dev,
     case VIR_DOMAIN_DEVICE_INPUT:
         switch ((virDomainInputBus) dev->data.input->bus) {
         case VIR_DOMAIN_INPUT_BUS_VIRTIO:
-            switch ((virDomainInputModel) dev->data.input->model) {
+            switch (dev->data.input->model) {
             case VIR_DOMAIN_INPUT_MODEL_VIRTIO_TRANSITIONAL:
                 /* Transitional devices only work in conventional PCI slots */
                 return pciFlags;
