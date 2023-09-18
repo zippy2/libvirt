@@ -3023,7 +3023,7 @@ virDomainInputDefValidate(const virDomainInputDef *input,
         return -1;
     }
 
-    switch ((virDomainInputModel)input->model) {
+    switch (input->model) {
     case VIR_DOMAIN_INPUT_MODEL_VIRTIO:
     case VIR_DOMAIN_INPUT_MODEL_VIRTIO_TRANSITIONAL:
     case VIR_DOMAIN_INPUT_MODEL_VIRTIO_NON_TRANSITIONAL:

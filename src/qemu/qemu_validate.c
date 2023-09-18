@@ -5479,7 +5479,7 @@ qemuValidateDomainDeviceDefInput(const virDomainInputDef *input,
         return 0;
 
     /* model=virtio-(non-)transitional is unsupported */
-    switch ((virDomainInputModel)input->model) {
+    switch (input->model) {
     case VIR_DOMAIN_INPUT_MODEL_VIRTIO_TRANSITIONAL:
     case VIR_DOMAIN_INPUT_MODEL_VIRTIO_NON_TRANSITIONAL:
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
