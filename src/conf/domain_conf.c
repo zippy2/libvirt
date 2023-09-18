@@ -11573,7 +11573,6 @@ virDomainPanicDefParseXML(virDomainXMLOption *xmlopt,
                           unsigned int flags)
 {
     virDomainPanicDef *panic;
-    g_autofree char *model = NULL;
 
     panic = g_new0(virDomainPanicDef, 1);
 
@@ -11581,11 +11580,10 @@ virDomainPanicDefParseXML(virDomainXMLOption *xmlopt,
                                     &panic->info, flags) < 0)
         goto error;
 
-    model = virXMLPropString(node, "model");
-    if (model != NULL &&
-        (panic->model = virDomainPanicModelTypeFromString(model)) < 0) {
-        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                       _("unknown panic model '%1$s'"), model);
+    if (virXMLPropEnum(node, "model",
+                       virDomainPanicModelTypeFromString,
+                       VIR_XML_PROP_NONE,
+                       &panic->model) < 0) {
         goto error;
     }
 

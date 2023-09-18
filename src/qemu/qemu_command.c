@@ -10194,7 +10194,7 @@ qemuBuildPanicCommandLine(virCommand *cmd,
     size_t i;
 
     for (i = 0; i < def->npanics; i++) {
-        switch ((virDomainPanicModel) def->panics[i]->model) {
+        switch (def->panics[i]->model) {
         case VIR_DOMAIN_PANIC_MODEL_ISA: {
             g_autoptr(virJSONValue) props = NULL;
 
