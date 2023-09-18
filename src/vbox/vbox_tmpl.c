@@ -496,7 +496,7 @@ static HRESULT _pfnClearException(PCVBOXXPCOM pFuncs)
 
 static void _vboxIIDInitialize(vboxIID *iid)
 {
-    memset(iid, 0, sizeof(vboxIID));
+    memset(iid, 0, sizeof(*iid));
     iid->owner = true;
 }
 
