@@ -2815,7 +2815,7 @@ bool virDomainMemoryIsVirtioModel(const virDomainMemoryDef *def);
 
 
 typedef enum {
-    VIR_DOMAIN_PANIC_MODEL_DEFAULT,
+    VIR_DOMAIN_PANIC_MODEL_DEFAULT = 0,
     VIR_DOMAIN_PANIC_MODEL_ISA,
     VIR_DOMAIN_PANIC_MODEL_PSERIES,
     VIR_DOMAIN_PANIC_MODEL_HYPERV,
@@ -2826,7 +2826,7 @@ typedef enum {
 } virDomainPanicModel;
 
 struct _virDomainPanicDef {
-    int model; /* virDomainPanicModel */
+    virDomainPanicModel model;
     virDomainDeviceInfo info;
 };
 
