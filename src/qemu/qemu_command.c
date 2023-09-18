@@ -912,7 +912,7 @@ qemuBuildVirtioDevGetConfigDev(const virDomainDeviceDef *device,
         case VIR_DOMAIN_DEVICE_INPUT:
             *virtioOptions = device->data.input->virtio;
 
-            switch ((virDomainInputType) device->data.input->type) {
+            switch (device->data.input->type) {
             case VIR_DOMAIN_INPUT_TYPE_MOUSE:
                 *baseName = "virtio-mouse";
                 break;
@@ -4305,7 +4305,7 @@ qemuBuildInputVirtioDevProps(const virDomainDef *def,
     g_autoptr(virJSONValue) props = NULL;
     const char *evdev = NULL;
 
-    switch ((virDomainInputType)dev->type) {
+    switch (dev->type) {
     case VIR_DOMAIN_INPUT_TYPE_MOUSE:
     case VIR_DOMAIN_INPUT_TYPE_TABLET:
     case VIR_DOMAIN_INPUT_TYPE_KBD:
@@ -4353,6 +4353,10 @@ qemuBuildInputUSBDevProps(const virDomainDef *def,
         break;
     case VIR_DOMAIN_INPUT_TYPE_KBD:
         driver = "usb-kbd";
+        break;
+    case VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH:
+    case VIR_DOMAIN_INPUT_TYPE_EVDEV:
+    case VIR_DOMAIN_INPUT_TYPE_LAST:
         break;
     }
 

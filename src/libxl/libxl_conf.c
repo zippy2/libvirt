@@ -823,6 +823,10 @@ libxlMakeDomBuildInfo(virDomainDef *def,
                     VIR_FREE(*usbdevice);
                     *usbdevice = g_strdup("tablet");
                     break;
+                case VIR_DOMAIN_INPUT_TYPE_KBD:
+                case VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH:
+                case VIR_DOMAIN_INPUT_TYPE_EVDEV:
+                case VIR_DOMAIN_INPUT_TYPE_LAST:
                 default:
                     virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
                             _("Unknown input device type"));
