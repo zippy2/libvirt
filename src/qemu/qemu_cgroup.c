@@ -437,6 +437,12 @@ qemuSetupInputCgroup(virDomainObj *vm,
         return qemuCgroupAllowDevicePath(vm, dev->source.evdev,
                                          VIR_CGROUP_DEVICE_RW, false);
         break;
+
+    case VIR_DOMAIN_INPUT_TYPE_MOUSE:
+    case VIR_DOMAIN_INPUT_TYPE_TABLET:
+    case VIR_DOMAIN_INPUT_TYPE_KBD:
+    case VIR_DOMAIN_INPUT_TYPE_LAST:
+        break;
     }
 
     return ret;
@@ -457,6 +463,12 @@ qemuTeardownInputCgroup(virDomainObj *vm,
     case VIR_DOMAIN_INPUT_TYPE_EVDEV:
         return qemuCgroupDenyDevicePath(vm, dev->source.evdev,
                                         VIR_CGROUP_DEVICE_RWM, false);
+        break;
+
+    case VIR_DOMAIN_INPUT_TYPE_MOUSE:
+    case VIR_DOMAIN_INPUT_TYPE_TABLET:
+    case VIR_DOMAIN_INPUT_TYPE_KBD:
+    case VIR_DOMAIN_INPUT_TYPE_LAST:
         break;
     }
 

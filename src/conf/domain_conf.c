@@ -2066,7 +2066,7 @@ void virDomainGraphicsDefFree(virDomainGraphicsDef *def)
 
 const char *virDomainInputDefGetPath(virDomainInputDef *input)
 {
-    switch ((virDomainInputType) input->type) {
+    switch (input->type) {
     case VIR_DOMAIN_INPUT_TYPE_MOUSE:
     case VIR_DOMAIN_INPUT_TYPE_TABLET:
     case VIR_DOMAIN_INPUT_TYPE_KBD:
@@ -11110,7 +11110,6 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
 {
     VIR_XPATH_NODE_AUTORESTORE(ctxt)
     virDomainInputDef *def;
-    g_autofree char *type = NULL;
     g_autofree char *bus = NULL;
     g_autofree char *model = NULL;
     xmlNodePtr source = NULL;
@@ -11119,19 +11118,13 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
 
     ctxt->node = node;
 
-    type = virXMLPropString(node, "type");
     bus = virXMLPropString(node, "bus");
     model = virXMLPropString(node, "model");
 
-    if (!type) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       "%s", _("missing input device type"));
-        goto error;
-    }
-
-    if ((def->type = virDomainInputTypeFromString(type)) < 0) {
-        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                       _("unknown input device type '%1$s'"), type);
+    if (virXMLPropEnum(node, "type",
+                       virDomainInputTypeFromString,
+                       VIR_XML_PROP_REQUIRED,
+                       &def->type) < 0) {
         goto error;
     }
 
