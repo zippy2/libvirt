@@ -4422,7 +4422,7 @@ qemuBuildInputCommandLine(virCommand *cmd,
         } else {
             g_autoptr(virJSONValue) props = NULL;
 
-            switch ((virDomainInputBus) input->bus) {
+            switch (input->bus) {
             case VIR_DOMAIN_INPUT_BUS_USB:
                 if (!(props = qemuBuildInputUSBDevProps(def, input)))
                     return -1;

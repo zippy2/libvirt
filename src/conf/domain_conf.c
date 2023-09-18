@@ -11603,14 +11603,11 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
 {
     VIR_XPATH_NODE_AUTORESTORE(ctxt)
     virDomainInputDef *def;
-    g_autofree char *bus = NULL;
     xmlNodePtr source = NULL;
 
     def = g_new0(virDomainInputDef, 1);
 
     ctxt->node = node;
-
-    bus = virXMLPropString(node, "bus");
 
     if (virXMLPropEnum(node, "type",
                        virDomainInputTypeFromString,
@@ -11626,11 +11623,10 @@ virDomainInputDefParseXML(virDomainXMLOption *xmlopt,
         goto error;
     }
 
-    if (bus &&
-        ((def->bus = virDomainInputBusTypeFromString(bus)) < 0 ||
-         def->bus == VIR_DOMAIN_INPUT_BUS_DEFAULT)) {
-        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                       _("unknown input bus type '%1$s'"), bus);
+    if (virXMLPropEnum(node, "bus",
+                       virDomainInputBusTypeFromString,
+                       VIR_XML_PROP_NONZERO,
+                       &def->bus) < 0) {
         goto error;
     }
 
