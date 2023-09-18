@@ -1067,7 +1067,7 @@ qemuValidateDomainDefPanic(const virDomainDef *def,
     size_t i;
 
     for (i = 0; i < def->npanics; i++) {
-        switch ((virDomainPanicModel) def->panics[i]->model) {
+        switch (def->panics[i]->model) {
         case VIR_DOMAIN_PANIC_MODEL_S390:
             /* For s390 guests, the hardware provides the same
              * functionality as the pvpanic device. The address
