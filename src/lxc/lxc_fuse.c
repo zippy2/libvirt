@@ -73,7 +73,7 @@ lxcProcGetattrImpl(const char *path,
     struct fuse_context *context = fuse_get_context();
     virDomainDef *def = (virDomainDef *)context->private_data;
 
-    memset(stbuf, 0, sizeof(struct stat));
+    memset(stbuf, 0, sizeof(*stbuf));
     mempath = g_strdup_printf("/proc/%s", path);
 
     if (STREQ(path, "/")) {
