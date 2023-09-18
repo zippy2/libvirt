@@ -1856,7 +1856,7 @@ virSecurityDACSetInputLabel(virSecurityManager *mgr,
     if (seclabel && !seclabel->relabel)
         return 0;
 
-    switch ((virDomainInputType)input->type) {
+    switch (input->type) {
     case VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH:
     case VIR_DOMAIN_INPUT_TYPE_EVDEV:
         if (virSecurityDACGetIds(seclabel, priv, &user, &group, NULL, NULL) < 0)
@@ -1885,7 +1885,7 @@ virSecurityDACRestoreInputLabel(virSecurityManager *mgr,
 {
     int ret = -1;
 
-    switch ((virDomainInputType)input->type) {
+    switch (input->type) {
     case VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH:
     case VIR_DOMAIN_INPUT_TYPE_EVDEV:
         ret = virSecurityDACRestoreFileLabel(mgr, input->source.evdev);

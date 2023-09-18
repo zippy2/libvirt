@@ -5496,7 +5496,7 @@ qemuValidateDomainDeviceDefInput(const virDomainInputDef *input,
         return -1;
     }
 
-    switch ((virDomainInputType)input->type) {
+    switch (input->type) {
     case VIR_DOMAIN_INPUT_TYPE_MOUSE:
         baseName = "virtio-mouse";
         cap = QEMU_CAPS_VIRTIO_MOUSE;

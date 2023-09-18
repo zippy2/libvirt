@@ -2990,7 +2990,7 @@ virDomainInputDefValidate(const virDomainInputDef *input,
         }
     }
 
-    switch ((virDomainInputType) input->type) {
+    switch (input->type) {
     case VIR_DOMAIN_INPUT_TYPE_MOUSE:
     case VIR_DOMAIN_INPUT_TYPE_TABLET:
     case VIR_DOMAIN_INPUT_TYPE_KBD:
