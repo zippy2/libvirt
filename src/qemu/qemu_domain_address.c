@@ -1031,7 +1031,7 @@ qemuDomainDeviceCalculatePCIConnectFlags(virDomainDeviceDef *dev,
         break;
 
     case VIR_DOMAIN_DEVICE_PANIC:
-        switch ((virDomainPanicModel) dev->data.panic->model) {
+        switch (dev->data.panic->model) {
         case VIR_DOMAIN_PANIC_MODEL_PVPANIC:
             return pciFlags | VIR_PCI_CONNECT_INTEGRATED;
 
