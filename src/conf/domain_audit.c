@@ -918,7 +918,7 @@ virDomainAuditInput(virDomainObj *vm,
     if (!(vmname = virAuditEncode("vm", vm->def->name)))
         return;
 
-    switch ((virDomainInputType) input->type) {
+    switch (input->type) {
     case VIR_DOMAIN_INPUT_TYPE_MOUSE:
     case VIR_DOMAIN_INPUT_TYPE_TABLET:
     case VIR_DOMAIN_INPUT_TYPE_KBD:
