@@ -1157,80 +1157,6 @@ virDomainDefPostParseVideo(virDomainDef *def,
 
 
 static int
-virDomainDefRejectDuplicateControllers(virDomainDef *def)
-{
-    int max_idx[VIR_DOMAIN_CONTROLLER_TYPE_LAST];
-    virBitmap *bitmaps[VIR_DOMAIN_CONTROLLER_TYPE_LAST] = { NULL };
-    virDomainControllerDef *cont;
-    size_t nbitmaps = 0;
-    int ret = -1;
-    size_t i;
-
-    memset(max_idx, -1, sizeof(max_idx));
-
-    for (i = 0; i < def->ncontrollers; i++) {
-        cont = def->controllers[i];
-        if (cont->idx > max_idx[cont->type])
-            max_idx[cont->type] = cont->idx;
-    }
-
-    /* multiple USB controllers with the same index are allowed */
-    max_idx[VIR_DOMAIN_CONTROLLER_TYPE_USB] = -1;
-
-    for (i = 0; i < VIR_DOMAIN_CONTROLLER_TYPE_LAST; i++) {
-        if (max_idx[i] >= 0)
-            bitmaps[i] = virBitmapNew(max_idx[i] + 1);
-        nbitmaps++;
-    }
-
-    for (i = 0; i < def->ncontrollers; i++) {
-        cont = def->controllers[i];
-
-        if (max_idx[cont->type] == -1)
-            continue;
-
-        if (virBitmapIsBitSet(bitmaps[cont->type], cont->idx)) {
-            virReportError(VIR_ERR_XML_ERROR,
-                           _("Multiple '%1$s' controllers with index '%2$d'"),
-                           virDomainControllerTypeToString(cont->type),
-                           cont->idx);
-            goto cleanup;
-        }
-        ignore_value(virBitmapSetBit(bitmaps[cont->type], cont->idx));
-    }
-
-    ret = 0;
- cleanup:
-    for (i = 0; i < nbitmaps; i++)
-        virBitmapFree(bitmaps[i]);
-    return ret;
-}
-
-
-static int
-virDomainDefRejectDuplicatePanics(virDomainDef *def)
-{
-    g_autoptr(virBitmap) exists = virBitmapNew(VIR_DOMAIN_PANIC_MODEL_LAST);
-    size_t i;
-
-    for (i = 0; i < def->npanics; i++) {
-        virDomainPanicModel model = def->panics[i]->model;
-
-        if (virBitmapIsBitSet(exists, model)) {
-            virReportError(VIR_ERR_XML_ERROR,
-                           _("Multiple panic devices with model '%1$s'"),
-                           virDomainPanicModelTypeToString(model));
-            return -1;
-        }
-
-        ignore_value(virBitmapSetBit(exists, model));
-    }
-
-    return 0;
-}
-
-
-static int
 virDomainDefPostParseCommon(virDomainDef *def,
                             struct virDomainDefPostParseDeviceIteratorData *data,
                             virDomainXMLOption *xmlopt)
@@ -1254,12 +1180,6 @@ virDomainDefPostParseCommon(virDomainDef *def,
         return -1;
 
     virDomainDefPostParseMemtune(def);
-
-    if (virDomainDefRejectDuplicateControllers(def) < 0)
-        return -1;
-
-    if (virDomainDefRejectDuplicatePanics(def) < 0)
-        return -1;
 
     if (def->os.type == VIR_DOMAIN_OSTYPE_HVM &&
         !(data->xmlopt->config.features & VIR_DOMAIN_DEF_FEATURE_NO_BOOT_ORDER) &&
