@@ -1544,7 +1544,7 @@ typedef enum {
 
 struct _virDomainInputDef {
     virDomainInputType type;
-    int bus;
+    virDomainInputBus bus;
     virDomainInputModel model;
     struct {
         char *evdev;
