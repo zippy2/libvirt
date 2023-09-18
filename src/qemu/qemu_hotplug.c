@@ -3032,7 +3032,7 @@ qemuDomainAttachInputDevice(virDomainObj *vm,
 
     qemuAssignDeviceInputAlias(vm->def, input, -1);
 
-    switch ((virDomainInputBus) input->bus) {
+    switch (input->bus) {
     case VIR_DOMAIN_INPUT_BUS_USB:
         if (virDomainUSBAddressEnsure(priv->usbaddrs, &input->info) < 0)
             return -1;
@@ -6031,7 +6031,7 @@ qemuDomainDetachPrepInput(virDomainObj *vm,
     }
     *detach = input = vm->def->inputs[idx];
 
-    switch ((virDomainInputBus) input->bus) {
+    switch (input->bus) {
     case VIR_DOMAIN_INPUT_BUS_DEFAULT:
     case VIR_DOMAIN_INPUT_BUS_PS2:
     case VIR_DOMAIN_INPUT_BUS_XEN:
