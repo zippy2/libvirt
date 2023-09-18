@@ -1774,6 +1774,9 @@ xenFormatXLInputDevs(virConf *conf, virDomainDef *def)
                     case VIR_DOMAIN_INPUT_TYPE_KBD:
                         devtype = "keyboard";
                         break;
+                    case VIR_DOMAIN_INPUT_TYPE_PASSTHROUGH:
+                    case VIR_DOMAIN_INPUT_TYPE_EVDEV:
+                    case VIR_DOMAIN_INPUT_TYPE_LAST:
                     default:
                         continue;
                 }
