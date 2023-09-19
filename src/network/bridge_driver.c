@@ -464,7 +464,7 @@ networkUpdateState(virNetworkObj *obj,
 
     def = virNetworkObjGetDef(obj);
 
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
     case VIR_NETWORK_FORWARD_ROUTE:
@@ -1689,7 +1689,7 @@ networkRefreshDaemonsHelper(virNetworkObj *obj,
     virNetworkDef *def = virNetworkObjGetDef(obj);
 
     if (virNetworkObjIsActive(obj)) {
-        switch ((virNetworkForwardType) def->forward.type) {
+        switch (def->forward.type) {
         case VIR_NETWORK_FORWARD_NONE:
         case VIR_NETWORK_FORWARD_NAT:
         case VIR_NETWORK_FORWARD_ROUTE:
@@ -1744,7 +1744,7 @@ networkReloadFirewallRulesHelper(virNetworkObj *obj,
     bool saveStatus = false;
 
     if (virNetworkObjIsActive(obj)) {
-        switch ((virNetworkForwardType) def->forward.type) {
+        switch (def->forward.type) {
         case VIR_NETWORK_FORWARD_NONE:
         case VIR_NETWORK_FORWARD_NAT:
         case VIR_NETWORK_FORWARD_ROUTE:
@@ -2263,7 +2263,7 @@ networkCreateInterfacePool(virNetworkDef *netdef)
         virNetworkForwardIfDef *thisIf
             = &netdef->forward.ifs[netdef->forward.nifs];
 
-        switch ((virNetworkForwardType) netdef->forward.type) {
+        switch (netdef->forward.type) {
         case VIR_NETWORK_FORWARD_BRIDGE:
         case VIR_NETWORK_FORWARD_PRIVATE:
         case VIR_NETWORK_FORWARD_VEPA:
@@ -2387,7 +2387,7 @@ networkStartNetwork(virNetworkDriverState *driver,
                        VIR_HOOK_SUBOP_BEGIN) < 0)
         goto cleanup;
 
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
 
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
@@ -2473,7 +2473,7 @@ networkShutdownNetwork(virNetworkDriverState *driver,
 
     unlink(stateFile);
 
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
 
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
@@ -2828,7 +2828,7 @@ networkValidate(virNetworkDriverState *driver,
     /* Only the three L3 network types that are configured by libvirt
      * need to have a bridge device name / mac address provided
      */
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
     case VIR_NETWORK_FORWARD_ROUTE:
@@ -3330,7 +3330,7 @@ networkUpdate(virNetworkPtr net,
         /* Take care of anything that must be done before updating the
          * live NetworkDef.
          */
-        switch ((virNetworkForwardType) def->forward.type) {
+        switch (def->forward.type) {
         case VIR_NETWORK_FORWARD_NONE:
         case VIR_NETWORK_FORWARD_NAT:
         case VIR_NETWORK_FORWARD_ROUTE:
@@ -4004,7 +4004,7 @@ networkAllocatePort(virNetworkObj *obj,
     }
 
     VIR_DEBUG("Processing forward type %d", netdef->forward.type);
-    switch ((virNetworkForwardType) netdef->forward.type) {
+    switch (netdef->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
     case VIR_NETWORK_FORWARD_ROUTE:
