@@ -1627,7 +1627,6 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
     if (bridgeNode) {
         g_autofree char *stp = NULL;
         g_autofree char *stpDelay = NULL;
-        g_autofree char *macTableManager = NULL;
 
         def->bridge = virXMLPropString(bridgeNode, "name");
         def->bridgeZone = virXMLPropString(bridgeNode, "zone");
@@ -1646,12 +1645,10 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
             return NULL;
         }
 
-        if ((macTableManager = virXMLPropString(bridgeNode, "macTableManager")) &&
-            (def->macTableManager
-             = virNetworkBridgeMACTableManagerTypeFromString(macTableManager)) <= 0) {
-            virReportError(VIR_ERR_XML_ERROR,
-                           _("Invalid macTableManager setting '%1$s' in network '%2$s'"),
-                           macTableManager, def->name);
+        if (virXMLPropEnum(bridgeNode, "macTableManager",
+                           virNetworkBridgeMACTableManagerTypeFromString,
+                           VIR_XML_PROP_NONZERO,
+                           &def->macTableManager) < 0) {
             return NULL;
         }
     }
