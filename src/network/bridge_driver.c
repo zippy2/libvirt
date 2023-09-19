@@ -2952,7 +2952,7 @@ networkValidate(virNetworkDriverState *driver,
         virNetworkForwardIfDef *iface = &def->forward.ifs[i];
         g_autofree char *sysfs_path = NULL;
 
-        switch ((virNetworkForwardHostdevDeviceType)iface->type) {
+        switch (iface->type) {
         case VIR_NETWORK_FORWARD_HOSTDEV_DEVICE_NETDEV:
             usesInterface = true;
 

@@ -1437,19 +1437,10 @@ virNetworkForwardDefParseXML(const char *networkName,
         def->ifs = g_new0(virNetworkForwardIfDef, nForwardAddrs);
 
         for (i = 0; i < nForwardAddrs; i++) {
-            g_autofree char *addrType = NULL;
-
-            if (!(addrType = virXMLPropString(forwardAddrNodes[i], "type"))) {
-                virReportError(VIR_ERR_XML_ERROR,
-                               _("missing address type in network %1$s"),
-                               networkName);
-                return -1;
-            }
-
-            if ((def->ifs[i].type = virNetworkForwardHostdevDeviceTypeFromString(addrType)) < 0) {
-                virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                               _("unknown address type '%1$s' in network %2$s"),
-                               addrType, networkName);
+            if (virXMLPropEnum(forwardAddrNodes[i], "type",
+                               virNetworkForwardHostdevDeviceTypeFromString,
+                               VIR_XML_PROP_REQUIRED,
+                               &def->ifs[i].type) < 0) {
                 return -1;
             }
 
@@ -1475,10 +1466,14 @@ virNetworkForwardDefParseXML(const char *networkName,
             }
             /* Add USB case here if we ever find a reason to support it */
 
+            case VIR_NETWORK_FORWARD_HOSTDEV_DEVICE_NONE:
+            case VIR_NETWORK_FORWARD_HOSTDEV_DEVICE_NETDEV:
+            case VIR_NETWORK_FORWARD_HOSTDEV_DEVICE_LAST:
             default:
-                virReportError(VIR_ERR_XML_ERROR,
-                               _("unsupported address type '%1$s' in network %2$s"),
-                               addrType, networkName);
+            virReportError(VIR_ERR_XML_ERROR,
+                           _("unsupported address type '%1$s' in network %2$s"),
+                           virNetworkForwardHostdevDeviceTypeToString(def->ifs[i].type),
+                           networkName);
                 return -1;
             }
             def->nifs++;
