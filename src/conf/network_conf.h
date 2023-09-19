@@ -184,7 +184,7 @@ struct _virNetworkIPDef {
 
 typedef struct _virNetworkForwardIfDef virNetworkForwardIfDef;
 struct _virNetworkForwardIfDef {
-    int type;
+    virNetworkForwardHostdevDeviceType type;
     union {
         virPCIDeviceAddress pci; /*PCI Address of device */
         /* when USB devices are supported a new variable to be added here */
