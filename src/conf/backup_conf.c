@@ -198,21 +198,18 @@ virDomainBackupDefParseXML(xmlXPathContextPtr ctxt,
     g_autoptr(virDomainBackupDef) def = NULL;
     g_autofree xmlNodePtr *nodes = NULL;
     xmlNodePtr node = NULL;
-    g_autofree char *mode = NULL;
     bool push;
     size_t i;
     int n;
 
     def = g_new0(virDomainBackupDef, 1);
 
-    def->type = VIR_DOMAIN_BACKUP_TYPE_PUSH;
-
-    if ((mode = virXMLPropString(ctxt->node, "mode"))) {
-        if ((def->type = virDomainBackupTypeFromString(mode)) <= 0) {
-            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                           _("unknown backup mode '%1$s'"), mode);
-            return NULL;
-        }
+    if (virXMLPropEnumDefault(ctxt->node, "mode",
+                              virDomainBackupTypeFromString,
+                              VIR_XML_PROP_NONZERO,
+                              &def->type,
+                              VIR_DOMAIN_BACKUP_TYPE_PUSH) < 0) {
+        return NULL;
     }
 
     push = def->type == VIR_DOMAIN_BACKUP_TYPE_PUSH;
