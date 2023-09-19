@@ -242,7 +242,7 @@ struct _virNetworkDef {
 
     char *bridge;       /* Name of bridge device */
     char *bridgeZone;  /* name of firewalld zone for bridge */
-    int  macTableManager; /* enum virNetworkBridgeMACTableManager */
+    virNetworkBridgeMACTableManagerType macTableManager;
     char *domain;
     virTristateBool domainLocalOnly; /* yes disables dns forwarding */
     virTristateBool domainRegister;
