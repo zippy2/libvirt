@@ -323,7 +323,7 @@ esxNetworkDefineXMLFlags(virConnectPtr conn, const char *xml,
     }
 
     /* FIXME: Add support for NAT */
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_BRIDGE:
         break;

@@ -122,7 +122,7 @@ networkHasRunningNetworksWithFWHelper(virNetworkObj *obj,
     if (virNetworkObjIsActive(obj)) {
         virNetworkDef *def = virNetworkObjGetDef(obj);
 
-        switch ((virNetworkForwardType) def->forward.type) {
+        switch (def->forward.type) {
         case VIR_NETWORK_FORWARD_NONE:
         case VIR_NETWORK_FORWARD_NAT:
         case VIR_NETWORK_FORWARD_ROUTE:
