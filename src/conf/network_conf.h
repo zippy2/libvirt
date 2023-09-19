@@ -201,7 +201,7 @@ struct _virNetworkForwardPfDef {
 
 typedef struct _virNetworkForwardDef virNetworkForwardDef;
 struct _virNetworkForwardDef {
-    int type;     /* One of virNetworkForwardType constants */
+    virNetworkForwardType type;
     bool managed;  /* managed attribute for hostdev mode */
     virDeviceHostdevPCIDriverInfo driver;
 
