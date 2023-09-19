@@ -1509,9 +1509,6 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
 {
     g_autoptr(virNetworkDef) def = NULL;
     g_autofree char *uuid = NULL;
-    g_autofree char *stp = NULL;
-    g_autofree char *stpDelay = NULL;
-    g_autofree char *macTableManager = NULL;
     g_autofree char *macAddr = NULL;
     g_autofree char *mtuSize = NULL;
     g_autofree xmlNodePtr *ipNodes = NULL;
@@ -1527,6 +1524,7 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
     xmlNodePtr vlanNode;
     xmlNodePtr metadataNode = NULL;
     xmlNodePtr domain_node = NULL;
+    xmlNodePtr bridgeNode = NULL;
 
     def = g_new0(virNetworkDef, 1);
 
@@ -1618,25 +1616,38 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
     if (virNetworkPortOptionsParseXML(ctxt, &def->isolatedPort) < 0)
         return NULL;
 
-    /* Parse bridge information */
-    def->bridge = virXPathString("string(./bridge[1]/@name)", ctxt);
-    def->bridgeZone = virXPathString("string(./bridge[1]/@zone)", ctxt);
-    stp = virXPathString("string(./bridge[1]/@stp)", ctxt);
-    def->stp = (stp && STREQ(stp, "off")) ? false : true;
+    forwardNode = virXPathNode("./forward", ctxt);
+    if (forwardNode &&
+        virNetworkForwardDefParseXML(def->name, forwardNode, ctxt, &def->forward) < 0) {
+        return NULL;
+    }
 
-    stpDelay = virXPathString("string(./bridge[1]/@delay)", ctxt);
-    if (stpDelay) {
-        if (virStrToLong_ulp(stpDelay, NULL, 10, &def->delay) < 0) {
+    /* Parse bridge information */
+    bridgeNode = virXPathNode("./bridge[1]", ctxt);
+    if (bridgeNode) {
+        g_autofree char *stp = NULL;
+        g_autofree char *stpDelay = NULL;
+        g_autofree char *macTableManager = NULL;
+
+        def->bridge = virXMLPropString(bridgeNode, "name");
+        def->bridgeZone = virXMLPropString(bridgeNode, "zone");
+        stp = virXMLPropString(bridgeNode, "stp");
+        if (stp) {
+            def->stp = STRNEQ(stp, "off");
+        } else {
+            def->stp = def->forward.type != VIR_NETWORK_FORWARD_BRIDGE;
+        }
+
+        if ((stpDelay = virXMLPropString(bridgeNode, "delay")) &&
+            virStrToLong_ulp(stpDelay, NULL, 10, &def->delay) < 0) {
             virReportError(VIR_ERR_XML_ERROR,
                            _("Invalid delay value in network '%1$s'"),
                            def->name);
             return NULL;
         }
-    }
 
-    macTableManager = virXPathString("string(./bridge[1]/@macTableManager)", ctxt);
-    if (macTableManager) {
-        if ((def->macTableManager
+        if ((macTableManager = virXMLPropString(bridgeNode, "macTableManager")) &&
+            (def->macTableManager
              = virNetworkBridgeMACTableManagerTypeFromString(macTableManager)) <= 0) {
             virReportError(VIR_ERR_XML_ERROR,
                            _("Invalid macTableManager setting '%1$s' in network '%2$s'"),
@@ -1786,12 +1797,6 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
         }
     }
 
-    forwardNode = virXPathNode("./forward", ctxt);
-    if (forwardNode &&
-        virNetworkForwardDefParseXML(def->name, forwardNode, ctxt, &def->forward) < 0) {
-        return NULL;
-    }
-
     /* Validate some items in the main NetworkDef that need to align
      * with the chosen forward mode.
      */
@@ -1861,7 +1866,7 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
         G_GNUC_FALLTHROUGH;
 
     case VIR_NETWORK_FORWARD_BRIDGE:
-        if (def->delay || stp || def->bridgeZone) {
+        if (def->delay || def->stp || def->bridgeZone) {
             virReportError(VIR_ERR_XML_ERROR,
                            _("bridge delay/stp/zone options only allowed in open, route, nat, and isolated mode, not in %1$s (network '%2$s')"),
                            virNetworkForwardTypeToString(def->forward.type),
