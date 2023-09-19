@@ -76,7 +76,7 @@ struct _virDomainBackupDiskDef {
 typedef struct _virDomainBackupDef virDomainBackupDef;
 struct _virDomainBackupDef {
     /* Public XML.  */
-    int type; /* virDomainBackupType */
+    virDomainBackupType type;
     char *incremental;
     virStorageNetHostDef *server; /* only when type == PULL */
     virTristateBool tls; /* use TLS for NBD */
