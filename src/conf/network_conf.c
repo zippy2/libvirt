@@ -1308,20 +1308,17 @@ virNetworkForwardDefParseXML(const char *networkName,
     g_autofree xmlNodePtr *forwardNatNodes = NULL;
     g_autofree char *forwardDev = NULL;
     g_autofree char *forwardManaged = NULL;
-    g_autofree char *type = NULL;
     xmlNodePtr driverNode = NULL;
     VIR_XPATH_NODE_AUTORESTORE(ctxt)
 
     ctxt->node = node;
 
-    if (!(type = virXPathString("string(./@mode)", ctxt))) {
-        def->type = VIR_NETWORK_FORWARD_NAT;
-    } else {
-        if ((def->type = virNetworkForwardTypeFromString(type)) < 0) {
-            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                           _("unknown forwarding type '%1$s'"), type);
-            return -1;
-        }
+    if (virXMLPropEnumDefault(node, "mode",
+                              virNetworkForwardTypeFromString,
+                              VIR_XML_PROP_NONE,
+                              &def->type,
+                              VIR_NETWORK_FORWARD_NAT) < 0) {
+        return -1;
     }
 
     forwardManaged = virXPathString("string(./@managed)", ctxt);
@@ -1783,7 +1780,7 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
     /* Validate some items in the main NetworkDef that need to align
      * with the chosen forward mode.
      */
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
         break;
 
@@ -1872,7 +1869,7 @@ virNetworkDefParseXML(xmlXPathContextPtr ctxt,
     }
 
     if (def->mtu) {
-        switch ((virNetworkForwardType) def->forward.type) {
+        switch (def->forward.type) {
         case VIR_NETWORK_FORWARD_NONE:
         case VIR_NETWORK_FORWARD_NAT:
         case VIR_NETWORK_FORWARD_ROUTE:
@@ -2358,7 +2355,7 @@ virNetworkDefFormatBuf(virBuffer *buf,
             virBufferAddLit(buf, "</forward>\n");
     }
 
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
     case VIR_NETWORK_FORWARD_ROUTE:
