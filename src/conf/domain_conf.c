@@ -32264,7 +32264,7 @@ virDomainNetResolveActualType(virDomainNetDef *iface)
     if (!(def = virNetworkDefParse(xml, NULL, NULL, false)))
         return -1;
 
-    switch ((virNetworkForwardType) def->forward.type) {
+    switch (def->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
     case VIR_NETWORK_FORWARD_ROUTE:

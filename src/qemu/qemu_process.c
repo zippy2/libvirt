@@ -5321,7 +5321,7 @@ qemuProcessGetNetworkAddress(const char *netname,
     if (!netdef)
         return -1;
 
-    switch ((virNetworkForwardType) netdef->forward.type) {
+    switch (netdef->forward.type) {
     case VIR_NETWORK_FORWARD_NONE:
     case VIR_NETWORK_FORWARD_NAT:
     case VIR_NETWORK_FORWARD_ROUTE:
