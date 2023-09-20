@@ -119,6 +119,7 @@ virNetDevVPortProfileEqual(const virNetDevVPortProfile *a, const virNetDevVPortP
             return false;
         break;
 
+    case VIR_NETDEV_VPORT_PROFILE_LAST:
     default:
         break;
     }
@@ -206,6 +207,10 @@ virNetDevVPortProfileCheckComplete(virNetDevVPortProfile *virtport,
        if (!virtport->interfaceID_specified)
           missing = "interfaceid";
        break;
+
+    case VIR_NETDEV_VPORT_PROFILE_NONE:
+    case VIR_NETDEV_VPORT_PROFILE_LAST:
+       break;
     }
 
     if (missing) {
@@ -266,6 +271,10 @@ virNetDevVPortProfileCheckNoExtras(const virNetDevVPortProfile *virtport)
             extra = "typeidversion";
         else if (virtport->instanceID_specified)
             extra = "instanceid";
+        break;
+
+    case VIR_NETDEV_VPORT_PROFILE_NONE:
+    case VIR_NETDEV_VPORT_PROFILE_LAST:
         break;
     }
 

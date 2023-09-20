@@ -28,7 +28,6 @@
 virNetDevVPortProfile *
 virNetDevVPortProfileParse(xmlNodePtr node, unsigned int flags)
 {
-    g_autofree char *virtPortType = NULL;
     g_autofree char *virtPortManagerID = NULL;
     g_autofree char *virtPortTypeID = NULL;
     g_autofree char *virtPortTypeIDVersion = NULL;
@@ -40,10 +39,10 @@ virNetDevVPortProfileParse(xmlNodePtr node, unsigned int flags)
 
     virtPort = g_new0(virNetDevVPortProfile, 1);
 
-    if ((virtPortType = virXMLPropString(node, "type")) &&
-        (virtPort->virtPortType = virNetDevVPortTypeFromString(virtPortType)) <= 0) {
-        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                       _("unknown virtualport type %1$s"), virtPortType);
+    if (virXMLPropEnum(node, "type",
+                       virNetDevVPortTypeFromString,
+                       VIR_XML_PROP_NONZERO,
+                       &virtPort->virtPortType) < 0) {
         return NULL;
     }
 
