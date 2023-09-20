@@ -114,6 +114,11 @@ virNetDevVPortProfileEqual(const virNetDevVPortProfile *a, const virNetDevVPortP
             return false;
         break;
 
+    case VIR_NETDEV_VPORT_PROFILE_MIDONET:
+        if (memcmp(a->interfaceID, b->interfaceID, VIR_UUID_BUFLEN) != 0)
+            return false;
+        break;
+
     default:
         break;
     }
@@ -248,6 +253,10 @@ virNetDevVPortProfileCheckNoExtras(const virNetDevVPortProfile *virtport)
             extra = "interfaceid";
         break;
 
+    case VIR_NETDEV_VPORT_PROFILE_MIDONET:
+        if (virtport->profileID[0])
+            extra = "profileid";
+        G_GNUC_FALLTHROUGH;
     case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
         if (virtport->managerID_specified)
             extra = "managerid";
@@ -1238,6 +1247,7 @@ virNetDevVPortProfileAssociate(const char *macvtap_ifname,
     switch (virtPort->virtPortType) {
     case VIR_NETDEV_VPORT_PROFILE_NONE:
     case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
+    case VIR_NETDEV_VPORT_PROFILE_MIDONET:
     case VIR_NETDEV_VPORT_PROFILE_LAST:
         break;
 
@@ -1303,6 +1313,7 @@ virNetDevVPortProfileDisassociate(const char *macvtap_ifname,
     switch (virtPort->virtPortType) {
     case VIR_NETDEV_VPORT_PROFILE_NONE:
     case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
+    case VIR_NETDEV_VPORT_PROFILE_MIDONET:
     case VIR_NETDEV_VPORT_PROFILE_LAST:
         break;
 
