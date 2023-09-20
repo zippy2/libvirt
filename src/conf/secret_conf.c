@@ -115,9 +115,7 @@ virSecretDefParseUsage(xmlXPathContextPtr ctxt,
 
     case VIR_SECRET_USAGE_TYPE_LAST:
     default:
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("unexpected secret usage type %1$d"),
-                       def->usage_type);
+        virReportEnumRangeError(virSecretUsageType, def->usage_type);
         return -1;
     }
     return 0;
@@ -225,8 +223,8 @@ virSecretDefFormatUsage(virBuffer *buf,
         virBufferEscapeString(&childBuf, "<name>%s</name>\n", def->usage_id);
         break;
 
-    default:
     case VIR_SECRET_USAGE_TYPE_LAST:
+    default:
         virReportEnumRangeError(virSecretUsageType, def->usage_type);
         return -1;
     }
