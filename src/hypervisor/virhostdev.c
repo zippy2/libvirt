@@ -368,8 +368,8 @@ virHostdevNetConfigVirtPortProfile(const char *linkdev, int vf,
 
     switch (virtPort->virtPortType) {
     case VIR_NETDEV_VPORT_PROFILE_NONE:
-    case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
     case VIR_NETDEV_VPORT_PROFILE_8021QBG:
+    case VIR_NETDEV_VPORT_PROFILE_OPENVSWITCH:
     case VIR_NETDEV_VPORT_PROFILE_MIDONET:
     case VIR_NETDEV_VPORT_PROFILE_LAST:
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
