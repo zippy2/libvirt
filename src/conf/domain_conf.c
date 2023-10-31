@@ -14816,8 +14816,9 @@ virDomainDiskByTarget(virDomainDef *def,
 }
 
 
-void virDomainDiskInsert(virDomainDef *def,
-                         virDomainDiskDef *disk)
+virDomainDiskDef *
+virDomainDiskInsert(virDomainDef *def,
+                    virDomainDiskDef **disk)
 {
     int idx;
     /* Tentatively plan to insert disk at the end. */
@@ -14831,12 +14832,12 @@ void virDomainDiskInsert(virDomainDef *def,
     for (idx = (def->ndisks - 1); idx >= 0; idx--) {
         /* If bus matches and current disk is after
          * new disk, then new disk should go here */
-        if (def->disks[idx]->bus == disk->bus &&
-            def->disks[idx]->dst && disk->dst &&
+        if (def->disks[idx]->bus == (*disk)->bus &&
+            def->disks[idx]->dst && (*disk)->dst &&
             (virDiskNameToIndex(def->disks[idx]->dst) >
-             virDiskNameToIndex(disk->dst))) {
+             virDiskNameToIndex((*disk)->dst))) {
             insertAt = idx;
-        } else if (def->disks[idx]->bus == disk->bus &&
+        } else if (def->disks[idx]->bus == (*disk)->bus &&
                    insertAt == -1) {
             /* Last disk with match bus is before the
              * new disk, then put new disk just after
@@ -14845,7 +14846,8 @@ void virDomainDiskInsert(virDomainDef *def,
         }
     }
 
-    ignore_value(VIR_INSERT_ELEMENT(def->disks, insertAt, def->ndisks, disk));
+    ignore_value(VIR_INSERT_ELEMENT_COPY(def->disks, insertAt, def->ndisks, *disk));
+    return *disk;
 }
 
 
