@@ -3929,7 +3929,9 @@ virDomainDiskDef *
 virDomainDiskByTarget(virDomainDef *def,
                       const char *dst);
 
-void virDomainDiskInsert(virDomainDef *def, virDomainDiskDef *disk);
+virDomainDiskDef *
+virDomainDiskInsert(virDomainDef *def,
+                    virDomainDiskDef **disk);
 int virDomainStorageNetworkParseHost(xmlNodePtr hostnode,
                                      virStorageNetHostDef *host);
 int virDomainDiskDefAssignAddress(virDomainXMLOption *xmlopt,
@@ -3967,10 +3969,10 @@ virDomainGraphicsListenDef *
 virDomainGraphicsGetListen(virDomainGraphicsDef *def, size_t i);
 int virDomainGraphicsListenAppendAddress(virDomainGraphicsDef *def,
                                          const char *address)
-            ATTRIBUTE_NONNULL(1);
+    ATTRIBUTE_NONNULL(1);
 int virDomainGraphicsListenAppendSocket(virDomainGraphicsDef *def,
                                         const char *socket)
-            ATTRIBUTE_NONNULL(1);
+    ATTRIBUTE_NONNULL(1);
 
 virDomainNetType virDomainNetGetActualType(const virDomainNetDef *iface);
 const char *virDomainNetGetActualBridgeName(const virDomainNetDef *iface);

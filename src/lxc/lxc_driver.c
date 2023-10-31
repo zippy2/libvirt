@@ -3004,9 +3004,7 @@ lxcDomainAttachDeviceConfig(virDomainDef *vmdef,
                            _("target %1$s already exists."), disk->dst);
             return -1;
         }
-        virDomainDiskInsert(vmdef, disk);
-        /* vmdef has the pointer. Generic codes for vmdef will do all jobs */
-        dev->data.disk = NULL;
+        virDomainDiskInsert(vmdef, &dev->data.disk);
         ret = 0;
         break;
 
@@ -3475,7 +3473,7 @@ lxcDomainAttachDeviceDiskLive(virLXCDriver *driver,
         goto cleanup;
     }
 
-    virDomainDiskInsert(vm->def, def);
+    def = virDomainDiskInsert(vm->def, &dev->data.disk);
 
     ret = 0;
 
