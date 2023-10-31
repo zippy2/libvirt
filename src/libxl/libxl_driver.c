@@ -3039,7 +3039,7 @@ libxlDomainAttachDeviceDiskLive(virDomainObj *vm, virDomainDeviceDef *dev)
                 }
 
                 libxlUpdateDiskDef(l_disk, &x_disk);
-                virDomainDiskInsert(vm->def, l_disk);
+                virDomainDiskInsert(vm->def, &l_disk);
 
             } else {
                 virReportError(VIR_ERR_CONFIG_UNSUPPORTED,

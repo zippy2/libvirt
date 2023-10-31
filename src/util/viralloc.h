@@ -200,6 +200,9 @@ int virDeleteElementsN(void *ptrptr, size_t size, size_t at, size_t *countptr,
 #define VIR_INSERT_ELEMENT_INPLACE(ptr, at, count, newelem) \
     virInsertElementsN(&(ptr), sizeof(*(ptr)), at, &(count), \
                        VIR_TYPEMATCH(ptr, &(newelem)), &(newelem), true, true)
+#define VIR_INSERT_ELEMENT_COPY(ptr, at, count, newelem) \
+    virInsertElementsN(&(ptr), sizeof(*(ptr)), at, &(count), \
+                       VIR_TYPEMATCH(ptr, &(newelem)), &(newelem), false, false)
 
 /**
  * VIR_APPEND_ELEMENT:
