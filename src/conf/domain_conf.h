@@ -3661,6 +3661,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(virDomainDeviceDef, virDomainDeviceDefFree);
 virDomainDeviceInfo *virDomainDeviceGetInfo(const virDomainDeviceDef *device);
 void virDomainDeviceSetData(virDomainDeviceDef *device,
                             void *devicedata);
+int virDomainDeviceAdd(virDomainDef *def,
+                       virDomainDeviceDef *dev)
+    G_GNUC_WARN_UNUSED_RESULT;
 void virDomainTPMDefFree(virDomainTPMDef *def);
 
 typedef int (*virDomainDeviceInfoCallback)(virDomainDef *def,
