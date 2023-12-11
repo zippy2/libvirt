@@ -4537,6 +4537,12 @@ qemuValidateDomainDeviceDefFS(virDomainFSDef *fs,
                            _("virtiofs does not support fmode and dmode"));
             return -1;
         }
+        if (fs->flock != VIR_TRISTATE_SWITCH_ABSENT ||
+            fs->posix_lock != VIR_TRISTATE_SWITCH_ABSENT) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                           _("file locking is not supported"));
+            return -1;
+        }
         if (qemuValidateDomainDefVhostUserRequireSharedMemory(def, "virtiofs") < 0) {
             return -1;
         }
