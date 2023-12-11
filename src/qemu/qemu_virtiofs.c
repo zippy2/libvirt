@@ -133,6 +133,10 @@ qemuVirtioFSBuildCommandLine(virQEMUDriverConfig *cfg,
     g_auto(virBuffer) opts = VIR_BUFFER_INITIALIZER;
     size_t i = 4;
 
+    /* Some @fs attributes (lock and posix_lock) are not handled here nor
+     * anywhwere else. The reason is they exist because (now deprecated) C
+     * implementation of virtiofsd supported them, but RUST implementation does
+     * not. And we only support the latter. */
     cmd = virCommandNew(fs->binary);
 
     virCommandAddArgFormat(cmd, "--fd=%d", *fd);
@@ -151,16 +155,6 @@ qemuVirtioFSBuildCommandLine(virQEMUDriverConfig *cfg,
         virBufferAddLit(&opts, ",xattr");
     else if (fs->xattr == VIR_TRISTATE_SWITCH_OFF)
         virBufferAddLit(&opts, ",no_xattr");
-
-    if (fs->flock == VIR_TRISTATE_SWITCH_ON)
-        virBufferAddLit(&opts, ",flock");
-    else if (fs->flock == VIR_TRISTATE_SWITCH_OFF)
-        virBufferAddLit(&opts, ",no_flock");
-
-    if (fs->posix_lock == VIR_TRISTATE_SWITCH_ON)
-        virBufferAddLit(&opts, ",posix_lock");
-    else if (fs->posix_lock == VIR_TRISTATE_SWITCH_OFF)
-        virBufferAddLit(&opts, ",no_posix_lock");
 
     virCommandAddArgBuffer(cmd, &opts);
 
