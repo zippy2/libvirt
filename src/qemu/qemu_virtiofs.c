@@ -130,7 +130,6 @@ qemuVirtioFSBuildCommandLine(virQEMUDriverConfig *cfg,
                              int *fd)
 {
     g_autoptr(virCommand) cmd = NULL;
-    g_auto(virBuffer) opts = VIR_BUFFER_INITIALIZER;
     size_t i = 4;
 
     /* Some @fs attributes (lock and posix_lock) are not handled here nor
@@ -143,26 +142,22 @@ qemuVirtioFSBuildCommandLine(virQEMUDriverConfig *cfg,
     virCommandPassFD(cmd, *fd, VIR_COMMAND_PASS_FD_CLOSE_PARENT);
     *fd = -1;
 
-    virCommandAddArg(cmd, "-o");
-    virBufferAddLit(&opts, "source=");
-    virQEMUBuildBufferEscapeComma(&opts, fs->src->path);
+    virCommandAddArgPair(cmd, "--shared-dir", fs->src->path);
+
     if (fs->cache)
-        virBufferAsprintf(&opts, ",cache=%s", virDomainFSCacheModeTypeToString(fs->cache));
+        virCommandAddArgPair(cmd, "--cache", virDomainFSCacheModeTypeToString(fs->cache));
+
     if (fs->sandbox)
-        virBufferAsprintf(&opts, ",sandbox=%s", virDomainFSSandboxModeTypeToString(fs->sandbox));
+        virCommandAddArgPair(cmd, "--sandbox", virDomainFSSandboxModeTypeToString(fs->sandbox));
 
     if (fs->xattr == VIR_TRISTATE_SWITCH_ON)
-        virBufferAddLit(&opts, ",xattr");
-    else if (fs->xattr == VIR_TRISTATE_SWITCH_OFF)
-        virBufferAddLit(&opts, ",no_xattr");
-
-    virCommandAddArgBuffer(cmd, &opts);
+        virCommandAddArg(cmd, "--xattr");
 
     if (fs->thread_pool_size >= 0)
         virCommandAddArgFormat(cmd, "--thread-pool-size=%i", fs->thread_pool_size);
 
     if (cfg->virtiofsdDebug)
-        virCommandAddArg(cmd, "-d");
+        virCommandAddArg(cmd, "--log-level=debug");
 
     for (i = 0; i < fs->idmap.nuidmap; i++) {
         virCommandAddArgFormat(cmd, "--uid-map=:%u:%u:%u:",
