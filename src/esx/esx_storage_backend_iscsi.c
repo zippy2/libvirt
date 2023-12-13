@@ -535,9 +535,6 @@ esxStorageVolLookupByKey(virConnectPtr conn, const char *key)
     esxPrivate *priv = conn->privateData;
     esxVI_ScsiLun *scsiLunList = NULL;
     esxVI_ScsiLun *scsiLun;
-    /* VIR_CRYPTO_HASH_SIZE_MD5 = VIR_UUID_BUFLEN = 16 */
-    unsigned char md5[VIR_CRYPTO_HASH_SIZE_MD5];
-    char uuid_string[VIR_UUID_STRING_BUFLEN] = "";
 
     /* key may be LUN device path */
     if (STRPREFIX(key, "/"))
@@ -546,12 +543,11 @@ esxStorageVolLookupByKey(virConnectPtr conn, const char *key)
     if (esxVI_LookupScsiLunList(priv->primary, &scsiLunList) < 0)
         goto cleanup;
 
-    for (scsiLun = scsiLunList; scsiLun;
-         scsiLun = scsiLun->_next) {
+    for (scsiLun = scsiLunList; scsiLun; scsiLun = scsiLun->_next) {
+        /* VIR_CRYPTO_HASH_SIZE_MD5 = VIR_UUID_BUFLEN = 16 */
+        unsigned char md5[VIR_CRYPTO_HASH_SIZE_MD5] = { 0 };
+        char uuid_string[VIR_UUID_STRING_BUFLEN] = { 0 };
         g_autofree char *poolName = NULL;
-
-        memset(uuid_string, '\0', sizeof(uuid_string));
-        memset(md5, '\0', sizeof(md5));
 
         if (virCryptoHashBuf(VIR_CRYPTO_HASH_MD5, scsiLun->uuid, md5) < 0)
             goto cleanup;
