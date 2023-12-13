@@ -1425,7 +1425,7 @@ remoteRelayNetworkEventMetadataChange(virConnectPtr conn,
                                       void *opaque)
 {
     daemonClientEventCallback *callback = opaque;
-    remote_network_event_callback_metadata_change_msg data;
+    remote_network_event_callback_metadata_change_msg data = { 0 };
 
     if (callback->callbackID < 0 ||
         !remoteRelayNetworkEventCheckACL(callback->client, conn, net))
@@ -1433,9 +1433,6 @@ remoteRelayNetworkEventMetadataChange(virConnectPtr conn,
 
     VIR_DEBUG("Relaying network metadata change %s %d %s, callback %d",
               net->name, type, NULLSTR(nsuri), callback->callbackID);
-
-    /* build return data */
-    memset(&data, 0, sizeof(data));
 
     data.type = type;
     if (nsuri) {
