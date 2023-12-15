@@ -2144,105 +2144,126 @@ virVMXGenerateDiskTarget(virDomainDiskDef *def,
                          int controllerOrBus,
                          int unit)
 {
-    const char *prefix = NULL;
-    unsigned int idx = 0;
+    unsigned int tries = 0;
 
-    switch (def->bus) {
-    case VIR_DOMAIN_DISK_BUS_SCSI:
-        if (controllerOrBus < 0 || controllerOrBus > 3) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("SCSI controller index %1$d out of [0..3] range"),
-                           controllerOrBus);
+    for (tries = 0; tries < 10; tries++) {
+        g_autofree char *dst = NULL;
+        const char *prefix = NULL;
+        unsigned int idx = 0;
+        size_t i;
+
+        switch (def->bus) {
+        case VIR_DOMAIN_DISK_BUS_SCSI:
+            if (controllerOrBus < 0 || controllerOrBus > 3) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("SCSI controller index %1$d out of [0..3] range"),
+                               controllerOrBus);
+                return -1;
+            }
+
+            if (unit < 0 || unit > vmdef->scsiBusMaxUnit || unit == 7) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("SCSI unit index %1$d out of [0..6,8..%2$u] range"),
+                               unit, vmdef->scsiBusMaxUnit);
+                return -1;
+            }
+
+            idx = controllerOrBus * 15 + (unit < 7 ? unit : unit - 1);
+            prefix = "sd";
+            break;
+
+        case VIR_DOMAIN_DISK_BUS_SATA:
+            if (controllerOrBus < 0 || controllerOrBus > 3) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("SATA controller index %1$d out of [0..3] range"),
+                               controllerOrBus);
+                return -1;
+            }
+
+            if (unit < 0 || unit >= 30) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("SATA unit index %1$d out of [0..29] range"),
+                               unit);
+                return -1;
+            }
+
+            idx = controllerOrBus * 30 + unit;
+            prefix = "sd";
+            break;
+
+        case VIR_DOMAIN_DISK_BUS_IDE:
+            if (controllerOrBus < 0 || controllerOrBus > 1) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("IDE bus index %1$d out of [0..1] range"),
+                               controllerOrBus);
+                return -1;
+            }
+
+            if (unit < 0 || unit > 1) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("IDE unit index %1$d out of [0..1] range"), unit);
+                return -1;
+            }
+            idx = controllerOrBus * 2 + unit;
+            prefix = "hd";
+            break;
+
+        case VIR_DOMAIN_DISK_BUS_FDC:
+            if (controllerOrBus != 0) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("FDC controller index %1$d out of [0] range"),
+                               controllerOrBus);
+                return -1;
+            }
+
+            if (unit < 0 || unit > 1) {
+                virReportError(VIR_ERR_INTERNAL_ERROR,
+                               _("FDC unit index %1$d out of [0..1] range"),
+                               unit);
+                return -1;
+            }
+
+            idx = unit;
+            prefix = "fd";
+            break;
+
+        case VIR_DOMAIN_DISK_BUS_VIRTIO:
+        case VIR_DOMAIN_DISK_BUS_XEN:
+        case VIR_DOMAIN_DISK_BUS_USB:
+        case VIR_DOMAIN_DISK_BUS_UML:
+        case VIR_DOMAIN_DISK_BUS_SD:
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+                           _("Unsupported bus type '%1$s' for device type '%2$s'"),
+                           virDomainDiskBusTypeToString(def->bus),
+                           virDomainDiskDeviceTypeToString(def->device));
             return -1;
+            break;
+
+        case VIR_DOMAIN_DISK_BUS_NONE:
+        case VIR_DOMAIN_DISK_BUS_LAST:
+            virReportEnumRangeError(virDomainDiskBus, def->bus);
+            return -1;
+            break;
         }
 
-        if (unit < 0 || unit > vmdef->scsiBusMaxUnit || unit == 7) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("SCSI unit index %1$d out of [0..6,8..%2$u] range"),
-                           unit, vmdef->scsiBusMaxUnit);
-            return -1;
+        /* Now generate target candidate and check for its uniqueness. */
+
+        dst = virIndexToDiskName(idx + tries, prefix);
+
+        for (i = 0; i < vmdef->ndisks; i++) {
+            if (STREQ(vmdef->disks[i]->dst, dst))
+                break;
         }
 
-        idx = controllerOrBus * 15 + (unit < 7 ? unit : unit - 1);
-        prefix = "sd";
-        break;
-
-    case VIR_DOMAIN_DISK_BUS_SATA:
-        if (controllerOrBus < 0 || controllerOrBus > 3) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("SATA controller index %1$d out of [0..3] range"),
-                           controllerOrBus);
-            return -1;
+        if (i == vmdef->ndisks) {
+            def->dst = g_steal_pointer(&dst);
+            return 0;
         }
-
-        if (unit < 0 || unit >= 30) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("SATA unit index %1$d out of [0..29] range"),
-                           unit);
-            return -1;
-        }
-
-        idx = controllerOrBus * 30 + unit;
-        prefix = "sd";
-        break;
-
-    case VIR_DOMAIN_DISK_BUS_IDE:
-        if (controllerOrBus < 0 || controllerOrBus > 1) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("IDE bus index %1$d out of [0..1] range"),
-                           controllerOrBus);
-            return -1;
-        }
-
-        if (unit < 0 || unit > 1) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("IDE unit index %1$d out of [0..1] range"), unit);
-            return -1;
-        }
-        idx = controllerOrBus * 2 + unit;
-        prefix = "hd";
-        break;
-
-    case VIR_DOMAIN_DISK_BUS_FDC:
-        if (controllerOrBus != 0) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("FDC controller index %1$d out of [0] range"),
-                           controllerOrBus);
-            return -1;
-        }
-
-        if (unit < 0 || unit > 1) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           _("FDC unit index %1$d out of [0..1] range"),
-                           unit);
-            return -1;
-        }
-
-        idx = unit;
-        prefix = "fd";
-        break;
-
-    case VIR_DOMAIN_DISK_BUS_VIRTIO:
-    case VIR_DOMAIN_DISK_BUS_XEN:
-    case VIR_DOMAIN_DISK_BUS_USB:
-    case VIR_DOMAIN_DISK_BUS_UML:
-    case VIR_DOMAIN_DISK_BUS_SD:
-        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
-                       _("Unsupported bus type '%1$s' for device type '%2$s'"),
-                       virDomainDiskBusTypeToString(def->bus),
-                       virDomainDiskDeviceTypeToString(def->device));
-        return -1;
-        break;
-
-    case VIR_DOMAIN_DISK_BUS_NONE:
-    case VIR_DOMAIN_DISK_BUS_LAST:
-        virReportEnumRangeError(virDomainDiskBus, def->bus);
-        return -1;
-        break;
     }
 
-    def->dst = virIndexToDiskName(idx, prefix);
-    return 0;
+    virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                   _("Unable to generate disk target name"));
+    return -1;
 }
 
 
