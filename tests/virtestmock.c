@@ -35,6 +35,8 @@ static int (*real___open_2)(const char *path, int flags);
 static FILE *(*real_fopen)(const char *path, const char *mode);
 static int (*real_access)(const char *path, int mode);
 static int (*real_connect)(int fd, const struct sockaddr *addr, socklen_t addrlen);
+static int (*real_execve)(const char *path, char *const argv[], char *const envp[]);
+static int (*real_execv)(const char *path, char *const argv[]);
 
 static const char *progname;
 const char *output;
@@ -57,6 +59,8 @@ static void init_syms(void)
     VIR_MOCK_REAL_INIT(fopen);
     VIR_MOCK_REAL_INIT(access);
     VIR_MOCK_REAL_INIT(connect);
+    VIR_MOCK_REAL_INIT(execve);
+    VIR_MOCK_REAL_INIT(execv);
 }
 
 static void
@@ -224,4 +228,25 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 #endif
 
     return real_connect(sockfd, addr, addrlen);
+}
+
+int execve(const char *path,
+           char *const argv[],
+           char *const envp[])
+{
+    init_syms();
+
+    CHECK_PATH(path);
+
+    return real_execve(path, argv, envp);
+}
+
+int execv(const char *path,
+          char *const argv[])
+{
+    init_syms();
+
+    CHECK_PATH(path);
+
+    return real_execv(path, argv);
 }
