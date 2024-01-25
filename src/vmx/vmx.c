@@ -2182,6 +2182,8 @@ virVMXGenerateDiskTarget(virDomainDiskDef *def,
             return -1;
         }
 
+        virDiskNameToIndex();
+
         idx = controllerOrBus * 30 + unit;
         prefix = "sd";
         break;
