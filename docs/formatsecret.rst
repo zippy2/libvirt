@@ -10,14 +10,18 @@ Secret XML
 ----------
 
 Secrets stored by libvirt may have attributes associated with them, using the
-``secret`` element. The ``secret`` element has two optional attributes, each
-with values '``yes``' and '``no``', and defaulting to '``no``':
+``secret`` element. The ``secret`` element has the following optional
+attributes, each with values '``yes``' and '``no``', and defaulting to
+'``no``':
 
 ``ephemeral``
    This secret must only be kept in memory, never stored persistently.
 ``private``
    The value of the secret must not be revealed to any caller of libvirt, nor to
    any other node.
+``tpm``
+   The value of the secret is stored using a key that's derived from the
+   system's TPM2 chip. This is mutually exclusive with ``ephemeral``.
 
 The top-level ``secret`` element may contain the following elements:
 
