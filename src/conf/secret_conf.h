@@ -21,11 +21,13 @@
 #pragma once
 
 #include "internal.h"
+#include "virenum.h"
 
 typedef struct _virSecretDef virSecretDef;
 struct _virSecretDef {
     bool isephemeral;
     bool isprivate;
+    virTristateBool tpm;
     unsigned char uuid[VIR_UUID_BUFLEN];
     char *description;          /* May be NULL */
     virSecretUsageType usage_type;
