@@ -3391,6 +3391,9 @@ virSecretLookupDefClear;
 virSecretLookupDefCopy;
 virSecretLookupFormatSecret;
 virSecretLookupParseSecret;
+virSecretTPMAvailable;
+virSecretTPMDecrypt;
+virSecretTPMEncrypt;
 
 
 # util/virsecureerase.h
