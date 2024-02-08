@@ -130,6 +130,7 @@ virSecretParseXML(xmlXPathContext *ctxt)
     g_autoptr(virSecretDef) def = NULL;
     g_autofree char *ephemeralstr = NULL;
     g_autofree char *privatestr = NULL;
+    g_autofree char *tpmstr = NULL;
     g_autofree char *uuidstr = NULL;
 
     def = g_new0(virSecretDef, 1);
@@ -148,6 +149,17 @@ virSecretParseXML(xmlXPathContext *ctxt)
                            _("invalid value of 'private'"));
             return NULL;
         }
+    }
+
+    if (virXMLPropTristateBool(ctxt->node, "tpm",
+                               VIR_XML_PROP_NONE, &def->tpm) < 0) {
+        return NULL;
+    }
+
+    if (def->tpm == VIR_TRISTATE_BOOL_YES && def->isephemeral) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("ephemeral and tpm are mutually exclusive"));
+        return NULL;
     }
 
     uuidstr = virXPathString("string(./uuid)", ctxt);
@@ -247,6 +259,11 @@ virSecretDefFormat(const virSecretDef *def)
     virBufferAsprintf(&attrBuf, " ephemeral='%s' private='%s'",
                       def->isephemeral ? "yes" : "no",
                       def->isprivate ? "yes" : "no");
+
+    if (def->tpm != VIR_TRISTATE_BOOL_ABSENT) {
+        virBufferAsprintf(&attrBuf, " tpm='%s'",
+                          virTristateBoolTypeToString(def->tpm));
+    }
 
     virUUIDFormat(def->uuid, uuidstr);
     virBufferEscapeString(&childBuf, "<uuid>%s</uuid>\n", uuidstr);
