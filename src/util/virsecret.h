@@ -62,3 +62,13 @@ int virSecretGetSecretString(virConnectPtr conn,
                              size_t *ret_secret_size)
     ATTRIBUTE_NONNULL(1) ATTRIBUTE_NONNULL(2) ATTRIBUTE_NONNULL(4)
     ATTRIBUTE_NONNULL(5) G_GNUC_WARN_UNUSED_RESULT;
+
+int virSecretTPMAvailable(void);
+int virSecretTPMEncrypt(const char *name,
+                        unsigned const char *value,
+                        size_t value_size,
+                        char **base64);
+int virSecretTPMDecrypt(const char *name,
+                        const char *base64,
+                        unsigned char **value,
+                        size_t *value_size);
