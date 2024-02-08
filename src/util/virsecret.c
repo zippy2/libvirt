@@ -23,10 +23,13 @@
 
 #include "datatypes.h"
 #include "viralloc.h"
+#include "vircommand.h"
 #include "virerror.h"
 #include "virlog.h"
 #include "virsecret.h"
+#include "virutil.h"
 #include "viruuid.h"
+#include "virfile.h"
 
 #define VIR_FROM_THIS VIR_FROM_NONE
 
@@ -173,6 +176,173 @@ virSecretGetSecretString(virConnectPtr conn,
 
     if (!(*secret = conn->secretDriver->secretGetValue(sec, secret_size, 0)))
         return -1;
+
+    return 0;
+}
+
+
+/**
+ * virSecretTPMAvailable:
+ *
+ * Checks whether systemd-creds is available and whether host supports
+ * TPM. Use this prior calling other virSecretTPM*() APIs.
+ *
+ * Returns: 1 in case TPM is available,
+ *          0 in case TPM is NOT available,
+ *         -1 otherwise.
+ */
+int
+virSecretTPMAvailable(void)
+{
+    g_autoptr(virCommand) cmd = NULL;
+    g_autofree char *out = NULL;
+    int exitstatus;
+    int rc;
+
+    cmd = virCommandNewArgList("systemd-creds", "has-tpm2", NULL);
+
+    virCommandSetOutputBuffer(cmd, &out);
+
+    rc = virCommandRun(cmd, &exitstatus);
+
+    if (rc < 0) {
+        /* systemd-creds not available */
+        return -1;
+    }
+
+    if (!out || !*out) {
+        /* systemd-creds reported nothing. Ouch. */
+        return 0;
+    }
+
+    /* systemd-creds can report one of these:
+     *
+     * yes - TPM is available and recognized by FW, kernel, etc.
+     * no - TPM is not available or not recognized
+     * partial - otherwise
+     */
+
+    if (STRPREFIX(out, "yes\n"))
+        return 1;
+
+    return 0;
+}
+
+
+/**
+ * virSecretTPMEncrypt:
+ * @name: credential name
+ * @value: credential value
+ * @value_size: size of @value
+ * @base64: encrypted @value, base64 encoded
+ *
+ * Encrypts given plaintext (@value) with a secret key automatically
+ * derived from the system's TPM2 chip. Ciphertext is base64 encoded and
+ * stored into @base64. Pass the same @name to virSecretTPMDecrypt().
+ *
+ * Returns: 0 on success,
+ *          -1 otherwise (with error reported).
+ */
+int
+virSecretTPMEncrypt(const char *name,
+                    unsigned const char *value,
+                    size_t value_size,
+                    char **base64)
+{
+    g_autoptr(virCommand) cmd = NULL;
+    g_autofree char *errBuf = NULL;
+    int pipeFD[2] = { -1, -1 };
+    int ret = -1;
+
+    if (virPipe(pipeFD) < 0)
+        return -1;
+
+    if (virSetCloseExec(pipeFD[1]) < 0) {
+        virReportSystemError(errno, "%s",
+                             _("Unable to set cloexec flag"));
+        goto cleanup;
+    }
+
+    cmd = virCommandNewArgList("systemd-creds", "encrypt",
+                               "--with-key=tpm2", NULL);
+    virCommandAddArgFormat(cmd, "--name=%s", name);
+    virCommandAddArgList(cmd, "-", "-", NULL);
+
+    virCommandSetInputFD(cmd, pipeFD[0]);
+    virCommandSetOutputBuffer(cmd, base64);
+    virCommandSetErrorBuffer(cmd, &errBuf);
+    virCommandDoAsyncIO(cmd);
+
+    if (virCommandRunAsync(cmd, NULL) < 0)
+        goto cleanup;
+
+    if (safewrite(pipeFD[1], value, value_size) != value_size) {
+        virReportSystemError(errno, "%s",
+                             _("Unable to pass secret value to systemd-cred"));
+        goto cleanup;
+    }
+
+    if (VIR_CLOSE(pipeFD[1]) < 0) {
+        virReportSystemError(errno, "%s", _("unable to close pipe"));
+        goto cleanup;
+    }
+
+    if (virCommandWait(cmd, NULL) < 0) {
+        if (errBuf && *errBuf) {
+            VIR_WARN("systemd-creds reported: %s", errBuf);
+        }
+        goto cleanup;
+    }
+
+    ret = 0;
+ cleanup:
+    virCommandAbort(cmd);
+    VIR_FORCE_CLOSE(pipeFD[0]);
+    VIR_FORCE_CLOSE(pipeFD[1]);
+    return ret;
+}
+
+
+/**
+ * virSecretTPMDecrypt:
+ * @name: credential name
+ * @base64: encrypted @value, base64 encoded
+ * @value: credential value,
+ * @value_size: size of @value
+ *
+ * Decrypts given ciphertext, base64 encoded (@base64) and stores
+ * plaintext into @value and its size into @value_size.
+ *
+ * Returns: 0 on success,
+ *         -1 otherwise (with error reported).
+ */
+int
+virSecretTPMDecrypt(const char *name,
+                    const char *base64,
+                    unsigned char **value,
+                    size_t *value_size)
+{
+    g_autoptr(virCommand) cmd = NULL;
+    g_autofree char *out = NULL;
+    g_autofree char *errBuf = NULL;
+
+    cmd = virCommandNewArgList("systemd-creds", "decrypt",
+                               "--transcode=base64", NULL);
+    virCommandAddArgFormat(cmd, "--name=%s", name);
+    virCommandAddArgList(cmd, "-", "-", NULL);
+
+    virCommandSetInputBuffer(cmd, base64);
+    virCommandSetOutputBuffer(cmd, &out);
+    virCommandSetErrorBuffer(cmd, &errBuf);
+
+    if (virCommandRun(cmd, NULL) < 0) {
+        if (errBuf && *errBuf) {
+            VIR_WARN("systemd-creds reported: %s", errBuf);
+        }
+        return -1;
+    }
+
+    *value = g_base64_decode(out, value_size);
 
     return 0;
 }
