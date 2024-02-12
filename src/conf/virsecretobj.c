@@ -24,12 +24,13 @@
 #include <sys/stat.h>
 
 #include "datatypes.h"
-#include "virsecretobj.h"
 #include "viralloc.h"
 #include "virerror.h"
 #include "virfile.h"
 #include "virhash.h"
 #include "virlog.h"
+#include "virsecret.h"
+#include "virsecretobj.h"
 #include "virstring.h"
 
 #define VIR_FROM_THIS VIR_FROM_SECRET
@@ -689,7 +690,19 @@ virSecretObjSaveData(virSecretObj *obj)
     if (!obj->value)
         return 0;
 
-    base64 = g_base64_encode(obj->value, obj->value_size);
+    if (obj->def->tpm == VIR_TRISTATE_BOOL_YES) {
+        char uuidStr[VIR_UUID_STRING_BUFLEN] = { 0 };
+
+        virUUIDFormat(obj->def->uuid, uuidStr);
+
+        if (virSecretTPMEncrypt(uuidStr,
+                                obj->value, obj->value_size,
+                                &base64) < 0) {
+            return -1;
+        }
+    } else {
+        base64 = g_base64_encode(obj->value, obj->value_size);
+    }
 
     if (virFileRewriteStr(obj->base64File, S_IRUSR | S_IWUSR, base64) < 0)
         return -1;
@@ -847,7 +860,20 @@ virSecretLoadValue(virSecretObj *obj)
 
     VIR_FORCE_CLOSE(fd);
 
-    obj->value = g_base64_decode(contents, &obj->value_size);
+    if (obj->def->tpm == VIR_TRISTATE_BOOL_YES) {
+        char uuidStr[VIR_UUID_STRING_BUFLEN] = { 0 };
+
+        virUUIDFormat(obj->def->uuid, uuidStr);
+
+        if (virSecretTPMDecrypt(uuidStr,
+                                contents,
+                                &obj->value,
+                                &obj->value_size) < 0) {
+            goto cleanup;
+        }
+    } else {
+        obj->value = g_base64_decode(contents, &obj->value_size);
+    }
 
     ret = 0;
 
