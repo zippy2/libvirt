@@ -234,6 +234,13 @@ secretDefineXML(virConnectPtr conn,
     if (virSecretDefineXMLEnsureACL(conn, def) < 0)
         goto cleanup;
 
+    if (def->tpm == VIR_TRISTATE_BOOL_YES &&
+        virSecretTPMAvailable() != 1) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("TPM is unavailable or unusable on this host"));
+        goto cleanup;
+    }
+
     if (!(obj = virSecretObjListAdd(driver->secrets, &def,
                                     driver->configDir, &backup)))
         goto cleanup;
