@@ -1171,6 +1171,12 @@ v10.1.0 (2024-03-01)
     multiple memory slots and thus smaller memory footprint (see the original
     commit for detailed explanation).
 
+  * virsecretobj: Encrypt/decrypt secrets using TPM
+
+    When defining new ``<secret/>`` user can set ``tpm='yes'`` which then makes
+    libvirt encrypt/decrypt the secret value using host's TPM before stored on
+    a disk.
+
 * **Improvements**
 
   * nodedev: Add ability to update persistent mediated devices by defining them
