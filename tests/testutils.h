@@ -136,6 +136,7 @@ int virTestMain(int argc,
     do { \
         const char *preload = getenv(PRELOAD_VAR); \
         if (preload == NULL || strstr(preload, libs) == NULL) { \
+            g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER; \
             char *newenv; \
             if (!preload) { \
                 newenv = (char *) libs; \
@@ -143,7 +144,10 @@ int virTestMain(int argc,
                 newenv = g_strdup_printf("%s:%s", libs, preload); \
             } \
             g_setenv(PRELOAD_VAR, newenv, TRUE); \
+            virBufferEscape(&buf, '\\', " ", "%s", abs_builddir); \
+            g_setenv("LD_LIBRARY_PATH", virBufferCurrentContent(&buf), TRUE); \
             FORCE_FLAT_NAMESPACE \
+            fprintf(stderr, "\nLD_LIBRARY_PATH: %s\n", g_getenv("LD_LIBRARY_PATH")); \
             execv(argv[0], argv); \
         } \
     } while (0)
@@ -153,7 +157,7 @@ int virTestMain(int argc,
         return virTestMain(argc, argv, func, __VA_ARGS__, NULL); \
     }
 
-#define VIR_TEST_MOCK(mock) (abs_builddir "/lib" mock "mock" MOCK_EXT)
+#define VIR_TEST_MOCK(mock) ("lib" mock "mock" MOCK_EXT)
 
 virCaps *virTestGenericCapsInit(void);
 virCapsHostNUMA *virTestCapsBuildNUMATopology(int seq);
