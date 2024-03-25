@@ -6,12 +6,12 @@
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 echo "error: failed to get domain '4294967298'" > exp || fail=1
-$abs_top_builddir/tools/virsh --quiet \
-    --connect test://$abs_top_srcdir/examples/xml/test/testnode.xml \
+"${abs_top_builddir}"/tools/virsh --quiet \
+    --connect test://"${abs_top_srcdir}"/examples/xml/test/testnode.xml \
     'domname 4294967298; quit' > /dev/null 2> err || fail=1
 diff -u err exp || fail=1
 

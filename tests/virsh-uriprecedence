@@ -1,12 +1,14 @@
 #!/bin/sh
 
+#set -x
+
 . "$(dirname $0)/test-lib.sh"
 
 # This test checks if virsh obeys the proper precedence of different
 # URI settings
 test_intro "virsh-uriprecedence"
 
-virsh_bin="$abs_top_builddir/tools/virsh"
+virsh_bin="${abs_top_builddir}/tools/virsh"
 virsh_cmd="$virsh_bin"
 counter=0
 ret=0
@@ -20,12 +22,12 @@ is_uri_good()
 
 test_uri_internal()
 {
-    test_name=$1
+    test_name="$1"
     test_cmd="$virsh_cmd \"$2\""
     result=0
 
     debug "Running '$test_cmd'"
-    out="$($virsh_cmd "$2")"
+    out="$("$virsh_cmd" "$2")"
 
     if ! is_uri_good "$out"; then
         debug "Invalid output: '$out'"

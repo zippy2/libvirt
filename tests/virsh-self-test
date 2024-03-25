@@ -35,7 +35,7 @@ else
 fi
 
 test_intro "$0"
-$abs_top_builddir/tools/${binary} ${extra_args} self-test > /dev/null
+"${abs_top_builddir}"/tools/${binary} ${extra_args} self-test > /dev/null
 status=$?
 test_result 1 "$0" ${status}
 

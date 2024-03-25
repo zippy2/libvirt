@@ -18,12 +18,18 @@
 #
 # Based on an idea from GNU coreutils
 
-_scriptdir="$(unset CDPATH; cd $(dirname $0) && pwd)"
+d="$(dirname $0)"
+
+echo "ASDFG=${d}=ASDF" >&2
+
+_scriptdir="$(unset CDPATH; cd "${d}" && pwd)"
 test -z "$abs_srcdir" && abs_srcdir=$_scriptdir
 test -z "$abs_builddir" && abs_builddir=$_scriptdir
 test -z "$abs_top_srcdir" && abs_top_srcdir=$_scriptdir/..
 test -z "$abs_top_builddir" && abs_top_builddir=$_scriptdir/..
 test -z "$LC_ALL" && LC_ALL=C
+
+echo "ASDFG=${_scriptdir}=ASDF" >&2
 
 # Skip this test if the shell lacks support for functions.
 unset function_test
@@ -261,8 +267,6 @@ t_=$("mktemp" "-d" "$test_dir_/lv-$this_test.XXXXXXXXXX") \
 
 # Run each test from within a temporary sub-directory named after the
 # test itself, and arrange to remove it upon exception or normal exit.
-trap 'st=$?; cleanup_; d='"$t_"';
-    cd '"$test_dir_"' && chmod -R u+rwx "$d" && rm -rf "$d" && exit $st' 0
 trap '(exit $?); exit $?' 1 2 13 15
 
 cd "$t_" || error_ "failed to cd to $t_"

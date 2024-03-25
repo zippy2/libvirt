@@ -21,7 +21,7 @@
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 fail=0
@@ -41,11 +41,11 @@ cat <<\EOF > dom
 </domain>
 EOF
 
-$abs_top_builddir/tools/virsh -c test:///default define dom > /dev/null || fail=1
+"${abs_top_builddir}"/tools/virsh -c test:///default define dom > /dev/null || fail=1
 
 mkfifo_or_skip_ fifo
 cat dom > fifo &
 
-$abs_top_builddir/tools/virsh -c test:///default define fifo > /dev/null || fail=1
+"${abs_top_builddir}"/tools/virsh -c test:///default define fifo > /dev/null || fail=1
 
 (exit $fail); exit $fail

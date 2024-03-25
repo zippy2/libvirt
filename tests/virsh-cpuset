@@ -21,13 +21,13 @@
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 fail=0
 
 # generate input
-$abs_top_builddir/tools/virsh --connect test:///default dumpxml 1 > xml || fail=1
+"${abs_top_builddir}"/tools/virsh --connect test:///default dumpxml 1 > xml || fail=1
 
 # require the presence of the string we'll transform
 grep '<vcpu placement' xml > /dev/null || fail=1
@@ -35,7 +35,7 @@ grep '<vcpu placement' xml > /dev/null || fail=1
 sed "s/vcpu placement='static'>/vcpu cpuset='aaa'>/" xml > xml-invalid || fail=1
 
 # Require failure and a diagnostic.
-$abs_top_builddir/tools/virsh --connect test:///default define xml-invalid > out 2>&1 && fail=1
+"${abs_top_builddir}"/tools/virsh --connect test:///default define xml-invalid > out 2>&1 && fail=1
 cat <<\EOF > exp || fail=1
 error: Failed to define domain from xml-invalid
 error: invalid argument: Failed to parse bitmap 'aaa'

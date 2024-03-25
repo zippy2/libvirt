@@ -6,7 +6,7 @@
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 fail=0
@@ -62,7 +62,7 @@ cat <<\EOF > D.xml || fail=1
 EOF
 
 url=test:///default
-$abs_top_builddir/tools/virsh --connect "$url" 'define D.xml; dumpxml D' > out 2>&1 || fail=1
+"${abs_top_builddir}"/tools/virsh --connect "$url" 'define D.xml; dumpxml D' > out 2>&1 || fail=1
 
 cat > exp <<EOF || fail=1
 Domain 'D' defined from D.xml

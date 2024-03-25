@@ -19,11 +19,11 @@
 
 . "$(dirname $0)/test-lib.sh"
 
-VIRSH=$abs_top_builddir/tools/virsh
+VIRSH="${abs_top_builddir}"/tools/virsh
 
 if test "$VERBOSE" = yes; then
   set -x
-  $VIRSH --version
+  "${VIRSH}" --version
 fi
 
 printf 'Scheduler      : fair\n\n' > exp-out || framework_failure
@@ -33,7 +33,7 @@ fail=0
 
 test_url=test:///default
 
-$VIRSH -c $test_url schedinfo 1 --set j=k >out 2>err && fail=1
+"${VIRSH}" -c $test_url schedinfo 1 --set j=k >out 2>err && fail=1
 compare exp-out out || fail=1
 compare exp-err err || fail=1
 

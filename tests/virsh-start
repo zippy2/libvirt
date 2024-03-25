@@ -21,7 +21,7 @@
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 fail=0
@@ -29,7 +29,7 @@ fail=0
 test_url=test:///default
 
 # expect this to fail
-$abs_top_builddir/tools/virsh -c $test_url start test > out 2> err && fail=1
+"${abs_top_builddir}"/tools/virsh -c $test_url start test > out 2> err && fail=1
 
 # stdout gets a newline
 echo > exp || fail=1

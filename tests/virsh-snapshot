@@ -23,7 +23,7 @@ test_expensive
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 fail=0
@@ -32,7 +32,7 @@ mock_xdg_ || framework_failure
 
 # The test driver loses states between restarts, so we perform a script
 # with some convenient markers for later post-processing of output.
-$abs_top_builddir/tools/virsh --connect test:///default >out 2>err '
+"${abs_top_builddir}"/tools/virsh --connect test:///default >out 2>err '
   # Create a series of snapshots, with names that intentionally sort
   # differently by topology than by name. Use revert to create fanout.
   snapshot-create-as test s1
@@ -196,7 +196,7 @@ EOF
 compare exp err || fail=1
 
 # Restore state with redefine
-$abs_top_builddir/tools/virsh -c test:///default >out 2>err '
+"${abs_top_builddir}"/tools/virsh -c test:///default >out 2>err '
   # Redefine must be in topological order; this will fail
   snapshot-create test --redefine s2.xml --validate
   echo --err marker

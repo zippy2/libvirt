@@ -12,17 +12,17 @@ fi
 mock_xdg_ || framework_failure
 
 export LIBVIRT_DEFAULT_URI='test:///default'
-ln -s $abs_top_builddir/tools/virsh virsh
+ln -s "${abs_top_builddir}"/tools/virsh virsh
 
-$abs_top_srcdir/tests/virsh-output-commands > out 2>&1
+"${abs_top_srcdir}"/tests/virsh-output-commands > out 2>&1
 
 echo end >> out
 
-if compare $abs_top_srcdir/tests/virsh-output.out out; then
+if compare "${abs_top_srcdir}"/tests/virsh-output.out out; then
     exit 0
 else
     if [ "x$VIR_TEST_REGENERATE_OUTPUT" = "x1" ]; then
-        cp out $abs_top_srcdir/tests/virsh-output.out
+        cp out "${abs_top_srcdir}"/tests/virsh-output.out
     fi
 
     exit 1

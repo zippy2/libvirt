@@ -5,14 +5,14 @@
 
 if test "$VERBOSE" = yes; then
   set -x
-  $abs_top_builddir/tools/virsh --version
+  "${abs_top_builddir}"/tools/virsh --version
 fi
 
 fail=0
 
 pwd=$(pwd) || fail=1
 
-$abs_top_builddir/tools/virsh --connect test:///default \
+"${abs_top_builddir}"/tools/virsh --connect test:///default \
   pool-define-as --print-xml \
   P dir src-host /src/path /src/dev S /target-path \
   1>out 2>&1
