@@ -837,11 +837,13 @@ int virTestMain(int argc,
 
     va_start(ap, func);
     while ((lib = va_arg(ap, const char *))) {
-        //  if (!virFileIsExecutable(lib)) {
-        //      perror(lib);
-        //      va_end(ap);
-        //      return EXIT_FAILURE;
-        //  }
+        g_autofree char *abs_lib_path = g_strdup_printf("%s/%s", abs_builddir, lib);
+
+        if (!virFileIsExecutable(abs_lib_path)) {
+            perror(abs_lib_path);
+            va_end(ap);
+            return EXIT_FAILURE;
+        }
 
         preloads = g_renew(const char *, preloads, npreloads + 2);
         preloads[npreloads++] = lib;

@@ -123,11 +123,13 @@ int virTestMain(int argc,
 
 #ifdef __APPLE__
 # define PRELOAD_VAR "DYLD_INSERT_LIBRARIES"
+# define LD_LIBRARY_PATH "DYLD_LIBRARY_PATH"
 # define FORCE_FLAT_NAMESPACE \
             g_setenv("DYLD_FORCE_FLAT_NAMESPACE", "1", TRUE);
 # define MOCK_EXT ".dylib"
 #else
 # define PRELOAD_VAR "LD_PRELOAD"
+# define LD_LIBRARY_PATH "LD_LIBRARY_PATH"
 # define FORCE_FLAT_NAMESPACE
 # define MOCK_EXT ".so"
 #endif
@@ -138,16 +140,21 @@ int virTestMain(int argc,
         if (preload == NULL || strstr(preload, libs) == NULL) { \
             g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER; \
             char *newenv; \
+            char *new_library_path; \
+            const char *cur_library_path = g_getenv(LD_LIBRARY_PATH); \
             if (!preload) { \
                 newenv = (char *) libs; \
             } else { \
                 newenv = g_strdup_printf("%s:%s", libs, preload); \
             } \
+            if (!cur_library_path) { \
+                new_library_path = (char *) abs_builddir; \
+            } else { \
+                new_library_path = g_strdup_printf("%s:%s", abs_builddir, cur_library_path); \
+            } \
             g_setenv(PRELOAD_VAR, newenv, TRUE); \
-            virBufferEscape(&buf, '\\', " ", "%s", abs_builddir); \
-            g_setenv("LD_LIBRARY_PATH", virBufferCurrentContent(&buf), TRUE); \
+            g_setenv(LD_LIBRARY_PATH, new_library_path, TRUE); \
             FORCE_FLAT_NAMESPACE \
-            fprintf(stderr, "\nLD_LIBRARY_PATH: %s\n", g_getenv("LD_LIBRARY_PATH")); \
             execv(argv[0], argv); \
         } \
     } while (0)
