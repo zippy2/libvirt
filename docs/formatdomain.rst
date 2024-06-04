@@ -8653,6 +8653,14 @@ The optional attribute ``backend`` is required if the ``type`` is ``qemu``, the
    ...
 
 
+ACPI ERST
+~~~~~~~~~
+
+An ACPI ERST device. It is utilized to support the ACPI Error Record
+Serialization Table, ERST, functionality. This feature is designed for storing
+error records in persistent storage for future reference and/or debugging.
+
+
 Security label
 --------------
 

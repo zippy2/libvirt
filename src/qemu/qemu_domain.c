@@ -6358,6 +6358,7 @@ qemuDomainDeviceDefPostParse(virDomainDeviceDef *dev,
     case VIR_DOMAIN_DEVICE_IOMMU:
     case VIR_DOMAIN_DEVICE_AUDIO:
     case VIR_DOMAIN_DEVICE_CRYPTO:
+    case VIR_DOMAIN_DEVICE_ACPI_ERST:
         ret = 0;
         break;
 
@@ -10360,6 +10361,7 @@ qemuDomainPrepareChardevSourceOne(virDomainDeviceDef *dev,
     case VIR_DOMAIN_DEVICE_VSOCK:
     case VIR_DOMAIN_DEVICE_AUDIO:
     case VIR_DOMAIN_DEVICE_CRYPTO:
+    case VIR_DOMAIN_DEVICE_ACPI_ERST:
         break;
     }
 
@@ -12290,6 +12292,7 @@ qemuDomainDeviceBackendChardevForeachOne(virDomainDeviceDef *dev,
     case VIR_DOMAIN_DEVICE_VSOCK:
     case VIR_DOMAIN_DEVICE_AUDIO:
     case VIR_DOMAIN_DEVICE_CRYPTO:
+    case VIR_DOMAIN_DEVICE_ACPI_ERST:
         /* no chardev backend */
         break;
     }

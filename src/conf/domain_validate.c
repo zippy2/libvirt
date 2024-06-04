@@ -3023,6 +3023,26 @@ virDomainTPMDevValidate(const virDomainTPMDef *tpm)
 
 
 static int
+virDomainACPIERSTDefValidate(const virDomainACPIERSTDef *acpierst)
+{
+    if (acpierst->path == NULL || acpierst->path[0] == '\0') {
+        virReportError(VIR_ERR_XML_ERROR, "%s",
+                       _("missing ACPI ERST path"));
+        return -1;
+    }
+
+    if (acpierst->size < 4 ||
+        !VIR_IS_POW2(acpierst->size)) {
+        virReportError(VIR_ERR_XML_ERROR, "%s",
+                       _("invalid size of ACPI ERST"));
+        return -1;
+    }
+
+    return 0;
+}
+
+
+static int
 virDomainDeviceInfoValidate(const virDomainDeviceDef *dev)
 {
     virDomainDeviceInfo *info;
@@ -3131,6 +3151,9 @@ virDomainDeviceDefValidateInternal(const virDomainDeviceDef *dev,
 
     case VIR_DOMAIN_DEVICE_TPM:
         return virDomainTPMDevValidate(dev->data.tpm);
+
+    case VIR_DOMAIN_DEVICE_ACPI_ERST:
+        return virDomainACPIERSTDefValidate(dev->data.acpierst);
 
     case VIR_DOMAIN_DEVICE_LEASE:
     case VIR_DOMAIN_DEVICE_WATCHDOG:

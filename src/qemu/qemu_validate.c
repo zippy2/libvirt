@@ -4670,6 +4670,28 @@ qemuValidateDomainDeviceDefCrypto(virDomainCryptoDef *crypto,
 
 
 static int
+qemuValidateDomainDeviceDefAcpiErst(virDomainACPIERSTDef *acpierst,
+                                    const virDomainDef *def G_GNUC_UNUSED,
+                                    virQEMUCaps *qemuCaps)
+{
+    if (!virQEMUCapsGet(qemuCaps, QEMU_CAPS_DEVICE_ACPI_ERST)) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("acpi-erst device is not supported"));
+        return -1;
+    }
+
+    if (acpierst->info.type != VIR_DOMAIN_DEVICE_ADDRESS_TYPE_NONE &&
+        acpierst->info.type != VIR_DOMAIN_DEVICE_ADDRESS_TYPE_PCI) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("ACPI ERST device must reside on a PCI bus"));
+        return -1;
+    }
+
+    return 0;
+}
+
+
+static int
 qemuSoundCodecTypeToCaps(int type)
 {
     switch (type) {
@@ -5371,6 +5393,9 @@ qemuValidateDomainDeviceDef(const virDomainDeviceDef *dev,
 
     case VIR_DOMAIN_DEVICE_CRYPTO:
         return qemuValidateDomainDeviceDefCrypto(dev->data.crypto, def, qemuCaps);
+
+    case VIR_DOMAIN_DEVICE_ACPI_ERST:
+        return qemuValidateDomainDeviceDefAcpiErst(dev->data.acpierst, def, qemuCaps);
 
     case VIR_DOMAIN_DEVICE_LEASE:
     case VIR_DOMAIN_DEVICE_PANIC:
