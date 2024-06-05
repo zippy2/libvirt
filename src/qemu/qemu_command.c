@@ -10341,6 +10341,54 @@ qemuBuildCryptoCommandLine(virCommand *cmd,
 }
 
 
+
+static int
+qemuBuildACPIERSTCommandLine(virCommand *cmd,
+                             const virDomainDef *def,
+                             virDomainACPIERSTDef *acpierst,
+                             virQEMUCaps *qemuCaps)
+{
+    g_autoptr(virJSONValue) devProps = NULL;
+    g_autoptr(virJSONValue) memProps = NULL;
+    g_autofree char *memAlias = NULL;
+
+    if (!acpierst->info.alias) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("ACPI ERST device is missing alias"));
+        return -1;
+    }
+
+    memAlias = g_strdup_printf("mem%s", acpierst->info.alias);
+
+    if (qemuMonitorCreateObjectProps(&memProps,
+                                     "memory-backend-file",
+                                     memAlias,
+                                     "s:mem-path", acpierst->path,
+                                     "U:size", acpierst->size * 1024,
+                                     "b:share", true,
+                                     NULL) < 0) {
+        return -1;
+    }
+
+    if (virJSONValueObjectAdd(&devProps,
+                              "s:driver", "acpi-erst",
+                              "s:id", acpierst->info.alias,
+                              "s:memdev", memAlias,
+                              NULL) < 0) {
+        return -1;
+    }
+
+    if (qemuBuildDeviceAddressProps(devProps, def, &acpierst->info) < 0)
+        return -1;
+
+    if (qemuBuildObjectCommandlineFromJSON(cmd, memProps, qemuCaps) < 0 ||
+        qemuBuildDeviceCommandlineFromJSON(cmd, devProps, def, qemuCaps) < 0)
+        return -1;
+
+    return 0;
+}
+
+
 static int
 qemuBuildAsyncTeardownCommandLine(virCommand *cmd,
                                   const virDomainDef *def,
@@ -10697,6 +10745,10 @@ qemuBuildCommandLine(virDomainObj *vm,
         return NULL;
 
     if (qemuBuildCryptoCommandLine(cmd, def, qemuCaps) < 0)
+        return NULL;
+
+    if (def->acpierst &&
+        qemuBuildACPIERSTCommandLine(cmd, def, def->acpierst, qemuCaps) < 0)
         return NULL;
 
     if (qemuBuildAsyncTeardownCommandLine(cmd, def, qemuCaps) < 0)

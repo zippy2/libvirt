@@ -658,6 +658,14 @@ qemuAssignDeviceCryptoAlias(virDomainDef *def,
 }
 
 
+static void
+qemuAssignDeviceACPIERSTAlias(virDomainACPIERSTDef *acpierst)
+{
+    if (!acpierst->info.alias)
+        acpierst->info.alias = g_strdup("acpierst0");
+}
+
+
 int
 qemuAssignDeviceAliases(virDomainDef *def)
 {
@@ -747,6 +755,8 @@ qemuAssignDeviceAliases(virDomainDef *def)
     for (i = 0; i < def->ncryptos; i++) {
         qemuAssignDeviceCryptoAlias(def, def->cryptos[i]);
     }
+    if (def->acpierst)
+        qemuAssignDeviceACPIERSTAlias(def->acpierst);
 
     return 0;
 }
