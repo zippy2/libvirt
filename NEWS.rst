@@ -17,6 +17,13 @@ v10.6.0 (unreleased)
 
 * **New features**
 
+  * Introduce pstore device
+
+    The aim of pstore device is to provide a bit of NVRAM storage for guest
+    kernel to record oops/panic logs just before the it crashes. Typical usage
+    includes usage in combination with a watchdog so that the logs can be
+    inspected after the watchdog rebooted the machine.
+
 * **Improvements**
 
 * **Bug fixes**
