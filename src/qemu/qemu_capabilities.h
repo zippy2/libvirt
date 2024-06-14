@@ -693,6 +693,7 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
     QEMU_CAPS_NETDEV_USER, /* -netdev user */
     QEMU_CAPS_DEVICE_ACPI_ERST, /* -device acpi-erst */
     QEMU_CAPS_INTEL_IOMMU_DMA_TRANSLATION, /* intel-iommu.dma-translation */
+    QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE, /* -object sev-guest.legacy-vm-type= */
 
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
