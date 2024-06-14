@@ -712,6 +712,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               /* 460 */
               "sev-snp-guest", /* QEMU_CAPS_SEV_SNP_GUEST */
               "netdev.user", /* QEMU_CAPS_NETDEV_USER */
+              "sev-guest.legacy-vm-type", /* QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE */
     );
 
 
@@ -1576,6 +1577,7 @@ static struct virQEMUCapsStringFlags virQEMUCapsQMPSchemaQueries[] = {
     { "query-migrate/ret-type/blocked-reasons", QEMU_CAPS_MIGRATION_BLOCKED_REASONS },
     { "screendump/arg-type/format/^png", QEMU_CAPS_SCREENSHOT_FORMAT_PNG },
     { "netdev_add/arg-type/+user", QEMU_CAPS_NETDEV_USER },
+    { "object-add/arg-type/+sev-guest/legacy-vm-type", QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE },
 };
 
 typedef struct _virQEMUCapsObjectTypeProps virQEMUCapsObjectTypeProps;
