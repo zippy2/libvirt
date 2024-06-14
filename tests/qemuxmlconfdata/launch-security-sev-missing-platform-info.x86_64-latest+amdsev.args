@@ -31,6 +31,6 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-QEMUGuest1/.config \
 -audiodev '{"id":"audio1","driver":"none"}' \
 -global ICH9-LPC.noreboot=off \
 -watchdog-action reset \
--object '{"qom-type":"sev-guest","id":"lsec0","cbitpos":51,"reduced-phys-bits":1,"policy":1,"dh-cert-file":"/var/lib/libvirt/qemu/domain--1-QEMUGuest1/dh_cert.base64","session-file":"/var/lib/libvirt/qemu/domain--1-QEMUGuest1/session.base64"}' \
+-object '{"qom-type":"sev-guest","id":"lsec0","cbitpos":51,"reduced-phys-bits":1,"policy":1,"dh-cert-file":"/var/lib/libvirt/qemu/domain--1-QEMUGuest1/dh_cert.base64","session-file":"/var/lib/libvirt/qemu/domain--1-QEMUGuest1/session.base64","legacy-vm-type":"on"}' \
 -sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on
