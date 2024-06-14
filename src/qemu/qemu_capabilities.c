@@ -721,6 +721,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "chardev-reconnect-miliseconds", /* QEMU_CAPS_CHARDEV_RECONNECT_MILISECONDS */
               "virtio-ccw.loadparm", /* QEMU_CAPS_VIRTIO_CCW_DEVICE_LOADPARM */
               "netdev-stream-reconnect-miliseconds", /* QEMU_CAPS_NETDEV_STREAM_RECONNECT_MILISECONDS */
+              "sev-guest.legacy-vm-type", /* QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE */
     );
 
 
@@ -1594,6 +1595,7 @@ static struct virQEMUCapsStringFlags virQEMUCapsQMPSchemaQueries[] = {
     { "screendump/arg-type/device", QEMU_CAPS_SCREENDUMP_DEVICE },
     { "screendump/arg-type/format/^png", QEMU_CAPS_SCREENSHOT_FORMAT_PNG },
     { "set-numa-node/arg-type/+hmat-lb", QEMU_CAPS_NUMA_HMAT },
+    { "object-add/arg-type/+sev-guest/legacy-vm-type", QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE },
 };
 
 typedef struct _virQEMUCapsObjectTypeProps virQEMUCapsObjectTypeProps;
