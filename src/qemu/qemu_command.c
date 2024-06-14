@@ -10014,6 +10014,7 @@ qemuBuildSEVCommandLine(virDomainObj *vm, virCommand *cmd,
     qemuDomainObjPrivate *priv = vm->privateData;
     g_autofree char *dhpath = NULL;
     g_autofree char *sessionpath = NULL;
+    const char *legacyVMType = NULL;
 
     VIR_DEBUG("policy=0x%x cbitpos=%d reduced_phys_bits=%d",
               sev->policy, sev->common.cbitpos, sev->common.reduced_phys_bits);
@@ -10024,6 +10025,14 @@ qemuBuildSEVCommandLine(virDomainObj *vm, virCommand *cmd,
     if (sev->session)
         sessionpath = g_strdup_printf("%s/session.base64", priv->libDir);
 
+    /* Starting from QEMU 9.1.0 (v9.0.0-rc4-45-g023267334d specifically), QEMU
+     * uses new interface to create SEV guests. This changes what is measured.
+     * Toggle this knob to preserve old style of measurements. Its type was
+     * switched to OnOffAuto in v9.1.0-rc0~29^2~19.*/
+    if (virQEMUCapsGet(priv->qemuCaps, QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE)) {
+        legacyVMType = virTristateSwitchTypeToString(VIR_TRISTATE_SWITCH_ON);
+    }
+
     if (qemuMonitorCreateObjectProps(&props, "sev-guest", "lsec0",
                                      "u:cbitpos", sev->common.cbitpos,
                                      "u:reduced-phys-bits", sev->common.reduced_phys_bits,
@@ -10031,6 +10040,7 @@ qemuBuildSEVCommandLine(virDomainObj *vm, virCommand *cmd,
                                      "S:dh-cert-file", dhpath,
                                      "S:session-file", sessionpath,
                                      "T:kernel-hashes", sev->common.kernel_hashes,
+                                     "S:legacy-vm-type", legacyVMType,
                                      NULL) < 0)
         return -1;
 
