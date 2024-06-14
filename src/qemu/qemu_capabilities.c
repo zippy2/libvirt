@@ -742,6 +742,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "amd-iommu.pci-id", /* QEMU_CAPS_AMD_IOMMU_PCI_ID */
               "usb-bot", /* QEMU_CAPS_DEVICE_USB_BOT */
               "tdx-guest", /* QEMU_CAPS_TDX_GUEST */
+              "sev-guest.legacy-vm-type", /* QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE */
     );
 
 
@@ -1619,6 +1620,7 @@ static struct virQEMUCapsStringFlags virQEMUCapsQMPSchemaQueries[] = {
     { "set-numa-node/arg-type/+hmat-lb", QEMU_CAPS_NUMA_HMAT },
     { "query-cpu-model-expansion/ret-type/deprecated-props", QEMU_CAPS_QUERY_CPU_MODEL_EXPANSION_DEPRECATED_PROPS },
     { "migrate-incoming/arg-type/exit-on-error", QEMU_CAPS_MIGRATE_INCOMING_EXIT_ON_ERROR },
+    { "object-add/arg-type/+sev-guest/legacy-vm-type", QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE },
 };
 
 typedef struct _virQEMUCapsObjectTypeProps virQEMUCapsObjectTypeProps;
