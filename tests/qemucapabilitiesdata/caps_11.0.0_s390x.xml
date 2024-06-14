@@ -146,6 +146,7 @@
   <flag name='uefi-vars'/>
   <flag name='query-block-flat'/>
   <flag name='blockdev-mirror.target-is-zero'/>
+  <flag name='sev-guest.legacy-vm-type'/>
   <version>11000000</version>
   <microcodeVersion>39100286</microcodeVersion>
   <package>v11.0.0</package>
