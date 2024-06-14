@@ -701,6 +701,7 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
     QEMU_CAPS_VIRTIO_CCW_DEVICE_LOADPARM, /* loadparm available on CCW device for multi device boot */
     QEMU_CAPS_NETDEV_STREAM_RECONNECT_MILISECONDS, /* 'reconnect-ms' option for netdev stream supported */
     QEMU_CAPS_QUERY_CPU_MODEL_EXPANSION_DEPRECATED_PROPS, /* query-cpu-model-expansion may report deprecated CPU properties */
+    QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE, /* -object sev-guest.legacy-vm-type= */
 
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
