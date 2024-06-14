@@ -206,6 +206,7 @@
   <flag name='amd-iommu'/>
   <flag name='usb-bot'/>
   <flag name='acpi-generic-initiator'/>
+  <flag name='sev-guest.legacy-vm-type'/>
   <version>9002000</version>
   <microcodeVersion>43100247</microcodeVersion>
   <package>v9.2.0</package>
