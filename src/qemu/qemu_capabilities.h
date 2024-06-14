@@ -739,6 +739,9 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
     QEMU_CAPS_QUERY_BLOCK_FLAT, /* 'query-block' command supports 'flat' */
     QEMU_CAPS_AMD_IOMMU_XTSUP, /* amd-iommu.xtsup */
 
+    /* 495 */
+    QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE, /* -object sev-guest.legacy-vm-type= */
+
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
 
