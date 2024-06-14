@@ -128,6 +128,7 @@
   <flag name='usb-bot'/>
   <flag name='virtio-iommu.aw-bits'/>
   <flag name='iommufd'/>
+  <flag name='sev-guest.legacy-vm-type'/>
   <version>9001000</version>
   <microcodeVersion>39100246</microcodeVersion>
   <package>v9.1.0</package>

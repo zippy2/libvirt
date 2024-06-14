@@ -144,6 +144,7 @@
   <flag name='iommufd'/>
   <flag name='uefi-vars'/>
   <flag name='blockdev-mirror.target-is-zero'/>
+  <flag name='sev-guest.legacy-vm-type'/>
   <version>10001000</version>
   <microcodeVersion>39100286</microcodeVersion>
   <package>v10.1.0</package>
