@@ -741,6 +741,7 @@ typedef enum { /* virQEMUCapsFlags grouping marker for syntax-check */
 
     /* 495 */
     QEMU_CAPS_BLOCKDEV_MIRROR_TARGET_IS_ZERO, /* 'blockdev-mirror' supports 'target-is-zero' */
+    QEMU_CAPS_SEV_GUEST_LEGACY_VM_TYPE, /* -object sev-guest.legacy-vm-type= */
 
     QEMU_CAPS_LAST /* this must always be the last item */
 } virQEMUCapsFlags;
