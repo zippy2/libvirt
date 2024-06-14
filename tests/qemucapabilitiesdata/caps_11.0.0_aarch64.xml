@@ -190,6 +190,7 @@
   <flag name='arm-smmuv3'/>
   <flag name='arm-smmuv3.smmu_per_bus'/>
   <flag name='arm-smmuv3.accel'/>
+  <flag name='sev-guest.legacy-vm-type'/>
   <version>11000000</version>
   <microcodeVersion>61700286</microcodeVersion>
   <package>v11.0.0</package>

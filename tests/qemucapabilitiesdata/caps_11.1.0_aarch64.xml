@@ -194,6 +194,7 @@
   <flag name='arm-smmuv3.cmdqv'/>
   <flag name='iothread.poll-weight'/>
   <flag name='win-dmp.guest-aware'/>
+  <flag name='sev-guest.legacy-vm-type'/>
   <version>11001000</version>
   <microcodeVersion>61700287</microcodeVersion>
   <package>v11.1.0</package>
