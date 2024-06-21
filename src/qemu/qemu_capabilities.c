@@ -3667,7 +3667,7 @@ virQEMUCapsProbeQMPGICCapabilities(virQEMUCaps *qemuCaps,
 
 
 static void
-virQEMUCapsGetSEVMaxGuests(virSEVCapability *caps)
+virQEMUCapsGetSEVFeatures(virSEVCapability *caps)
 {
     /*
      * From Secure Encrypted Virtualization API v0.24, section 6.19.1
@@ -3679,8 +3679,8 @@ virQEMUCapsGetSEVMaxGuests(virSEVCapability *caps)
      * is discovered by CPUID Fn8000_001F[EDX]. The maximum SEV ASID
      * available is discovered by CPUID Fn8000_001F[ECX].
      */
-    uint32_t min_asid, max_asid;
-    virHostCPUX86GetCPUID(0x8000001F, 0, NULL, NULL,
+    uint32_t eax, ebx, min_asid, max_asid;
+    virHostCPUX86GetCPUID(0x8000001F, 0, &eax, &ebx,
                           &max_asid, &min_asid);
 
     if (max_asid != 0 && min_asid != 0) {
@@ -3689,7 +3689,14 @@ virQEMUCapsGetSEVMaxGuests(virSEVCapability *caps)
     } else {
         caps->max_guests = caps->max_es_guests = 0;
     }
+
+    if (eax & (1 << 5)) {
+        /* VMPL supported */
+        /* XXX SEV-SNP supported */
+        caps->num_vmpl = (ebx & 0xF000) >> 12;
+    }
 }
+
 
 static int
 virQEMUCapsProbeQMPSEVCapabilities(virQEMUCaps *qemuCaps,
@@ -3712,7 +3719,7 @@ virQEMUCapsProbeQMPSEVCapabilities(virQEMUCaps *qemuCaps,
         return 0;
     }
 
-    virQEMUCapsGetSEVMaxGuests(caps);
+    virQEMUCapsGetSEVFeatures(caps);
 
     virSEVCapabilitiesFree(qemuCaps->sevCapabilities);
     qemuCaps->sevCapabilities = caps;
@@ -4597,7 +4604,7 @@ virQEMUCapsParseSEVInfo(virQEMUCaps *qemuCaps, xmlXPathContextPtr ctxt)
      * config tunables. It is cheap to query so
      * lack of caching is a non-issue
      */
-    virQEMUCapsGetSEVMaxGuests(sev);
+    virQEMUCapsGetSEVFeatures(sev);
 
     qemuCaps->sevCapabilities = g_steal_pointer(&sev);
     return 0;
