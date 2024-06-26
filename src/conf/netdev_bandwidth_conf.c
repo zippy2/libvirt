@@ -24,6 +24,16 @@
 
 #define VIR_FROM_THIS VIR_FROM_NONE
 
+#define CHECK_LIMIT(val, limit, name) \
+    do { \
+        if ((val) > (limit)) { \
+            virReportError(VIR_ERR_OVERFLOW, \
+                           _("value '%1$llu' is too big for '%2$s' parameter, maximum is '%3$llu'"), \
+                           val, name, (unsigned long long) limit); \
+            return -1; \
+        } \
+    } while (0)
+
 static int
 virNetDevBandwidthParseRate(xmlNodePtr node,
                             virNetDevBandwidthRate *rate,
@@ -50,6 +60,11 @@ virNetDevBandwidthParseRate(xmlNodePtr node,
                                         &rate->floor)) < 0)
         return -1;
 
+    CHECK_LIMIT(rate->average, 1ULL << 54, "average");
+    CHECK_LIMIT(rate->peak, 1ULL << 54, "peak");
+    CHECK_LIMIT(rate->burst, UINT_MAX >> 10, "burst");
+    CHECK_LIMIT(rate->floor, 1ULL << 54, "floor");
+
     if (!rc_average && !rc_floor) {
         virReportError(VIR_ERR_XML_DETAIL, "%s",
                        _("Missing mandatory average or floor attributes"));
@@ -70,6 +85,8 @@ virNetDevBandwidthParseRate(xmlNodePtr node,
 
     return 0;
 }
+
+#undef CHECK_LIMIT
 
 /**
  * virNetDevBandwidthParse:
