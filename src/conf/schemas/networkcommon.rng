@@ -180,7 +180,7 @@
   </define>
 
   <define name="speed">
-    <data type="unsignedInt">
+    <data type="unsignedLong">
       <param name="pattern">[0-9]+</param>
       <param name="minInclusive">1</param>
     </data>
