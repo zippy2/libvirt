@@ -7470,7 +7470,7 @@ qemuDomainUpdateDeviceFlags(virDomainPtr dom,
     virDomainObj *vm = NULL;
     qemuDomainObjPrivate *priv;
     virObjectEvent *event = NULL;
-    g_autoptr(virDomainDef) vmdef = NULL;
+    g_autoptr(virDomainDef) persistentDefCopy = NULL;
     g_autoptr(virDomainDeviceDef) dev_config = NULL;
     g_autoptr(virDomainDeviceDef) dev_live = NULL;
     bool force = (flags & VIR_DOMAIN_DEVICE_MODIFY_FORCE) != 0;
@@ -7516,14 +7516,15 @@ qemuDomainUpdateDeviceFlags(virDomainPtr dom,
 
     if (flags & VIR_DOMAIN_AFFECT_CONFIG) {
         /* Make a copy for updated domain. */
-        vmdef = virDomainObjCopyPersistentDef(vm, driver->xmlopt,
-                                              priv->qemuCaps);
-        if (!vmdef)
+        persistentDefCopy = virDomainObjCopyPersistentDef(vm, driver->xmlopt,
+                                                          priv->qemuCaps);
+        if (!persistentDefCopy)
             goto endjob;
 
         /* virDomainDefCompatibleDevice call is delayed until we know the
          * device we're going to update. */
-        if ((ret = qemuDomainUpdateDeviceConfig(vmdef, dev_config, priv->qemuCaps,
+        if ((ret = qemuDomainUpdateDeviceConfig(persistentDefCopy, dev_config,
+                                                priv->qemuCaps,
                                                 parse_flags,
                                                 driver->xmlopt)) < 0)
             goto endjob;
@@ -7540,9 +7541,9 @@ qemuDomainUpdateDeviceFlags(virDomainPtr dom,
 
     /* Finally, if no error until here, we can save config. */
     if (flags & VIR_DOMAIN_AFFECT_CONFIG) {
-        ret = virDomainDefSave(vmdef, driver->xmlopt, cfg->configDir);
+        ret = virDomainDefSave(persistentDefCopy, driver->xmlopt, cfg->configDir);
         if (!ret) {
-            virDomainObjAssignDef(vm, &vmdef, false, NULL);
+            virDomainObjAssignDef(vm, &persistentDefCopy, false, NULL);
 
             /* Event sending if persistent config has changed */
             event = virDomainEventLifecycleNewFromObj(vm,
