@@ -7470,6 +7470,8 @@ qemuDomainUpdateDeviceFlags(virDomainPtr dom,
     virDomainObj *vm = NULL;
     qemuDomainObjPrivate *priv;
     virObjectEvent *event = NULL;
+    virDomainDef *liveDef = NULL;
+    virDomainDef *persistentDef = NULL;
     g_autoptr(virDomainDef) persistentDefCopy = NULL;
     g_autoptr(virDomainDeviceDef) dev_config = NULL;
     g_autoptr(virDomainDeviceDef) dev_live = NULL;
@@ -7502,14 +7504,17 @@ qemuDomainUpdateDeviceFlags(virDomainPtr dom,
         !(flags & VIR_DOMAIN_AFFECT_LIVE))
         parse_flags |= VIR_DOMAIN_DEF_PARSE_INACTIVE;
 
+    if (virDomainObjGetDefs(vm, flags, &liveDef, &persistentDef) < 0)
+        goto cleanup;
+
     if (flags & VIR_DOMAIN_AFFECT_CONFIG) {
-        if (!(dev_config = virDomainDeviceDefParse(xml, vm->def, driver->xmlopt,
+        if (!(dev_config = virDomainDeviceDefParse(xml, persistentDef, driver->xmlopt,
                                                    priv->qemuCaps, parse_flags)))
             goto endjob;
     }
 
     if (flags & VIR_DOMAIN_AFFECT_LIVE) {
-        if (!(dev_live = virDomainDeviceDefParse(xml, vm->def, driver->xmlopt,
+        if (!(dev_live = virDomainDeviceDefParse(xml, liveDef, driver->xmlopt,
                                                  priv->qemuCaps, parse_flags)))
             goto endjob;
     }
