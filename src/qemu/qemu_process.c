@@ -9915,7 +9915,6 @@ qemuProcessQMPStop(qemuProcessQMP *proc)
     if (proc->pid != 0) {
         VIR_DEBUG("Killing QMP caps process %lld", (long long)proc->pid);
         virProcessKillPainfully(proc->pid, true);
-        virResetLastError();
         proc->pid = 0;
     }
 
