@@ -10292,7 +10292,6 @@ qemuProcessQMPStop(qemuProcessQMP *proc)
         virErrorPreserveLast(&err);
         VIR_DEBUG("Killing QMP caps process %lld", (long long)proc->pid);
         virProcessKillPainfully(proc->pid, true);
-        virResetLastError();
         proc->pid = 0;
         virErrorRestore(&err);
     }
