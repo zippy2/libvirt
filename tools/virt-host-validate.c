@@ -29,6 +29,7 @@
 #include "internal.h"
 #include "virerror.h"
 #include "virgettext.h"
+#include "virglibutil.h"
 
 #include "virt-host-validate-common.h"
 #if WITH_QEMU
@@ -44,26 +45,58 @@
 # include "virt-host-validate-ch.h"
 #endif
 
+typedef struct _virValidateCallbacks virValidateCallbacks;
+struct _virValidateCallbacks {
+    const char *name;
+    int (*callback)(void);
+};
+
+static virValidateCallbacks validateCallbacks[] = {
+#if WITH_QEMU
+    { "qemu", virHostValidateQEMU },
+#endif
+#if WITH_LXC
+    { "lxc", virHostValidateLXC },
+#endif
+#if WITH_BHYVE
+    { "bhyve", virHostValidateBhyve },
+#endif
+#if WITH_CH
+    { "ch", virHostValidateCh },
+#endif
+};
+
 static void
 show_help(FILE *out, const char *argv0)
 {
+    g_autofree char *hvs = NULL;
+    char *hvs_list[G_N_ELEMENTS(validateCallbacks) + 1] = { };
+    size_t i;
+
+    for (i = 0; i < G_N_ELEMENTS(validateCallbacks); i++) {
+        hvs_list[i] = g_strdup_printf("   - %1$s", validateCallbacks[i].name);
+    }
+
+    hvs = g_strjoinv("\n", hvs_list);
+
+    for (i = 0; i < G_N_ELEMENTS(validateCallbacks); i++) {
+        g_free(hvs_list[i]);
+    }
+
     fprintf(out,
             _("\n"
               "syntax: %1$s [OPTIONS] [HVTYPE]\n"
               "\n"
               " Hypervisor types:\n"
               "\n"
-              "   - qemu\n"
-              "   - lxc\n"
-              "   - bhyve\n"
-              "   - ch\n"
+              "%2$s\n"
               "\n"
               " Options:\n"
               "   -h, --help     Display command line help\n"
               "   -v, --version  Display command version\n"
               "   -q, --quiet    Don't display progress information\n"
               "\n"),
-            argv0);
+            argv0, hvs);
 }
 
 static void
@@ -87,6 +120,7 @@ main(int argc, char **argv)
     int ret = EXIT_SUCCESS;
     bool quiet = false;
     bool usedHvname = false;
+    size_t i;
 
     if (virGettextInitialize() < 0 ||
         virErrorInitialize() < 0) {
@@ -126,37 +160,13 @@ main(int argc, char **argv)
 
     virValidateSetQuiet(quiet);
 
-#if WITH_QEMU
-    if (!hvname || STREQ(hvname, "qemu")) {
-        usedHvname = true;
-        if (virHostValidateQEMU() < 0)
-            ret = EXIT_FAILURE;
+    for (i = 0; i < G_N_ELEMENTS(validateCallbacks); i++) {
+        if (!hvname || STREQ(hvname, validateCallbacks[i].name)) {
+            usedHvname = true;
+            if (validateCallbacks[i].callback() < 0)
+                ret = EXIT_FAILURE;
+        }
     }
-#endif
-
-#if WITH_LXC
-    if (!hvname || STREQ(hvname, "lxc")) {
-        usedHvname = true;
-        if (virHostValidateLXC() < 0)
-            ret = EXIT_FAILURE;
-    }
-#endif
-
-#if WITH_BHYVE
-    if (!hvname || STREQ(hvname, "bhyve")) {
-        usedHvname = true;
-        if (virHostValidateBhyve() < 0)
-            ret = EXIT_FAILURE;
-    }
-#endif
-
-#if WITH_CH
-    if (!hvname || STREQ(hvname, "ch")) {
-        usedHvname = true;
-        if (virHostValidateCh() < 0)
-            ret = EXIT_FAILURE;
-    }
-#endif
 
     if (hvname && !usedHvname) {
         fprintf(stderr, _("%1$s: unsupported hypervisor name %2$s\n"),
