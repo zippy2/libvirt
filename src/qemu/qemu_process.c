@@ -8696,6 +8696,18 @@ void qemuProcessStop(virQEMUDriver *driver,
                                  VIR_QEMU_PROCESS_KILL_FORCE|
                                  VIR_QEMU_PROCESS_KILL_NOCHECK));
 
+    vm->pid = 0;
+
+    /* now that we know it's stopped call the hook if present */
+    if (virHookPresent(VIR_HOOK_DRIVER_QEMU)) {
+        g_autofree char *xml = qemuDomainDefFormatXML(driver, NULL, vm->def, 0);
+
+        /* we can't stop the operation even if the script raised an error */
+        ignore_value(virHookCall(VIR_HOOK_DRIVER_QEMU, vm->def->name,
+                                 VIR_HOOK_QEMU_OP_STOPPED, VIR_HOOK_SUBOP_END,
+                                 NULL, xml, NULL));
+    }
+
     if (priv->agent) {
         g_clear_pointer(&priv->agent, qemuAgentClose);
     }
@@ -8719,25 +8731,6 @@ void qemuProcessStop(virQEMUDriver *driver,
 
     qemuDBusStop(driver, vm);
 
-    /* Only after this point we can reset 'priv->beingDestroyed' so that
-     * there's no point at which the VM could be considered as alive between
-     * entering the destroy job and this point where the active "flag" is
-     * cleared.
-     */
-    vm->def->id = -1;
-    priv->beingDestroyed = false;
-
-    /* Wake up anything waiting on domain condition */
-    virDomainObjBroadcast(vm);
-
-    /* IMPORTANT: qemuDomainObjStopWorker() unlocks @vm in order to prevent
-     * deadlocks with the per-VM event loop thread. This MUST be done after
-     * marking the VM as dead */
-    qemuDomainObjStopWorker(vm);
-
-    if (!!g_atomic_int_dec_and_test(&driver->nactive) && driver->inhibitCallback)
-        driver->inhibitCallback(false, driver->inhibitOpaque);
-
     /* Clear network bandwidth */
     virDomainClearNetBandwidth(vm->def);
 
@@ -8754,18 +8747,6 @@ void qemuProcessStop(virQEMUDriver *driver,
         }
     }
 
-    virPortAllocatorRelease(priv->nbdPort);
-    priv->nbdPort = 0;
-
-    if (priv->monConfig) {
-        if (priv->monConfig->type == VIR_DOMAIN_CHR_TYPE_UNIX)
-            unlink(priv->monConfig->data.nix.path);
-        g_clear_pointer(&priv->monConfig, virObjectUnref);
-    }
-
-    /* Remove the master key */
-    qemuDomainMasterKeyRemove(priv);
-
     ignore_value(virDomainChrDefForeach(vm->def,
                                         false,
                                         qemuProcessCleanupChardevDevice,
@@ -8774,22 +8755,6 @@ void qemuProcessStop(virQEMUDriver *driver,
 
     /* Its namespace is also gone then. */
     qemuDomainDestroyNamespace(driver, vm);
-
-    virFileDeleteTree(priv->libDir);
-    virFileDeleteTree(priv->channelTargetDir);
-
-    /* Stop autodestroy in case guest is restarted */
-    virCloseCallbacksDomainRemove(vm, NULL, qemuProcessAutoDestroy);
-
-    /* now that we know it's stopped call the hook if present */
-    if (virHookPresent(VIR_HOOK_DRIVER_QEMU)) {
-        g_autofree char *xml = qemuDomainDefFormatXML(driver, NULL, vm->def, 0);
-
-        /* we can't stop the operation even if the script raised an error */
-        ignore_value(virHookCall(VIR_HOOK_DRIVER_QEMU, vm->def->name,
-                                 VIR_HOOK_QEMU_OP_STOPPED, VIR_HOOK_SUBOP_END,
-                                 NULL, xml, NULL));
-    }
 
     /* Reset Security Labels unless caller don't want us to */
     if (!(flags & VIR_QEMU_PROCESS_STOP_NO_RELABEL))
@@ -8838,8 +8803,6 @@ void qemuProcessStop(virQEMUDriver *driver,
         virResctrlAllocRemove(vm->def->resctrls[i]->alloc);
     }
 
-    qemuProcessRemoveDomainStatus(driver, vm);
-
     /* Remove VNC and Spice ports from port reservation bitmap, but only if
        they were reserved by the driver (autoport=yes)
     */
@@ -8872,19 +8835,8 @@ void qemuProcessStop(virQEMUDriver *driver,
         }
     }
 
-    for (i = 0; i < vm->ndeprecations; i++)
-        g_free(vm->deprecations[i]);
-    g_clear_pointer(&vm->deprecations, g_free);
-    vm->ndeprecations = 0;
-    vm->taint = 0;
-    vm->pid = 0;
-    virDomainObjSetState(vm, VIR_DOMAIN_SHUTOFF, reason);
     for (i = 0; i < vm->def->niothreadids; i++)
         vm->def->iothreadids[i]->thread_id = 0;
-
-    /* clean up a possible backup job */
-    if (priv->backup)
-        qemuBackupJobTerminate(vm, VIR_DOMAIN_JOB_STATUS_CANCELED);
 
     /* Do this explicitly after vm->pid is reset so that security drivers don't
      * try to enter the domain's namespace which is non-existent by now as qemu
@@ -8918,6 +8870,56 @@ void qemuProcessStop(virQEMUDriver *driver,
     }
 
     qemuSecurityReleaseLabel(driver->securityManager, vm->def);
+
+    /* Only after this point we can reset 'priv->beingDestroyed' so that
+     * there's no point at which the VM could be considered as alive between
+     * entering the destroy job and this point where the active "flag" is
+     * cleared.
+     */
+    vm->def->id = -1;
+    priv->beingDestroyed = false;
+
+    /* Wake up anything waiting on domain condition */
+    virDomainObjBroadcast(vm);
+
+    /* IMPORTANT: qemuDomainObjStopWorker() unlocks @vm in order to prevent
+     * deadlocks with the per-VM event loop thread. This MUST be done after
+     * marking the VM as dead */
+    qemuDomainObjStopWorker(vm);
+
+    if (!!g_atomic_int_dec_and_test(&driver->nactive) && driver->inhibitCallback)
+        driver->inhibitCallback(false, driver->inhibitOpaque);
+
+    virPortAllocatorRelease(priv->nbdPort);
+    priv->nbdPort = 0;
+
+    if (priv->monConfig) {
+        if (priv->monConfig->type == VIR_DOMAIN_CHR_TYPE_UNIX)
+            unlink(priv->monConfig->data.nix.path);
+        g_clear_pointer(&priv->monConfig, virObjectUnref);
+    }
+
+    /* Remove the master key */
+    qemuDomainMasterKeyRemove(priv);
+
+    virFileDeleteTree(priv->libDir);
+    virFileDeleteTree(priv->channelTargetDir);
+
+    /* Stop autodestroy in case guest is restarted */
+    virCloseCallbacksDomainRemove(vm, NULL, qemuProcessAutoDestroy);
+
+    qemuProcessRemoveDomainStatus(driver, vm);
+
+    for (i = 0; i < vm->ndeprecations; i++)
+        g_free(vm->deprecations[i]);
+    g_clear_pointer(&vm->deprecations, g_free);
+    vm->ndeprecations = 0;
+    vm->taint = 0;
+    virDomainObjSetState(vm, VIR_DOMAIN_SHUTOFF, reason);
+
+    /* clean up a possible backup job */
+    if (priv->backup)
+        qemuBackupJobTerminate(vm, VIR_DOMAIN_JOB_STATUS_CANCELED);
 
     /* clear all private data entries which are no longer needed */
     qemuDomainObjPrivateDataClear(priv);
