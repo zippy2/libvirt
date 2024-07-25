@@ -1389,9 +1389,6 @@ virVMXParseConfig(virVMXContext *ctx,
     bool smbios_reflecthost = false;
     int controller;
     int bus;
-    int ndisk;
-    int last_scsi;
-    int offset = -1;
     int port;
     bool present;
     int scsi_virtualDev[4] = { -1, -1, -1, -1 };
@@ -1403,6 +1400,7 @@ virVMXParseConfig(virVMXContext *ctx,
     virCPUDef *cpu = NULL;
     char *firmware = NULL;
     size_t saved_ndisks = 0;
+    size_t i;
 
     if (ctx->parseFileName == NULL) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -1812,29 +1810,18 @@ virVMXParseConfig(virVMXContext *ctx,
      * find last SCSI index in array and use it as offset for all SATA indexes
      * (overwrite old values)
      * finally, regenerate correct addresses, while it depends on the index */
-    for (ndisk = 0; ndisk < def->ndisks; ndisk++) {
-        virDomainDiskDef *dsc = def->disks[ndisk];
+    for (i = 0; i < def->ndisks; i++) {
+        virDomainDiskDef *disk = def->disks[i];
 
-        if (dsc->bus == VIR_DOMAIN_DISK_BUS_SCSI) {
-            offset = virDiskNameToIndex(dsc->dst);
-            last_scsi = ndisk;
-            continue;
+        VIR_FREE(disk->dst);
+        disk->dst = virIndexToDiskName(i, "sd");
+
+        if (virDomainDiskDefAssignAddress(NULL, disk, def) < 0) {
+            virReportError(VIR_ERR_INTERNAL_ERROR,
+                           _("Could not assign address to disk '%1$s'"),
+                           virDomainDiskGetSource(disk));
+            goto cleanup;
         }
-
-        if (offset > -1) {
-            VIR_FREE(def->disks[ndisk]->dst);
-            def->disks[ndisk]->dst = virIndexToDiskName(offset + ndisk - last_scsi, "sd");
-
-            if (virDomainDiskDefAssignAddress(NULL, def->disks[ndisk], def) < 0) {
-                virReportError(VIR_ERR_INTERNAL_ERROR,
-                               _("Could not assign address to disk '%1$s'"),
-                               virDomainDiskGetSource(dsc));
-                goto cleanup;
-            }
-        }
-
-        else
-            break;
     }
 
     /* def:disks (ide) */

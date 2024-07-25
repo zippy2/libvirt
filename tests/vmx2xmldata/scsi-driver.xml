@@ -19,18 +19,18 @@
     </disk>
     <disk type='file' device='disk'>
       <source file='[datastore] directory/harddisk2.vmdk'/>
-      <target dev='sdp' bus='scsi'/>
-      <address type='drive' controller='1' bus='0' target='0' unit='0'/>
+      <target dev='sdb' bus='scsi'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='1'/>
     </disk>
     <disk type='file' device='disk'>
       <source file='[datastore] directory/harddisk3.vmdk'/>
-      <target dev='sdae' bus='scsi'/>
-      <address type='drive' controller='2' bus='0' target='0' unit='0'/>
+      <target dev='sdc' bus='scsi'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='2'/>
     </disk>
     <disk type='file' device='disk'>
       <source file='[datastore] directory/harddisk4.vmdk'/>
-      <target dev='sdat' bus='scsi'/>
-      <address type='drive' controller='3' bus='0' target='0' unit='0'/>
+      <target dev='sdd' bus='scsi'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='3'/>
     </disk>
     <controller type='scsi' index='0' model='buslogic'/>
     <controller type='scsi' index='1' model='lsilogic'/>

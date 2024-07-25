@@ -20,9 +20,9 @@
     </disk>
     <disk type='file' device='cdrom'>
       <source file='[datastore] directory/Debian1-cdrom.iso'/>
-      <target dev='sdp' bus='scsi'/>
+      <target dev='sdb' bus='scsi'/>
       <readonly/>
-      <address type='drive' controller='1' bus='0' target='0' unit='0'/>
+      <address type='drive' controller='0' bus='0' target='0' unit='1'/>
     </disk>
     <disk type='file' device='cdrom'>
       <source file='/vmimages/tools-isoimages/linux.iso'/>
