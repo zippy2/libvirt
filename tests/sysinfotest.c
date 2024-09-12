@@ -140,6 +140,7 @@ mymain(void)
     TEST("s390-freq", virSysinfoReadS390);
     TEST("ppc", virSysinfoReadPPC);
     TEST("x86", virSysinfoReadDMI);
+    TEST("x86_2", virSysinfoReadDMI);
     TEST("arm", virSysinfoReadARM);
     TEST("arm-rpi2", virSysinfoReadARM);
     TEST("aarch64", virSysinfoReadARM);
