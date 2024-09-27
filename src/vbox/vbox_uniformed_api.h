@@ -196,7 +196,11 @@ typedef struct {
     nsresult (*GetState)(IMachine *machine, PRUint32 *state);
     nsresult (*GetName)(IMachine *machine, PRUnichar **name);
     nsresult (*GetId)(IMachine *machine, vboxIID *iid);
+#if VBOX_API_VERSION >= 7001000
+    nsresult (*GetFirmwareSettings)(IMachine *machine, IFirmwareSettings **firmwareSettings);
+#else
     nsresult (*GetBIOSSettings)(IMachine *machine, IBIOSSettings **bios);
+#endif
     nsresult (*GetAudioAdapter)(IMachine *machine, IAudioAdapter **audioAdapter);
     nsresult (*GetNetworkAdapter)(IMachine *machine, PRUint32 slot, INetworkAdapter **adapter);
     nsresult (*GetChipsetType)(IMachine *machine, PRUint32 *chipsetType);
@@ -274,6 +278,15 @@ typedef struct {
     nsresult (*GetMaxGuestRAM)(ISystemProperties *systemProperties, PRUint32 *maxGuestRAM);
 } vboxUniformedISystemProperties;
 
+#if VBOX_API_VERSION >= 7001000
+typedef struct {
+    nsresult (*GetACPIEnabled)(IFirmwareSettings *firmware, PRBool *ACPIEnabled);
+    nsresult (*SetACPIEnabled)(IFirmwareSettings *firmware, PRBool ACPIEnabled);
+    nsresult (*GetIOAPICEnabled)(IFirmwareSettings *firmware, PRBool *IOAPICEnabled);
+    nsresult (*SetIOAPICEnabled)(IFirmwareSettings *firmware, PRBool IOAPICEnabled);
+} vboxUniformedIFirmwareSettings;
+
+#else
 /* Functions for IBIOSSettings */
 typedef struct {
     nsresult (*GetACPIEnabled)(IBIOSSettings *bios, PRBool *ACPIEnabled);
@@ -281,6 +294,7 @@ typedef struct {
     nsresult (*GetIOAPICEnabled)(IBIOSSettings *bios, PRBool *IOAPICEnabled);
     nsresult (*SetIOAPICEnabled)(IBIOSSettings *bios, PRBool IOAPICEnabled);
 } vboxUniformedIBIOSSettings;
+#endif
 
 /* Functions for IAudioAdapter */
 typedef struct {
@@ -532,7 +546,11 @@ typedef struct {
     vboxUniformedIConsole UIConsole;
     vboxUniformedIProgress UIProgress;
     vboxUniformedISystemProperties UISystemProperties;
+#if VBOX_API_VERSION >= 7001000
+    vboxUniformedIFirmwareSettings UIFirmwareSettings;
+#else
     vboxUniformedIBIOSSettings UIBIOSSettings;
+#endif
     vboxUniformedIAudioAdapter UIAudioAdapter;
     vboxUniformedINetworkAdapter UINetworkAdapter;
     vboxUniformedISerialPort UISerialPort;
