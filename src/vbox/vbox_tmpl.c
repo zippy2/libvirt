@@ -46,6 +46,8 @@
 /* This one changes from version to version. */
 #if VBOX_API_VERSION == 7000000
 # include "vbox_CAPI_v7_0.h"
+#elif VBOX_API_VERSION == 7001000
+# include "vbox_CAPI_v7_1.h"
 #else
 # error "Unsupported VBOX_API_VERSION"
 #endif
@@ -632,6 +634,20 @@ _virtualboxCreateMachine(struct _vboxDriver *data, virDomainDef *def, IMachine *
     vboxIIDFromUUID(&iid, def->uuid);
     createFlags = g_strdup_printf("UUID=%s,forceOverwrite=0", uuidstr);
     VBOX_UTF8_TO_UTF16(createFlags, &createFlagsUtf16);
+#if VBOX_API_VERSION >= 7001000
+    rc = data->vboxObj->vtbl->CreateMachine(data->vboxObj,
+                                            NULL,
+                                            machineNameUtf16,
+                                            0,
+                                            0,
+                                            nsnull,
+                                            nsnull,
+                                            createFlagsUtf16,
+                                            NULL,
+                                            NULL,
+                                            NULL,
+                                            machine);
+#else
     rc = data->vboxObj->vtbl->CreateMachine(data->vboxObj,
                                             NULL,
                                             machineNameUtf16,
@@ -643,6 +659,7 @@ _virtualboxCreateMachine(struct _vboxDriver *data, virDomainDef *def, IMachine *
                                             NULL,
                                             NULL,
                                             machine);
+#endif
     VIR_FREE(createFlags);
     VBOX_UTF16_FREE(machineNameUtf16);
     VBOX_UTF16_FREE(createFlagsUtf16);
@@ -816,11 +833,21 @@ _machineGetId(IMachine *machine, vboxIID *iid)
     return machine->vtbl->GetId(machine, &iid->value);
 }
 
+#if VBOX_API_VERSION >= 7001000
+static nsresult
+_machineGetFirmwareSettings(IMachine *machine, IFirmwareSettings **firmware)
+{
+    return machine->vtbl->GetFirmwareSettings(machine, firmware);
+}
+
+#else
+
 static nsresult
 _machineGetBIOSSettings(IMachine *machine, IBIOSSettings **bios)
 {
     return machine->vtbl->GetBIOSSettings(machine, bios);
 }
+#endif
 
 static nsresult
 _machineGetAudioAdapter(IMachine *machine, IAudioAdapter **audioadapter)
@@ -843,7 +870,18 @@ _machineGetNetworkAdapter(IMachine *machine, PRUint32 slot, INetworkAdapter **ad
 static nsresult
 _machineGetChipsetType(IMachine *machine, PRUint32 *chipsetType)
 {
+#if VBOX_API_VERSION >= 7001000
+    IPlatform *platform = NULL;
+    nsresult rc;
+
+    rc = machine->vtbl->GetPlatform(machine, &platform);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platform->vtbl->GetChipsetType(platform, chipsetType);
+#else
     return machine->vtbl->GetChipsetType(machine, chipsetType);
+#endif
 }
 
 static nsresult
@@ -909,13 +947,45 @@ _machineSetMemorySize(IMachine *machine, PRUint32 memorySize)
 static nsresult
 _machineGetCPUProperty(IMachine *machine, PRUint32 property, PRBool *value)
 {
+#if VBOX_API_VERSION >= 7001000
+    IPlatform *platform = NULL;
+    IPlatformX86 *platformX86 = NULL;
+    nsresult rc;
+
+    rc = machine->vtbl->GetPlatform(machine, &platform);
+    if (NS_FAILED(rc))
+        return rc;
+
+    rc = platform->vtbl->GetX86(platform, &platformX86);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformX86->vtbl->GetCPUProperty(platformX86, property, value);
+#else
     return machine->vtbl->GetCPUProperty(machine, property, value);
+#endif
 }
 
 static nsresult
 _machineSetCPUProperty(IMachine *machine, PRUint32 property, PRBool value)
 {
+#if VBOX_API_VERSION >= 7001000
+    IPlatform *platform = NULL;
+    IPlatformX86 *platformX86 = NULL;
+    nsresult rc;
+
+    rc = machine->vtbl->GetPlatform(machine, &platform);
+    if (NS_FAILED(rc))
+        return rc;
+
+    rc = platform->vtbl->GetX86(platform, &platformX86);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformX86->vtbl->SetCPUProperty(platformX86, property, value);
+#else
     return machine->vtbl->SetCPUProperty(machine, property, value);
+#endif
 }
 
 static nsresult
@@ -2282,7 +2352,6 @@ static vboxUniformedIMachine _UIMachine = {
     .GetState = _machineGetState,
     .GetName = _machineGetName,
     .GetId = _machineGetId,
-    .GetBIOSSettings = _machineGetBIOSSettings,
     .GetAudioAdapter = _machineGetAudioAdapter,
     .GetNetworkAdapter = _machineGetNetworkAdapter,
     .GetChipsetType = _machineGetChipsetType,
@@ -2312,6 +2381,11 @@ static vboxUniformedIMachine _UIMachine = {
     .SetExtraData = _machineSetExtraData,
     .GetSnapshotCount = _machineGetSnapshotCount,
     .SaveSettings = _machineSaveSettings,
+#if VBOX_API_VERSION >= 7001000
+    .GetFirmwareSettings = _machineGetFirmwareSettings
+#else
+    .GetBIOSSettings = _machineGetBIOSSettings,
+#endif
 };
 
 static vboxUniformedISession _UISession = {
