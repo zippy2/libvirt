@@ -8,7 +8,6 @@
 /** The API Version */
 #define VBOX_API_VERSION 7001000
 /** Version specific prefix. */
-#define NAME(name) vbox70##name
+#define NAME(name) vbox71##name
 
 #include "vbox_tmpl.c"
-
