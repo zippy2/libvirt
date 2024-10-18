@@ -311,25 +311,29 @@ virNetDevBandwidthSet(const char *ifname,
          * This description is rather long, but it is still a good idea to read
          * it before you dig into the code.
          */
+        virCommandFree(cmd);
+        cmd = virCommandNew(TC);
         if (hierarchical_class) {
-            virCommandFree(cmd);
-            cmd = virCommandNew(TC);
             virCommandAddArgList(cmd, "class", "add", "dev", ifname, "parent",
                                  "1:", "classid", "1:1", "htb", "rate", average,
                                  "ceil", peak ? peak : average, NULL);
-            virNetDevBandwidthCmdAddOptimalQuantum(cmd, tx);
-            if (virCommandRun(cmd, NULL) < 0)
-                goto cleanup;
+        } else {
+            virCommandAddArgList(cmd, "class", "add", "dev", ifname, "parent",
+                                 "1:", "classid", "1:1", "htb", "rate", peak ?
+                                 peak : average, "ceil", peak ? peak : average,
+                                 NULL);
         }
+        if (burst)
+            virCommandAddArgList(cmd, "burst", burst, NULL);
+        virNetDevBandwidthCmdAddOptimalQuantum(cmd, tx);
+        if (virCommandRun(cmd, NULL) < 0)
+            goto cleanup;
         virCommandFree(cmd);
         cmd = virCommandNew(TC);
         virCommandAddArgList(cmd, "class", "add", "dev", ifname, "parent",
-                             hierarchical_class ? "1:1" : "1:", "classid",
-                             hierarchical_class ? "1:2" : "1:1", "htb",
-                             "rate", average, NULL);
+                             "1:1", "classid", "1:2", "htb", "rate", average,
+                             "ceil", peak ? peak : average, NULL);
 
-        if (peak)
-            virCommandAddArgList(cmd, "ceil", peak, NULL);
         if (burst)
             virCommandAddArgList(cmd, "burst", burst, NULL);
 
@@ -340,9 +344,8 @@ virNetDevBandwidthSet(const char *ifname,
         virCommandFree(cmd);
         cmd = virCommandNew(TC);
         virCommandAddArgList(cmd, "qdisc", "add", "dev", ifname, "parent",
-                             hierarchical_class ? "1:2" : "1:1",
-                             "handle", "2:", "sfq", "perturb",
-                             "10", NULL);
+                             "1:2", "handle", "2:", "sfq", "perturb", "10",
+                             NULL);
 
         if (virCommandRun(cmd, NULL) < 0)
             goto cleanup;
