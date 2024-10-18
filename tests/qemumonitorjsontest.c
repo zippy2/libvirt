@@ -1640,7 +1640,7 @@ testQemuMonitorJSONqemuMonitorJSONGetMigrationStats(const void *opaque)
 {
     const testGenericData *data = opaque;
     virDomainXMLOption *xmlopt = data->xmlopt;
-    qemuMonitorMigrationStats stats;
+    qemuMonitorMigrationStats stats = { 0 };
     qemuMonitorMigrationStats expectedStats = { 0 };
     g_autofree char *error = NULL;
     g_autoptr(qemuMonitorTest) test = NULL;
@@ -1687,7 +1687,6 @@ testQemuMonitorJSONqemuMonitorJSONGetMigrationStats(const void *opaque)
         return -1;
     }
 
-    memset(&stats, 0, sizeof(stats));
     if (qemuMonitorJSONGetMigrationStats(qemuMonitorTestGetMonitor(test),
                                          &stats, &error) < 0)
         return -1;
