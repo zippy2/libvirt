@@ -723,7 +723,7 @@ chDoDomainSave(virCHDriver *driver,
 {
     g_autoptr(virCHDriverConfig) cfg = virCHDriverGetConfig(driver);
     virCHDomainObjPrivate *priv = vm->privateData;
-    CHSaveXMLHeader hdr;
+    CHSaveXMLHeader hdr = { 0 };
     virDomainState domainState;
     g_autofree char *to = NULL;
     g_autofree char *xml = NULL;
@@ -767,7 +767,6 @@ chDoDomainSave(virCHDriver *driver,
         goto end;
     xml_len = strlen(xml) + 1;
 
-    memset(&hdr, 0, sizeof(hdr));
     memcpy(hdr.magic, CH_SAVE_MAGIC, sizeof(hdr.magic));
     hdr.xmlLen = xml_len;
 
