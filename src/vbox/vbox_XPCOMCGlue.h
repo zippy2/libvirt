@@ -34,6 +34,7 @@
 
 /** Pointer to VBoxGetXPCOMCFunctions for the loaded VBoxXPCOMC so/dylib/dll. */
 extern PFNVBOXGETXPCOMCFUNCTIONS g_pfnGetFunctions;
+extern IVirtualBoxClient *g_vboxClient;
 
 int VBoxCGlueInit(unsigned int *version);
 

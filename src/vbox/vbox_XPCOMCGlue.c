@@ -60,6 +60,8 @@ static void *hVBoxXPCOMC;
 static PCVBOXXPCOM pVBoxFuncs_v2_2;
 /** Pointer to VBoxGetXPCOMCFunctions for the loaded VBoxXPCOMC so/dylib/dll. */
 PFNVBOXGETXPCOMCFUNCTIONS g_pfnGetFunctions = NULL;
+/** Pointer to vboxClient */
+IVirtualBoxClient *g_vboxClient;
 
 
 /**
@@ -80,6 +82,8 @@ tryLoadOne(const char *dir, bool setAppHome, bool ignoreMissing,
     int result = -1;
     g_autofree char *name = NULL;
     PFNVBOXGETXPCOMCFUNCTIONS pfnGetFunctions;
+    IVirtualBoxClient *vboxClient; 
+    nsresult rc;
 
     if (dir != NULL) {
         name = g_strdup_printf("%s/%s", dir, DYNLIB_NAME);
@@ -120,23 +124,32 @@ tryLoadOne(const char *dir, bool setAppHome, bool ignoreMissing,
     }
 
     pfnGetFunctions = (PFNVBOXGETXPCOMCFUNCTIONS)
-        dlsym(hVBoxXPCOMC, VBOX_GET_XPCOMC_FUNCTIONS_SYMBOL_NAME);
+        dlsym(hVBoxXPCOMC, VBOX_GET_CAPI_FUNCTIONS_SYMBOL_NAME);
 
     if (pfnGetFunctions == NULL) {
         VIR_ERROR(_("Could not dlsym %1$s from '%2$s': %3$s"),
-                  VBOX_GET_XPCOMC_FUNCTIONS_SYMBOL_NAME, name, dlerror());
+                  VBOX_GET_CAPI_FUNCTIONS_SYMBOL_NAME, name, dlerror());
         goto cleanup;
     }
 
-    pVBoxFuncs_v2_2 = pfnGetFunctions(VBOX_XPCOMC_VERSION);
+    pVBoxFuncs_v2_2 = pfnGetFunctions(VBOX_CAPI_VERSION);
 
     if (pVBoxFuncs_v2_2 == NULL) {
         VIR_ERROR(_("Calling %1$s from '%2$s' failed"),
-                  VBOX_GET_XPCOMC_FUNCTIONS_SYMBOL_NAME, name);
+                  VBOX_GET_CAPI_FUNCTIONS_SYMBOL_NAME, name);
         goto cleanup;
     }
 
     *version = pVBoxFuncs_v2_2->pfnGetVersion();
+
+    rc = pVBoxFuncs_v2_2->pfnClientInitialize(IVIRTUALBOXCLIENT_IID_STR,
+                                              &vboxClient);
+    if (NS_FAILED(rc)) {
+        VIR_ERROR(_("Unable to initialize VirtualBox C API client"));
+        goto cleanup;
+    }
+
+    g_vboxClient = vboxClient;
     g_pfnGetFunctions = pfnGetFunctions;
     result = 0;
 
@@ -185,8 +198,8 @@ VBoxCGlueInit(unsigned int *version)
 
     /* If the user specifies the location, try only that. */
     if (home != NULL) {
-        if (tryLoadOne(home, false, false, version) < 0)
-            return -1;
+        if (tryLoadOne(home, false, false, version) >= 0)
+            return 0;
     }
 
     /* Try the additionally configured location. */
