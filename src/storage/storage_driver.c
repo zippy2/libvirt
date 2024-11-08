@@ -1881,8 +1881,10 @@ storageVolCreateXML(virStoragePoolPtr pool,
     virCheckFlags(VIR_STORAGE_VOL_CREATE_PREALLOC_METADATA |
                   VIR_STORAGE_VOL_CREATE_VALIDATE, NULL);
 
-    if (flags & VIR_STORAGE_VOL_CREATE_VALIDATE)
+    if (flags & VIR_STORAGE_VOL_CREATE_VALIDATE) {
         parseFlags |= VIR_VOL_XML_PARSE_VALIDATE;
+        flags &= ~VIR_STORAGE_VOL_CREATE_VALIDATE;
+    }
 
     if (!(obj = virStoragePoolObjFromStoragePool(pool)))
         return NULL;
@@ -2021,8 +2023,10 @@ storageVolCreateXMLFrom(virStoragePoolPtr pool,
                   VIR_STORAGE_VOL_CREATE_VALIDATE,
                   NULL);
 
-    if (flags & VIR_STORAGE_VOL_CREATE_VALIDATE)
+    if (flags & VIR_STORAGE_VOL_CREATE_VALIDATE) {
         parseFlags |= VIR_VOL_XML_PARSE_VALIDATE;
+        flags &= ~VIR_STORAGE_VOL_CREATE_VALIDATE;
+    }
 
     obj = virStoragePoolObjFindByUUID(driver->pools, pool->uuid);
     if (obj && STRNEQ(pool->name, volsrc->pool)) {
