@@ -416,8 +416,10 @@ vboxStorageVolCreateXML(virStoragePoolPtr pool,
 
     virCheckFlags(VIR_STORAGE_VOL_CREATE_VALIDATE, NULL);
 
-    if (flags & VIR_STORAGE_VOL_CREATE_VALIDATE)
+    if (flags & VIR_STORAGE_VOL_CREATE_VALIDATE) {
         parseFlags |= VIR_VOL_XML_PARSE_VALIDATE;
+        flags &= ~VIR_STORAGE_VOL_CREATE_VALIDATE;
+    }
 
     /* since there is currently one default pool now
      * and virStorageVolDefFormat() just checks it type
