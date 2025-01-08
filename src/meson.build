@@ -552,7 +552,6 @@ if conf.has('WITH_REMOTE')
     ],
     dependencies: [
       capng_dep,
-      devmapper_dep,
       gnutls_dep,
       json_c_dep,
       libssh2_dep,
