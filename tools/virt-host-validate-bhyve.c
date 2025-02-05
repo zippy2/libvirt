@@ -48,7 +48,6 @@
 
 int virHostValidateBhyve(void)
 {
-    int ret = 0;
     int fileid = 0;
     g_autofree struct kld_file_stat *stat = g_new0(struct kld_file_stat, 1);
     bool vmm_loaded = false;
@@ -81,5 +80,5 @@ int virHostValidateBhyve(void)
     MODULE_STATUS_WARN(if_bridge, "bridged networking will not work");
     MODULE_STATUS_WARN(nmdm, "nmdm console will not work");
 
-    return ret;
+    return 0;
 }
