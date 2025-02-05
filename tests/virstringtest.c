@@ -256,7 +256,6 @@ static int
 testStringToLong(const void *opaque)
 {
     const struct stringToLongData *data = opaque;
-    int ret = 0;
     char *end;
     unsigned long ul;
     bool negative;
@@ -329,7 +328,7 @@ testStringToLong(const void *opaque)
 
 #undef TEST_ONE
 
-    return ret;
+    return 0;
 }
 
 
