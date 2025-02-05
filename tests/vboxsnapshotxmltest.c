@@ -86,15 +86,13 @@ testCompareXMLtoXMLFiles(const char *xml)
 static int
 testCompareXMLToXMLHelper(const void *data)
 {
-    int result = -1;
+    
     g_autofree char *xml = NULL;
 
     xml = g_strdup_printf("%s/vboxsnapshotxmldata/%s.vbox", abs_srcdir,
                           (const char *)data);
 
-    result = testCompareXMLtoXMLFiles(xml);
-
-    return result;
+    return testCompareXMLtoXMLFiles(xml);
 }
 
 static int

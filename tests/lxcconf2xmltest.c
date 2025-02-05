@@ -58,7 +58,6 @@ struct testInfo {
 static int
 testCompareXMLToConfigHelperLegacy(const void *data)
 {
-    int result = -1;
     const struct testInfo *info = data;
     g_autofree char *xml = NULL;
     g_autofree char *config = NULL;
@@ -68,15 +67,12 @@ testCompareXMLToConfigHelperLegacy(const void *data)
     config = g_strdup_printf("%s/lxcconf2xmldata/lxcconf2xml-%s.config",
                              abs_srcdir, info->name);
 
-    result = testCompareXMLToConfigFiles(xml, config, info->expectError);
-
-    return result;
+    return testCompareXMLToConfigFiles(xml, config, info->expectError);
 }
 
 static int
 testCompareXMLToConfigHelperV3(const void *data)
 {
-    int result = -1;
     const struct testInfo *info = data;
     g_autofree char *xml = NULL;
     g_autofree char *config = NULL;
@@ -86,9 +82,7 @@ testCompareXMLToConfigHelperV3(const void *data)
     config = g_strdup_printf("%s/lxcconf2xmldata/lxcconf2xml-%s-v3.config",
                              abs_srcdir, info->name);
 
-    result = testCompareXMLToConfigFiles(xml, config, info->expectError);
-
-    return result;
+    return testCompareXMLToConfigFiles(xml, config, info->expectError);
 }
 
 
