@@ -139,7 +139,6 @@ struct testInfo {
 static int
 testCompareXMLToDomConfigHelper(const void *data)
 {
-    int ret = -1;
     const struct testInfo *info = data;
     g_autofree char *xmlfile = NULL;
     g_autofree char *jsonfile = NULL;
@@ -147,9 +146,7 @@ testCompareXMLToDomConfigHelper(const void *data)
     xmlfile = g_strdup_printf("%s/libxlxml2domconfigdata/%s.xml", abs_srcdir, info->name);
     jsonfile = g_strdup_printf("%s/libxlxml2domconfigdata/%s.json", abs_srcdir, info->name);
 
-    ret = testCompareXMLToDomConfig(xmlfile, jsonfile);
-
-    return ret;
+    return testCompareXMLToDomConfig(xmlfile, jsonfile);
 }
 
 
