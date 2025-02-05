@@ -134,7 +134,6 @@ struct testInfo {
 static int
 testCompareXMLToIPTablesHelper(const void *data)
 {
-    int result = -1;
     const struct testInfo *info = data;
     g_autofree char *xml = NULL;
     g_autofree char *args = NULL;
@@ -145,9 +144,7 @@ testCompareXMLToIPTablesHelper(const void *data)
                            abs_srcdir, info->name, RULESTYPE,
                            virFirewallBackendTypeToString(info->backend));
 
-    result = testCompareXMLToArgvFiles(xml, args, info->baseargs, info->backend);
-
-    return result;
+    return testCompareXMLToArgvFiles(xml, args, info->baseargs, info->backend);
 }
 
 
