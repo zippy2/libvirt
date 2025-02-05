@@ -1437,11 +1437,7 @@ virDomainCCWAddressSetCreateFromDomain(virDomainDef *def)
 static virDomainVirtioSerialAddrSet *
 virDomainVirtioSerialAddrSetCreate(void)
 {
-    virDomainVirtioSerialAddrSet *ret = NULL;
-
-    ret = g_new0(virDomainVirtioSerialAddrSet, 1);
-
-    return ret;
+    return g_new0(virDomainVirtioSerialAddrSet, 1);
 }
 
 static void

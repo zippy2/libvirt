@@ -72,7 +72,6 @@ testCompareXMLToXMLFiles(const char *xml, const char *outfile, unsigned int flag
 static int
 testCompareXMLToXMLHelper(const void *data)
 {
-    int result = -1;
     const struct TestData *tdata = data;
     g_autofree char *xml = NULL;
     g_autofree char *outfile = NULL;
@@ -87,9 +86,7 @@ testCompareXMLToXMLHelper(const void *data)
         outfile = g_strdup_printf("%s/nodedevxml2xmlout/%s.xml", abs_srcdir,
                                   tdata->filename);
 
-    result = testCompareXMLToXMLFiles(xml, outfile, tdata->flags);
-
-    return result;
+    return testCompareXMLToXMLFiles(xml, outfile, tdata->flags);
 }
 
 

@@ -64,16 +64,13 @@ typedef struct test_parms {
 static int
 testCompareXMLToXMLHelper(const void *data)
 {
-    int result = -1;
     const test_parms *tp = data;
     g_autofree char *xml = NULL;
 
     xml = g_strdup_printf("%s/virnwfilterbindingxml2xmldata/%s.xml", abs_srcdir,
                           tp->name);
 
-    result = testCompareXMLToXMLFiles(xml);
-
-    return result;
+    return testCompareXMLToXMLFiles(xml);
 }
 
 static int
