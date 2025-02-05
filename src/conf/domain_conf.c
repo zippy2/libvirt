@@ -3955,11 +3955,7 @@ virDomainPanicDefFree(virDomainPanicDef *panic)
 virDomainLoaderDef *
 virDomainLoaderDefNew(void)
 {
-    virDomainLoaderDef *def = NULL;
-
-    def = g_new0(virDomainLoaderDef, 1);
-
-    return def;
+    return g_new0(virDomainLoaderDef, 1);
 }
 
 void
