@@ -27,18 +27,16 @@ testCompareXMLToXMLHelper(const void *data)
     const struct testInfo *info = data;
     g_autofree char *xml_in = NULL;
     g_autofree char *xml_out = NULL;
-    int ret = -1;
 
     xml_in = g_strdup_printf("%s/genericxml2xmlindata/%s.xml",
                              abs_srcdir, info->name);
     xml_out = g_strdup_printf("%s/genericxml2xmloutdata/%s.xml",
                               abs_srcdir, info->name);
 
-    ret = testCompareDomXML2XMLFiles(caps, xmlopt, xml_in,
-                                     info->different ? xml_out : xml_in,
-                                     info->active_only, 0,
-                                     info->expectResult);
-    return ret;
+    return testCompareDomXML2XMLFiles(caps, xmlopt, xml_in,
+                                      info->different ? xml_out : xml_in,
+                                      info->active_only, 0,
+                                      info->expectResult);
 }
 
 

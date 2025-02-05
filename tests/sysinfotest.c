@@ -134,8 +134,6 @@ testSysinfo(const void *data)
 static int
 mymain(void)
 {
-    int ret = EXIT_SUCCESS;
-
     TEST("s390", virSysinfoReadS390);
     TEST("s390-freq", virSysinfoReadS390);
     TEST("ppc", virSysinfoReadPPC);
@@ -147,7 +145,7 @@ mymain(void)
     TEST("aarch64-gigabyte", virSysinfoReadARM);
     TEST("aarch64-hpe-apollo", virSysinfoReadARM);
 
-    return ret;
+    return EXIT_SUCCESS;
 }
 
 #undef TEST
