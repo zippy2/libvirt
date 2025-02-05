@@ -33,7 +33,7 @@ struct testInfo {
 static int
 testCompareXMLToXMLHelper(const void *data)
 {
-    int result = -1;
+    
     g_autofree char *inxml = NULL;
     g_autofree char *outxml = NULL;
     const struct testInfo *info = data;
@@ -44,9 +44,7 @@ testCompareXMLToXMLHelper(const void *data)
                              info->different ? "out" : "in",
                              info->name);
 
-    result = testCompareXMLToXMLFiles(inxml, outxml);
-
-    return result;
+    return testCompareXMLToXMLFiles(inxml, outxml);
 }
 
 static int
