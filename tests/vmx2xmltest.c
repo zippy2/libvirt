@@ -91,7 +91,6 @@ struct testInfo {
 static int
 testCompareHelper(const void *data)
 {
-    int ret = -1;
     const struct testInfo *info = data;
     g_autofree char *vmx = NULL;
     g_autofree char *xml = NULL;
@@ -101,9 +100,7 @@ testCompareHelper(const void *data)
     xml = g_strdup_printf("%s/vmx2xmldata/%s.xml", abs_srcdir,
                           info->file);
 
-    ret = testCompareFiles(vmx, xml, info->should_fail);
-
-    return ret;
+    return testCompareFiles(vmx, xml, info->should_fail);
 }
 
 
