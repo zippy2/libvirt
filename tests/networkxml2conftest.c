@@ -95,7 +95,6 @@ typedef struct {
 static int
 testCompareXMLToConfHelper(const void *data)
 {
-    int result = -1;
     const testInfo *info = data;
     g_autofree char *inxml = NULL;
     g_autofree char *outconf = NULL;
@@ -105,9 +104,7 @@ testCompareXMLToConfHelper(const void *data)
     outconf = g_strdup_printf("%s/networkxml2confdata/%s.conf", abs_srcdir, info->name);
     outhostsfile = g_strdup_printf("%s/networkxml2confdata/%s.hostsfile", abs_srcdir, info->name);
 
-    result = testCompareXMLToConfFiles(inxml, outconf, outhostsfile, info->caps);
-
-    return result;
+    return testCompareXMLToConfFiles(inxml, outconf, outhostsfile, info->caps);
 }
 
 static void
