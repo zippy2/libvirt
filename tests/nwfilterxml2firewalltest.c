@@ -387,7 +387,6 @@ struct testInfo {
 static int
 testCompareXMLToIPTablesHelper(const void *data)
 {
-    int result = -1;
     const struct testInfo *info = data;
     g_autofree char *xml = NULL;
     g_autofree char *args = NULL;
@@ -397,9 +396,7 @@ testCompareXMLToIPTablesHelper(const void *data)
     args = g_strdup_printf("%s/nwfilterxml2firewalldata/%s-%s.args",
                            abs_srcdir, info->name, RULESTYPE);
 
-    result = testCompareXMLToArgvFiles(xml, args);
-
-    return result;
+    return testCompareXMLToArgvFiles(xml, args);
 }
 
 
