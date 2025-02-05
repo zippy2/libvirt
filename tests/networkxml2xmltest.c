@@ -81,17 +81,15 @@ static int
 testCompareXMLToXMLHelper(const void *data)
 {
     const struct testInfo *info = data;
-    int result = -1;
+    
     g_autofree char *inxml = NULL;
     g_autofree char *outxml = NULL;
 
     inxml = g_strdup_printf("%s/networkxml2xmlin/%s.xml", abs_srcdir, info->name);
     outxml = g_strdup_printf("%s/networkxml2xmlout/%s.xml", abs_srcdir, info->name);
 
-    result = testCompareXMLToXMLFiles(inxml, outxml, info->flags,
-                                      info->expectResult);
-
-    return result;
+    return testCompareXMLToXMLFiles(inxml, outxml, info->flags,
+                                    info->expectResult);
 }
 
 static int
