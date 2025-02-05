@@ -45,7 +45,6 @@ typedef struct test_parms {
 static int
 testCompareXMLToXMLHelper(const void *data)
 {
-    int result = -1;
     const test_parms *tp = data;
     g_autofree char *inxml = NULL;
     g_autofree char *outxml = NULL;
@@ -53,9 +52,7 @@ testCompareXMLToXMLHelper(const void *data)
     inxml = g_strdup_printf("%s/nwfilterxml2xmlin/%s.xml", abs_srcdir, tp->name);
     outxml = g_strdup_printf("%s/nwfilterxml2xmlout/%s.xml", abs_srcdir, tp->name);
 
-    result = testCompareXMLToXMLFiles(inxml, outxml, tp->expect_warning);
-
-    return result;
+    return testCompareXMLToXMLFiles(inxml, outxml, tp->expect_warning);
 }
 
 static int

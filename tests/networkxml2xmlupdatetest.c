@@ -71,7 +71,7 @@ static int
 testCompareXMLToXMLHelper(const void *data)
 {
     const struct testInfo *info = data;
-    int result = -1;
+    
     g_autofree char *netxml = NULL;
     g_autofree char *updatexml = NULL;
     g_autofree char *outxml = NULL;
@@ -83,11 +83,9 @@ testCompareXMLToXMLHelper(const void *data)
     outxml = g_strdup_printf("%s/networkxml2xmlupdateout/%s.xml",
                              abs_srcdir, info->outxml);
 
-    result = testCompareXMLToXMLFiles(netxml, updatexml, outxml, info->flags,
-                                      info->command, info->section,
-                                      info->parentIndex, info->expectFailure);
-
-    return result;
+    return testCompareXMLToXMLFiles(netxml, updatexml, outxml, info->flags,
+                                    info->command, info->section,
+                                    info->parentIndex, info->expectFailure);
 }
 
 static int

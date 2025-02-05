@@ -38,15 +38,13 @@ testCompareXMLToXMLFiles(const char *xml)
 static int
 testCompareXMLToXMLHelper(const void *data)
 {
-    int result = -1;
+    
     g_autofree char *xml = NULL;
 
     xml = g_strdup_printf("%s/interfaceschemadata/%s.xml", abs_srcdir,
                           (const char *)data);
 
-    result = testCompareXMLToXMLFiles(xml);
-
-    return result;
+    return testCompareXMLToXMLFiles(xml);
 }
 
 
