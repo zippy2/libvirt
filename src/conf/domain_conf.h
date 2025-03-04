@@ -2501,6 +2501,7 @@ struct _virDomainOSDef {
     char *kernel;
     char *initrd;
     char *cmdline;
+    char *shim;
     char *dtb;
     char *root;
     char *slic_table;

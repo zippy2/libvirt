@@ -3922,6 +3922,7 @@ virDomainOSDefClear(virDomainOSDef *os)
     g_free(os->kernel);
     g_free(os->initrd);
     g_free(os->cmdline);
+    g_free(os->shim);
     g_free(os->dtb);
     g_free(os->root);
     g_free(os->slic_table);
@@ -17756,6 +17757,7 @@ virDomainDefParseBootKernelOptions(virDomainDef *def,
     def->os.kernel = virXPathString("string(./os/kernel[1])", ctxt);
     def->os.initrd = virXPathString("string(./os/initrd[1])", ctxt);
     def->os.cmdline = virXPathString("string(./os/cmdline[1])", ctxt);
+    def->os.shim = virXPathString("string(./os/shim[1])", ctxt);
     def->os.dtb = virXPathString("string(./os/dtb[1])", ctxt);
     def->os.root = virXPathString("string(./os/root[1])", ctxt);
 }
@@ -17928,10 +17930,10 @@ virDomainDefParseBootOptions(virDomainDef *def,
     /*
      * Booting options for different OS types....
      *
-     *   - A bootloader (and optional kernel+initrd)  (xen)
-     *   - A kernel + initrd                          (xen)
-     *   - A boot device (and optional kernel+initrd) (hvm)
-     *   - An init script                             (exe)
+     *   - A bootloader (and optional kernel+initrd)            (xen)
+     *   - A kernel + initrd                                    (xen)
+     *   - A boot device (and optional kernel+initrd(+shim))    (hvm)
+     *   - An init script                                       (exe)
      */
 
     switch ((virDomainOSType) def->os.type) {
@@ -28475,6 +28477,8 @@ virDomainDefFormatInternalSetRootName(virDomainDef *def,
                           def->os.initrd);
     virBufferEscapeString(buf, "<cmdline>%s</cmdline>\n",
                           def->os.cmdline);
+    virBufferEscapeString(buf, "<shim>%s</shim>\n",
+                          def->os.shim);
     virBufferEscapeString(buf, "<dtb>%s</dtb>\n",
                           def->os.dtb);
     virBufferEscapeString(buf, "<root>%s</root>\n",
