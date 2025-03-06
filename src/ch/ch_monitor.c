@@ -139,15 +139,15 @@ virCHMonitorBuildPayloadJson(virJSONValue *content, virDomainDef *vmdef)
 
     if (vmdef->sec &&
         vmdef->sec->sectype == VIR_DOMAIN_LAUNCH_SECURITY_SEV_SNP) {
-        size_t len;
-        const size_t host_data_len = 32;
-        g_autofree unsigned char *buf = NULL;
-        g_autofree char *host_data = NULL;
-
         if (virJSONValueObjectAppendString(payload, "igvm", vmdef->os.kernel) < 0)
             return -1;
 
         if (vmdef->sec->data.sev_snp.host_data) {
+            size_t len;
+            const size_t host_data_len = 32;
+            g_autofree unsigned char *buf = NULL;
+            g_autofree char *host_data = NULL;
+
             /* Libvirt provided host_data is base64 encoded and cloud-hypervisor
                requires host_data as hex encoded. Base64 decode and hex encode
                before sending to cloud-hypervisor.*/
