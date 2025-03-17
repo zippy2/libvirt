@@ -2670,6 +2670,15 @@ virDomainHostdevSubsysSCSIClear(virDomainHostdevSubsysSCSI *scsisrc)
     }
 }
 
+static void
+virDomainHostdevSubsysUSBClear(virDomainHostdevSubsysUSB *usbsrc)
+{
+    if (!usbsrc)
+        return;
+
+    VIR_FREE(usbsrc->port);
+}
+
 
 static void
 virDomainHostdevDefClear(virDomainHostdevDef *def)
@@ -2713,6 +2722,8 @@ virDomainHostdevDefClear(virDomainHostdevDef *def)
             g_clear_pointer(&def->source.subsys.u.pci.origstates, virBitmapFree);
             break;
         case VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_USB:
+            virDomainHostdevSubsysUSBClear(&def->source.subsys.u.usb);
+            break;
         case VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_MDEV:
         case VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_LAST:
             break;
@@ -5895,6 +5906,9 @@ virDomainHostdevSubsysUSBDefParseXML(xmlNodePtr node,
     xmlNodePtr productNode;
     xmlNodePtr addressNode;
     virTristateBool autoAddress;
+    bool found_device, found_port;
+    char *port;
+    int ret = -1;
     VIR_XPATH_NODE_AUTORESTORE(ctxt)
 
     ctxt->node = node;
@@ -5945,13 +5959,45 @@ virDomainHostdevSubsysUSBDefParseXML(xmlNodePtr node,
     }
 
     if ((addressNode = virXPathNode("./address", ctxt))) {
-        if (virXMLPropUInt(addressNode, "bus", 0,
-                           VIR_XML_PROP_REQUIRED, &usbsrc->bus) < 0)
-            return -1;
+        found_device = false;
+        found_port = false;
 
-        if (virXMLPropUInt(addressNode, "device", 0,
-                           VIR_XML_PROP_REQUIRED, &usbsrc->device) < 0)
+        ret = virXMLPropUInt(addressNode, "bus", 0,
+            VIR_XML_PROP_REQUIRED, &usbsrc->bus);
+        if (ret < 0) {
             return -1;
+        } else if (ret == 0) {
+            virReportError(VIR_ERR_INTERNAL_ERROR,
+                           "%s", _("missing bus"));
+            return -1;
+        }
+
+        ret = virXMLPropUInt(addressNode, "device", 0,
+            VIR_XML_PROP_NONE, &usbsrc->device);
+        if (ret < 0)
+            return -1;
+        else if (ret > 0)
+            found_device = true;
+
+        port = virXMLPropString(addressNode, "port");
+        if (port) {
+            if (*port) {
+                usbsrc->port = port;
+                found_port = true;
+            } else {
+                VIR_FREE(port);
+            }
+        }
+
+        if (!found_device && !found_port) {
+            virReportError(VIR_ERR_INTERNAL_ERROR,
+                "%s", _("usb address needs either device id or port"));
+            return -1;
+        } else if (found_device && found_port) {
+            virReportError(VIR_ERR_INTERNAL_ERROR,
+                "%s", _("found both device id and port in usb address (ambiguous setting)"));
+            return -1;
+        }
     }
 
     return 0;
@@ -14774,8 +14820,13 @@ virDomainHostdevMatchSubsysUSB(virDomainHostdevDef *first,
     virDomainHostdevSubsysUSB *first_usbsrc = &first->source.subsys.u.usb;
     virDomainHostdevSubsysUSB *second_usbsrc = &second->source.subsys.u.usb;
 
-    if (first_usbsrc->bus && first_usbsrc->device) {
-        /* specified by bus location on host */
+    if (first_usbsrc->bus && first_usbsrc->port) {
+        /* specified by bus and port on host */
+        if (first_usbsrc->bus == second_usbsrc->bus &&
+            STREQ_NULLABLE(first_usbsrc->port, second_usbsrc->port))
+            return 1;
+    } else if (first_usbsrc->bus && first_usbsrc->device) {
+        /* specified by bus and device id on host */
         if (first_usbsrc->bus == second_usbsrc->bus &&
             first_usbsrc->device == second_usbsrc->device)
             return 1;
@@ -24345,10 +24396,15 @@ virDomainHostdevDefFormatSubsysUSB(virBuffer *buf,
         virBufferAsprintf(&sourceChildBuf, "<product id='0x%.4x'/>\n", usbsrc->product);
     }
 
-    if (usbsrc->bus || usbsrc->device)
+    if (usbsrc->bus && usbsrc->port) {
+        virBufferAsprintf(&sourceChildBuf, "<address %sbus='%d' port='%s'/>\n",
+                          includeTypeInAddr ? "type='usb' " : "",
+                          usbsrc->bus, usbsrc->port);
+    } else if (usbsrc->bus || usbsrc->device) {
         virBufferAsprintf(&sourceChildBuf, "<address %sbus='%d' device='%d'/>\n",
                           includeTypeInAddr ? "type='usb' " : "",
                           usbsrc->bus, usbsrc->device);
+    }
 
     virXMLFormatElement(buf, "source", &sourceAttrBuf, &sourceChildBuf);
 }
