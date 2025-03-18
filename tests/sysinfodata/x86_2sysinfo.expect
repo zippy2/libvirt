@@ -1,0 +1,383 @@
+<sysinfo type='smbios'>
+  <bios>
+    <entry name='vendor'>Lenovo</entry>
+    <entry name='version'>M5E128E-2.30</entry>
+    <entry name='date'>02/01/2024</entry>
+    <entry name='release'>2.30</entry>
+  </bios>
+  <system>
+    <entry name='manufacturer'>Lenovo</entry>
+    <entry name='product'>ThinkSystem SR850 V2</entry>
+    <entry name='version'>06</entry>
+    <entry name='serial'>J900AF06</entry>
+    <entry name='uuid'>6c297434-b88f-11ed-9fc1-72e2842cac4f</entry>
+    <entry name='sku'>7D32CTO1WW</entry>
+    <entry name='family'>ThinkSystem</entry>
+  </system>
+  <baseBoard>
+    <entry name='manufacturer'>Lenovo</entry>
+    <entry name='product'>7D32CTO1WW</entry>
+    <entry name='version'>06</entry>
+    <entry name='serial'>W7ZS32E004D</entry>
+    <entry name='asset'>none</entry>
+    <entry name='location'>none</entry>
+  </baseBoard>
+  <chassis>
+    <entry name='manufacturer'>Lenovo</entry>
+    <entry name='version'>none</entry>
+    <entry name='serial'>J900AF06</entry>
+    <entry name='asset'>none</entry>
+    <entry name='sku'>7D32CTO1WW</entry>
+  </chassis>
+  <processor>
+    <entry name='socket_destination'>CPU 1</entry>
+    <entry name='type'>Central Processor</entry>
+    <entry name='family'>Xeon</entry>
+    <entry name='manufacturer'>Intel(R) Corporation</entry>
+    <entry name='signature'>Type 0, Family 6, Model 85, Stepping 11</entry>
+    <entry name='version'>Intel(R) Xeon(R) Gold 6330H CPU @ 2.00GHz</entry>
+    <entry name='external_clock'>100 MHz</entry>
+    <entry name='max_speed'>3700 MHz</entry>
+    <entry name='status'>Populated, Enabled</entry>
+    <entry name='serial_number'>Not Specified</entry>
+    <entry name='part_number'>Not Specified</entry>
+  </processor>
+  <processor>
+    <entry name='socket_destination'>CPU 2</entry>
+    <entry name='type'>Central Processor</entry>
+    <entry name='family'>Xeon</entry>
+    <entry name='manufacturer'>Intel(R) Corporation</entry>
+    <entry name='signature'>Type 0, Family 6, Model 85, Stepping 11</entry>
+    <entry name='version'>Intel(R) Xeon(R) Gold 6330H CPU @ 2.00GHz</entry>
+    <entry name='external_clock'>100 MHz</entry>
+    <entry name='max_speed'>3700 MHz</entry>
+    <entry name='status'>Populated, Enabled</entry>
+    <entry name='serial_number'>Not Specified</entry>
+    <entry name='part_number'>Not Specified</entry>
+  </processor>
+  <processor>
+    <entry name='socket_destination'>CPU 3</entry>
+    <entry name='type'>Central Processor</entry>
+    <entry name='family'>Xeon</entry>
+    <entry name='manufacturer'>Intel(R) Corporation</entry>
+    <entry name='signature'>Type 0, Family 6, Model 85, Stepping 11</entry>
+    <entry name='version'>Intel(R) Xeon(R) Gold 6330H CPU @ 2.00GHz</entry>
+    <entry name='external_clock'>100 MHz</entry>
+    <entry name='max_speed'>3700 MHz</entry>
+    <entry name='status'>Populated, Enabled</entry>
+    <entry name='serial_number'>Not Specified</entry>
+    <entry name='part_number'>Not Specified</entry>
+  </processor>
+  <processor>
+    <entry name='socket_destination'>CPU 4</entry>
+    <entry name='type'>Central Processor</entry>
+    <entry name='family'>Xeon</entry>
+    <entry name='manufacturer'>Intel(R) Corporation</entry>
+    <entry name='signature'>Type 0, Family 6, Model 85, Stepping 11</entry>
+    <entry name='version'>Intel(R) Xeon(R) Gold 6330H CPU @ 2.00GHz</entry>
+    <entry name='external_clock'>100 MHz</entry>
+    <entry name='max_speed'>3700 MHz</entry>
+    <entry name='status'>Populated, Enabled</entry>
+    <entry name='serial_number'>Not Specified</entry>
+    <entry name='part_number'>Not Specified</entry>
+  </processor>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 8</entry>
+    <entry name='bank_locator'>CPU 1</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E8E</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 10</entry>
+    <entry name='bank_locator'>CPU 1</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E50</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 12</entry>
+    <entry name='bank_locator'>CPU 1</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E84</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 5</entry>
+    <entry name='bank_locator'>CPU 1</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E88</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 3</entry>
+    <entry name='bank_locator'>CPU 1</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E83</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 1</entry>
+    <entry name='bank_locator'>CPU 1</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E92</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 20</entry>
+    <entry name='bank_locator'>CPU 2</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943EA0</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 22</entry>
+    <entry name='bank_locator'>CPU 2</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E6C</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 24</entry>
+    <entry name='bank_locator'>CPU 2</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E99</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 17</entry>
+    <entry name='bank_locator'>CPU 2</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E90</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 15</entry>
+    <entry name='bank_locator'>CPU 2</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E91</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 13</entry>
+    <entry name='bank_locator'>CPU 2</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE0122422494403A</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 32</entry>
+    <entry name='bank_locator'>CPU 3</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E93</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 34</entry>
+    <entry name='bank_locator'>CPU 3</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E98</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 36</entry>
+    <entry name='bank_locator'>CPU 3</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224944030</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 29</entry>
+    <entry name='bank_locator'>CPU 3</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E85</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 27</entry>
+    <entry name='bank_locator'>CPU 3</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224944034</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 25</entry>
+    <entry name='bank_locator'>CPU 3</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E77</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 44</entry>
+    <entry name='bank_locator'>CPU 4</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E82</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 46</entry>
+    <entry name='bank_locator'>CPU 4</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E87</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 48</entry>
+    <entry name='bank_locator'>CPU 4</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E8D</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 41</entry>
+    <entry name='bank_locator'>CPU 4</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E9F</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 39</entry>
+    <entry name='bank_locator'>CPU 4</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E94</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <memory_device>
+    <entry name='size'>64 GB</entry>
+    <entry name='form_factor'>DIMM</entry>
+    <entry name='locator'>DIMM 37</entry>
+    <entry name='bank_locator'>CPU 4</entry>
+    <entry name='type'>DDR4</entry>
+    <entry name='type_detail'>Synchronous Registered (Buffered)</entry>
+    <entry name='speed'>3200 MT/s</entry>
+    <entry name='manufacturer'>Samsung</entry>
+    <entry name='serial_number'>80CE01224224943E86</entry>
+    <entry name='part_number'>M393A8G40AB2-CWE</entry>
+  </memory_device>
+  <oemStrings>
+    <entry>Some valid OEM string</entry>
+    <entry>Some valid OEM string</entry>
+    <entry>Some valid OEM string</entry>
+    <entry>$UC Microcode Version -[07002802]-</entry>
+    <entry>Some valid OEM string</entry>
+    <entry>Some valid OEM string</entry>
+    <entry>Some valid OEM string</entry>
+    <entry>Some valid OEM string</entry>
+    <entry>Some valid OEM string</entry>
+  </oemStrings>
+</sysinfo>
