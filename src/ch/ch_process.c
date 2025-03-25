@@ -36,6 +36,7 @@
 #include "virjson.h"
 #include "virlog.h"
 #include "virnuma.h"
+#include "virpidfile.h"
 #include "virstring.h"
 #include "ch_interface.h"
 #include "ch_hostdev.h"
@@ -849,6 +850,21 @@ virCHProcessPrepareHost(virCHDriver *driver, virDomainObj *vm)
 
     if (virCHHostdevPrepareDomainDevices(driver, vm->def, hostdev_flags) < 0)
         return -1;
+
+    VIR_FREE(priv->pidfile);
+    if (!(priv->pidfile = virPidFileBuildPath(cfg->stateDir, vm->def->name))) {
+        virReportSystemError(errno,
+                             "%s", _("Failed to build pidfile path."));
+        return -1;
+    }
+
+    if (unlink(priv->pidfile) < 0 &&
+        errno != ENOENT) {
+        virReportSystemError(errno,
+                             _("Cannot remove stale PID file %1$s"),
+                             priv->pidfile);
+        return -1;
+    }
 
     /* Ensure no historical cgroup for this VM is lying around */
     VIR_DEBUG("Ensuring no historical cgroup is lying around");
