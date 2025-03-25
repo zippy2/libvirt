@@ -5906,9 +5906,6 @@ virDomainHostdevSubsysUSBDefParseXML(xmlNodePtr node,
     xmlNodePtr productNode;
     xmlNodePtr addressNode;
     virTristateBool autoAddress;
-    bool found_device, found_port;
-    char *port;
-    int ret = -1;
     VIR_XPATH_NODE_AUTORESTORE(ctxt)
 
     ctxt->node = node;
@@ -5959,43 +5956,36 @@ virDomainHostdevSubsysUSBDefParseXML(xmlNodePtr node,
     }
 
     if ((addressNode = virXPathNode("./address", ctxt))) {
-        found_device = false;
-        found_port = false;
+        bool found_device = false;
+        bool found_port = false;
+        g_autofree char *port = NULL;
+        int rc = -1;
 
-        ret = virXMLPropUInt(addressNode, "bus", 0,
-            VIR_XML_PROP_REQUIRED, &usbsrc->bus);
-        if (ret < 0) {
-            return -1;
-        } else if (ret == 0) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                           "%s", _("missing bus"));
+        if (virXMLPropUInt(addressNode, "bus", 0,
+                           VIR_XML_PROP_REQUIRED, &usbsrc->bus) < 0) {
             return -1;
         }
 
-        ret = virXMLPropUInt(addressNode, "device", 0,
-            VIR_XML_PROP_NONE, &usbsrc->device);
-        if (ret < 0)
+        rc = virXMLPropUInt(addressNode, "device", 0,
+                             VIR_XML_PROP_NONE, &usbsrc->device);
+        if (rc < 0)
             return -1;
-        else if (ret > 0)
+        else if (rc > 0)
             found_device = true;
 
         port = virXMLPropString(addressNode, "port");
-        if (port) {
-            if (*port) {
-                usbsrc->port = port;
-                found_port = true;
-            } else {
-                VIR_FREE(port);
-            }
+        if (port && *port) {
+            usbsrc->port = g_steal_pointer(&port);
+            found_port = true;
         }
 
         if (!found_device && !found_port) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                "%s", _("usb address needs either device id or port"));
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("USB address needs either device id or port"));
             return -1;
         } else if (found_device && found_port) {
-            virReportError(VIR_ERR_INTERNAL_ERROR,
-                "%s", _("found both device id and port in usb address (ambiguous setting)"));
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           _("found both device id and port in USB address (ambiguous setting)"));
             return -1;
         }
     }
