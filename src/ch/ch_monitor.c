@@ -584,12 +584,12 @@ chMonitorCreateSocket(const char *socket_path)
 virCHMonitor *
 virCHMonitorNew(virDomainObj *vm, virCHDriverConfig *cfg, int logfile)
 {
+    virCHDomainObjPrivate *priv = vm->privateData;
     g_autoptr(virCHMonitor) mon = NULL;
     g_autoptr(virCommand) cmd = NULL;
-    virCHDomainObjPrivate *priv = vm->privateData;
-    int rv;
     int socket_fd = 0;
     int event_monitor_fd;
+    int rv;
 
     if (virCHMonitorInitialize() < 0)
         return NULL;
@@ -666,22 +666,20 @@ virCHMonitorNew(virDomainObj *vm, virCHDriverConfig *cfg, int logfile)
     virCommandDaemonize(cmd);
 
     /* launch Cloud-Hypervisor socket */
-    rv = virCommandRun(cmd, NULL);
-
-    if (rv == 0) {
-        if ((rv = virPidFileReadPath(priv->pidfile, &mon->pid)) < 0) {
-            virReportSystemError(-rv,
-                                 _("Domain  %1$s didn't show up"),
-                                 vm->def->name);
-            return NULL;
-        }
-        VIR_DEBUG("CH vm=%p name=%s running with pid=%lld",
-                  vm, vm->def->name, (long long)vm->pid);
-    } else {
+    if (virCommandRun(cmd, NULL) < 0) {
         VIR_DEBUG("CH vm=%p name=%s failed to spawn",
                   vm, vm->def->name);
         return NULL;
     }
+
+    if ((rv = virPidFileReadPath(priv->pidfile, &mon->pid)) < 0) {
+        virReportSystemError(-rv,
+                             _("Domain  %1$s didn't show up"),
+                             vm->def->name);
+        return NULL;
+    }
+    VIR_DEBUG("CH vm=%p name=%s running with pid=%lld",
+              vm, vm->def->name, (long long)vm->pid);
 
     /* open the reader end of fifo before start Event Handler */
     while ((event_monitor_fd = open(mon->eventmonitorpath, O_RDONLY)) < 0) {

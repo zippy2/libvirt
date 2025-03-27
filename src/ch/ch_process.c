@@ -853,8 +853,8 @@ virCHProcessPrepareHost(virCHDriver *driver, virDomainObj *vm)
 
     VIR_FREE(priv->pidfile);
     if (!(priv->pidfile = virPidFileBuildPath(cfg->stateDir, vm->def->name))) {
-        virReportSystemError(errno,
-                             "%s", _("Failed to build pidfile path."));
+        virReportSystemError(errno, "%s",
+                             _("Failed to build pidfile path."));
         return -1;
     }
 
@@ -1050,6 +1050,15 @@ virCHProcessStop(virCHDriver *driver,
     vm->pid = 0;
     vm->def->id = -1;
     g_clear_pointer(&priv->machineName, g_free);
+
+    if (priv->pidfile) {
+        if (unlink(priv->pidfile) < 0 &&
+            errno != ENOENT)
+            VIR_WARN("Failed to remove PID file for %s: %s",
+                     vm->def->name, g_strerror(errno));
+
+        g_clear_pointer(&priv->pidfile, g_free);
+    }
 
     virDomainObjSetState(vm, VIR_DOMAIN_SHUTOFF, reason);
 
