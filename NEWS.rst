@@ -75,6 +75,18 @@ v11.2.0 (unreleased)
     system are printed. A user may specify ``--all`` to also print models which
     are not supported on the host.
 
+  * qemu: Introduce os/shim element
+
+    For secure boot environments where ``<loader/>`` is signed, it may be
+    unfeasible to keep the binary up to date (esp. when revoking certificates
+    contained within). To address that, new ``<shim/>`` element is introduced
+    which allows hypervisor to side load another UEFI binary, which can then
+    contain new certification authorities and/or list of revocations.
+
+  * ch: Enable SEV SNP support
+
+    Cloud Hypervisor guests can be now started with SEV SNP enabled.
+
 * **Improvements**
 
   * qemu: Improved guest agent corner case error reporting
@@ -87,6 +99,14 @@ v11.2.0 (unreleased)
     The new error codes are ``VIR_ERR_AGENT_COMMAND_TIMEOUT`` and
     ``VIR_ERR_AGENT_COMMAND_FAILED``.
 
+  * qemu: Reflect MAC address change in live domain XML
+
+    When a guest changes MAC address on one of its vNICs the new MAC address is
+    now visible in the live XML under ``currentAddress`` attribute of
+    ``<mac/>`` element. At the same time,
+    ``VIR_DOMAIN_EVENT_ID_NIC_MAC_CHANGE`` event is emitted so that management
+    applications can update their internal state.
+
 * **Bug fixes**
 
   * qemu: attach virtio-mem with CCW address
@@ -94,6 +114,11 @@ v11.2.0 (unreleased)
     Attaching a virtio-mem device on s390 without an address type now gets a
     default type CCW address assigned. A specified CCW address is now used for
     the virtio-mem device instead of getting overwritten by a PCI address.
+
+  * ch: Various memory leak fixes
+
+    There were some memory leaks identified in the Cloud Hypervisor driver.
+    They are fixed now.
 
 
 v11.1.0 (2025-03-03)
