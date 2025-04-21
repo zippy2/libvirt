@@ -228,6 +228,7 @@ struct _virDomainHostdevSubsysUSB {
                          on vendor/product */
     unsigned bus;
     unsigned device;
+    char *port;
 
     unsigned vendor;
     unsigned product;

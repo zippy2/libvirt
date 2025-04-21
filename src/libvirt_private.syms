@@ -3679,8 +3679,6 @@ virURIResolveAlias;
 # util/virusb.h
 virUSBDeviceFileIterate;
 virUSBDeviceFind;
-virUSBDeviceFindByBus;
-virUSBDeviceFindByVendor;
 virUSBDeviceFree;
 virUSBDeviceGetBus;
 virUSBDeviceGetDevno;
