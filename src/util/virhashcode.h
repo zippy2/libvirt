@@ -29,5 +29,4 @@
 
 #include "internal.h"
 
-uint32_t virHashCodeGen(const void *key, size_t len, uint32_t seed)
-    ATTRIBUTE_MOCKABLE;
+uint32_t virHashCodeGen(const void *key, size_t len, uint32_t seed);

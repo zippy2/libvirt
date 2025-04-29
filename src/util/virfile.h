@@ -195,8 +195,7 @@ int virFileIsLink(const char *linkpath)
 char *virFindFileInPath(const char *file)
     ATTRIBUTE_MOCKABLE;
 char *virFindFileInPathFull(const char *file,
-                            const char *const *extraDirs)
-    ATTRIBUTE_MOCKABLE;
+                            const char *const *extraDirs);
 
 char *virFileFindResource(const char *filename,
                           const char *builddir,
