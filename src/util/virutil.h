@@ -135,7 +135,7 @@ time_t virGetSelfLastChanged(void);
 void virUpdateSelfLastChanged(const char *path);
 
 long virGetSystemPageSize(void) ATTRIBUTE_MOCKABLE;
-long virGetSystemPageSizeKB(void) ATTRIBUTE_MOCKABLE;
+long virGetSystemPageSizeKB(void);
 
 unsigned long long virMemoryLimitTruncate(unsigned long long value);
 bool virMemoryLimitIsSet(unsigned long long value);
