@@ -47,7 +47,7 @@ typedef enum {
 } virNetDevMacVLanCreateFlags;
 
 bool virNetDevMacVLanIsMacvtap(const char *ifname)
-   ATTRIBUTE_NONNULL(1) G_GNUC_WARN_UNUSED_RESULT ATTRIBUTE_MOCKABLE;
+   ATTRIBUTE_NONNULL(1) G_GNUC_WARN_UNUSED_RESULT;
 
 int virNetDevMacVLanCreate(const char *ifname,
                            const virMacAddr *macaddress,
