@@ -43,7 +43,7 @@ int virNumaGetNodeMemory(int node,
                          unsigned long long *memsize,
                          unsigned long long *memfree) ATTRIBUTE_MOCKABLE;
 
-unsigned int virNumaGetMaxCPUs(void) ATTRIBUTE_MOCKABLE;
+unsigned int virNumaGetMaxCPUs(void);
 
 int virNumaGetNodeOfCPU(int cpu) ATTRIBUTE_MOCKABLE;
 int virNumaGetNodeCPUs(int node, virBitmap **cpus) ATTRIBUTE_MOCKABLE;
