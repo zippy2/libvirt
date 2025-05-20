@@ -82,6 +82,7 @@ virDomainInterfaceEthernetConnect(virDomainDef *def,
     bool template_ifname = false;
     const char *tunpath = "/dev/net/tun";
     const char *auditdev = tunpath;
+    VIR_WARN("virDomainInterfaceEthernetConnect %s", net->ifname);
 
     if (net->backend.tap) {
         tunpath = net->backend.tap;

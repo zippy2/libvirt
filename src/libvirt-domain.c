@@ -3307,6 +3307,11 @@ virDomainMigrateVersion3Full(virDomainPtr domain,
                      "params=%p, nparams=%d, useParams=%d, flags=0x%x",
                      dconn, NULLSTR(xmlin), NULLSTR(dname), NULLSTR(uri),
                      bandwidth, params, nparams, useParams, flags);
+    VIR_WARN(
+                     "dconn=%p, xmlin=%s, dname=%s, uri=%s, bandwidth=%llu, "
+                     "params=%p, nparams=%d, useParams=%d, flags=0x%x",
+                     dconn, NULLSTR(xmlin), NULLSTR(dname), NULLSTR(uri),
+                     bandwidth, params, nparams, useParams, flags);
     VIR_TYPED_PARAMS_DEBUG(params, nparams);
 
     virCheckNonEmptyOptStringArgReturn(dname, NULL);
@@ -3337,7 +3342,7 @@ virDomainMigrateVersion3Full(virDomainPtr domain,
     if (ret)
         protection = VIR_MIGRATE_CHANGE_PROTECTION;
 
-    VIR_DEBUG("Begin3 %p", domain->conn);
+    VIR_WARN("Begin3 %p", domain->conn);
     if (useParams) {
         dom_xml = domain->conn->driver->domainMigrateBegin3Params
             (domain, params, nparams, &cookieout, &cookieoutlen,
@@ -3366,7 +3371,7 @@ virDomainMigrateVersion3Full(virDomainPtr domain,
     destflags = flags & ~(VIR_MIGRATE_ABORT_ON_ERROR |
                           VIR_MIGRATE_AUTO_CONVERGE);
 
-    VIR_DEBUG("Prepare3 %p flags=0x%x", dconn, destflags);
+    VIR_WARN("Prepare3 %p flags=0x%x", dconn, destflags);
     cookiein = g_steal_pointer(&cookieout);
     cookieinlen = cookieoutlen;
     cookieoutlen = 0;
@@ -3427,7 +3432,7 @@ virDomainMigrateVersion3Full(virDomainPtr domain,
      * running, but in paused state until the destination can
      * confirm migration completion.
      */
-    VIR_DEBUG("Perform3 %p uri=%s", domain->conn, uri);
+    VIR_WARN("Perform3 %p uri=%s", domain->conn, uri);
     VIR_FREE(cookiein);
     cookiein = g_steal_pointer(&cookieout);
     cookieinlen = cookieoutlen;
@@ -3465,7 +3470,7 @@ virDomainMigrateVersion3Full(virDomainPtr domain,
      * send all migration data. Returns NULL for ddomain if
      * the dest was unable to complete migration.
      */
-    VIR_DEBUG("Finish3 %p ret=%d", dconn, ret);
+    VIR_WARN("Finish3 %p ret=%d", dconn, ret);
     VIR_FREE(cookiein);
     cookiein = g_steal_pointer(&cookieout);
     cookieinlen = cookieoutlen;
@@ -3540,7 +3545,7 @@ virDomainMigrateVersion3Full(virDomainPtr domain,
      * cancelled there.
      */
     if (notify_source) {
-        VIR_DEBUG("Confirm3 %p ret=%d domain=%p", domain->conn, ret, domain);
+        VIR_WARN("Confirm3 %p ret=%d domain=%p", domain->conn, ret, domain);
         VIR_FREE(cookiein);
         cookiein = g_steal_pointer(&cookieout);
         cookieinlen = cookieoutlen;
