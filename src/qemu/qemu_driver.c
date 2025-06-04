@@ -10757,7 +10757,7 @@ qemuDomainMigratePrepareTunnel(virConnectPtr dconn,
                                virStreamPtr st,
                                unsigned long flags,
                                const char *dname,
-                               unsigned long resource G_GNUC_UNUSED,
+                               unsigned long bandwidth G_GNUC_UNUSED,
                                const char *dom_xml)
 {
     virQEMUDriver *driver = dconn->privateData;
@@ -10807,7 +10807,7 @@ qemuDomainMigratePrepare2(virConnectPtr dconn,
                           char **uri_out,
                           unsigned long flags,
                           const char *dname,
-                          unsigned long resource G_GNUC_UNUSED,
+                          unsigned long bandwidth G_GNUC_UNUSED,
                           const char *dom_xml)
 {
     virQEMUDriver *driver = dconn->privateData;
@@ -10863,7 +10863,7 @@ qemuDomainMigratePerform(virDomainPtr dom,
                          const char *uri,
                          unsigned long flags,
                          const char *dname,
-                         unsigned long resource)
+                         unsigned long bandwidth)
 {
     virQEMUDriver *driver = dom->conn->privateData;
     virDomainObj *vm = NULL;
@@ -10904,7 +10904,7 @@ qemuDomainMigratePerform(virDomainPtr dom,
                                   NULL,
                                   migParams, cookie, cookielen,
                                   NULL, NULL, /* No output cookies in v2 */
-                                  flags, dname, resource, false);
+                                  flags, dname, bandwidth, false);
 
  cleanup:
     virDomainObjEndAPI(&vm);
@@ -11037,7 +11037,7 @@ qemuDomainMigratePrepare3(virConnectPtr dconn,
                           char **uri_out,
                           unsigned long flags,
                           const char *dname,
-                          unsigned long resource G_GNUC_UNUSED,
+                          unsigned long bandwidth G_GNUC_UNUSED,
                           const char *dom_xml)
 {
     virQEMUDriver *driver = dconn->privateData;
@@ -11188,7 +11188,7 @@ qemuDomainMigratePrepareTunnel3(virConnectPtr dconn,
                                 int *cookieoutlen,
                                 unsigned long flags,
                                 const char *dname,
-                                unsigned long resource G_GNUC_UNUSED,
+                                unsigned long bandwidth G_GNUC_UNUSED,
                                 const char *dom_xml)
 {
     virQEMUDriver *driver = dconn->privateData;
@@ -11284,7 +11284,7 @@ qemuDomainMigratePerform3(virDomainPtr dom,
                           const char *uri,
                           unsigned long flags,
                           const char *dname,
-                          unsigned long resource)
+                          unsigned long bandwidth)
 {
     virQEMUDriver *driver = dom->conn->privateData;
     virDomainObj *vm = NULL;
@@ -11308,7 +11308,7 @@ qemuDomainMigratePerform3(virDomainPtr dom,
                                   NULL, migParams,
                                   cookiein, cookieinlen,
                                   cookieout, cookieoutlen,
-                                  flags, dname, resource, true);
+                                  flags, dname, bandwidth, true);
 
  cleanup:
     virDomainObjEndAPI(&vm);
