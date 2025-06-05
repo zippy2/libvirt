@@ -10863,7 +10863,7 @@ qemuDomainMigratePerform(virDomainPtr dom,
                          const char *uri,
                          unsigned long flags,
                          const char *dname,
-                         unsigned long resource)
+                         unsigned long bandwidth)
 {
     virQEMUDriver *driver = dom->conn->privateData;
     virDomainObj *vm = NULL;
@@ -10904,7 +10904,7 @@ qemuDomainMigratePerform(virDomainPtr dom,
                                   NULL,
                                   migParams, cookie, cookielen,
                                   NULL, NULL, /* No output cookies in v2 */
-                                  flags, dname, resource, false);
+                                  flags, dname, bandwidth, false);
 
  cleanup:
     virDomainObjEndAPI(&vm);
