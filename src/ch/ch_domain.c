@@ -68,6 +68,11 @@ virCHDomainObjPrivateFree(void *data)
     virBitmapFree(priv->autoCpuset);
     virBitmapFree(priv->autoNodeset);
     virCgroupFree(priv->cgroup);
+    if (priv->migrationDstReceiveThr) {
+        virThreadCancel(priv->migrationDstReceiveThr);
+        virThreadJoin(priv->migrationDstReceiveThr);
+        g_free(priv->migrationDstReceiveThr);
+    }
     g_free(priv->pidfile);
     g_free(priv);
 }

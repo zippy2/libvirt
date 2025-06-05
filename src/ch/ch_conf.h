@@ -31,6 +31,9 @@
 #define CH_DRIVER_NAME "CH"
 #define CH_CMD "cloud-hypervisor"
 
+#define CH_MIGRATION_PORT_MIN 49152
+#define CH_MIGRATION_PORT_MAX 49216
+
 typedef struct _virCHDriver virCHDriver;
 
 typedef struct _virCHDriverConfig virCHDriverConfig;

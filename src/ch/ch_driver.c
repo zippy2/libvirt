@@ -1458,11 +1458,10 @@ chStateInitialize(bool privileged,
     if (!(ch_driver->domainEventState = virObjectEventStateNew()))
         goto cleanup;
 
-        /* Allocate bitmap for migration port reservation */
-    if (!(ch_driver->migrationPorts =
-          virPortAllocatorRangeNew(_("migration"),
-                                   49152,
-                                   49216)))
+    /* Allocate bitmap for migration port reservation */
+    if (!(ch_driver->migrationPorts = virPortAllocatorRangeNew(_("migration"),
+                                                               CH_MIGRATION_PORT_MIN,
+                                                               CH_MIGRATION_PORT_MAX)))
         goto cleanup;
 
     if ((rv = chExtractVersion(ch_driver)) < 0) {
@@ -2362,47 +2361,52 @@ chDomainMigrateBegin3(virDomainPtr domain,
                       int *cookieoutlen,
                       unsigned long flags,
                       const char *dname,
-                      unsigned long resource G_GNUC_UNUSED)
+                      unsigned long bandwidth)
 {
+    virCHDriver *driver = domain->conn->privateData;
     virDomainObj *vm;
     char *xml = NULL;
-    virCHDriver *driver = domain->conn->privateData;
 
-    VIR_WARN("chDomainMigrateBegin3 %p %s %p %p %lu %s",
-              domain, xmlin, cookieout, cookieoutlen, flags, dname);
-    if (!(vm = virCHDomainObjFromDomain(domain)))
-        return NULL;
-
-    if (virDomainMigrateBegin3EnsureACL(domain->conn, vm->def) < 0) {
-        virDomainObjEndAPI(&vm);
+    if (xmlin) {
+        virReportError(VIR_ERR_ARGUMENT_UNSUPPORTED, "%s",
+                       _("xml modification unsupported"));
         return NULL;
     }
 
-    // Copied from libxl_migration.c:386
+    if (dname) {
+        virReportError(VIR_ERR_ARGUMENT_UNSUPPORTED, "%s",
+                       _("guest name modification unsupported"));
+        return NULL;
+    }
+
+    if (bandwidth) {
+        virReportError(VIR_ERR_ARGUMENT_UNSUPPORTED, "%s",
+                       _("migration bandwidth unsupported"));
+        return NULL;
+    }
+
+    if (!(vm = virCHDomainObjFromDomain(domain)))
+        return NULL;
+
+    if (virDomainMigrateBegin3EnsureACL(domain->conn, vm->def) < 0)
+        goto cleanup;
+
     if (virDomainObjBeginJob(vm, VIR_JOB_MODIFY) < 0)
         goto cleanup;
 
     xml = virDomainDefFormat(vm->def, driver->xmlopt, VIR_DOMAIN_DEF_FORMAT_SECURE);
 
-    if (xml) {
-        VIR_WARN("chDomainMigrateBegin3 success. xml: %s", xml);
-        goto cleanup;
-    }
-
-    return NULL;
  cleanup:
     virDomainObjEndAPI(&vm);
     return xml;
 }
 
-static
-virDomainDef *
+static virDomainDef *
 chMigrationAnyPrepareDef(virCHDriver *driver,
-                           const char *dom_xml,
-                           const char *dname)
+                         const char *dom_xml,
+                         const char *dname)
 {
     virDomainDef *def;
-    char *name = NULL;
 
     if (!dom_xml) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -2412,15 +2416,15 @@ chMigrationAnyPrepareDef(virCHDriver *driver,
 
     if (!(def = virDomainDefParseString(dom_xml, driver->xmlopt,
                                         NULL,
-                                        VIR_DOMAIN_DEF_PARSE_INACTIVE)))
-        goto cleanup;
+                                        VIR_DOMAIN_DEF_PARSE_INACTIVE))) {
+        return NULL;
+    }
 
     if (dname) {
-        VIR_FREE(name);
+        VIR_FREE(def->name);
         def->name = g_strdup(dname);
     }
 
- cleanup:
     return def;
 }
 
@@ -2432,13 +2436,14 @@ typedef struct _chMigrationDstArgs {
 static void
 chDoMigrateDstReceive(void *opaque)
 {
-    chMigrationDstArgs *args = opaque;
+    g_autofree chMigrationDstArgs *args = opaque;
     virCHDomainObjPrivate *priv = args->priv;
     g_autofree char* rcv_uri = NULL;
 
-    VIR_WARN("In thread. %u %p", args->port, args->priv);
+    VIR_DEBUG("In thread. %u %p", args->port, args->priv);
     if (!priv->monitor) {
         VIR_ERROR(_("VMs monitor not initialized"));
+        return;
     }
 
     rcv_uri = g_strdup_printf("tcp:0.0.0.0:%d", args->port);
@@ -2447,7 +2452,7 @@ chDoMigrateDstReceive(void *opaque)
         VIR_WARN("Migration receive failed.");
     }
 
-    VIR_WARN("Migration thread finished its duty");
+    VIR_DEBUG("Migration thread finished its duty");
 }
 
 /**
@@ -2471,16 +2476,11 @@ chDomainMigratePrepare3(virConnectPtr dconn,
     virCHDriver *driver = dconn->privateData;
     virDomainObj *vm = NULL;
     virCHDomainObjPrivate *priv = NULL;
-    chMigrationDstArgs *args = g_new0(chMigrationDstArgs, 1);
+    g_autofree chMigrationDstArgs *args = g_new0(chMigrationDstArgs, 1);
     unsigned short port = 0;
     g_autofree char *hostname = NULL;
-    const char *threadname = "mig-ch";
     g_autoptr(virDomainDef) def = NULL;
-    int rc = 0;
-    const char *incFormat = "%s:%s:%d"; // seems to differ for AF_INET6
-
-    VIR_WARN("chDomainMigratePrepare3 %p %s %u %p %p %s %p %lu %s %s",
-              dconn, cookiein, cookieinlen, cookieout, cookieoutlen, uri_in, uri_out, flags, dname, dom_xml);
+    int ret = -1;
 
     if (virDomainMigratePrepare3EnsureACL(dconn, def) < 0)
         return -1;
@@ -2488,65 +2488,52 @@ chDomainMigratePrepare3(virConnectPtr dconn,
     if (!(def = chMigrationAnyPrepareDef(driver, dom_xml, dname)))
         return -1;
 
-    VIR_WARN("Got DomainDef prepared successfully");
+    if (virPortAllocatorAcquire(driver->migrationPorts, &port) < 0)
+        return -1;
 
-    if (virPortAllocatorAcquire(driver->migrationPorts, &port) < 0) {
-        rc = -1;
-        goto cleanup;
-    }
-    VIR_WARN("Got port %i", port);
+    if (!(hostname = virGetHostname()))
+        return -1;
 
-    if ((hostname = virGetHostname()) == NULL) {
-        rc = -1;
-        goto cleanup;
-    }
-
-    *uri_out = g_strdup_printf(incFormat, "tcp", hostname, port);
-    VIR_WARN("uri out %s", *uri_out);
+    /* Seems to differ for AF_INET6 */
+    *uri_out = g_strdup_printf("tcp:%s:%d", hostname, port);
+    VIR_DEBUG("uri out %s", *uri_out);
 
     if (!(vm = virDomainObjListAdd(driver->domains, &def,
                                    driver->xmlopt,
                                    VIR_DOMAIN_OBJ_LIST_ADD_LIVE |
                                    VIR_DOMAIN_OBJ_LIST_ADD_CHECK_LIVE,
-                                   NULL)))
-    {
-        rc = -1;
-        VIR_WARN("Could not add Domain Obj to List");
+                                   NULL))) {
         goto cleanup;
     }
 
-    if (virCHProcessInit(driver, vm) < 0) {
-        rc = -1;
-        VIR_WARN("Could not init process");
+    if (virCHProcessInit(driver, vm) < 0)
         goto cleanup;
-    }
 
-    VIR_WARN("Try creating migration thread");
     priv = vm->privateData;
     args->port = port;
     args->priv = priv;
 
-    // VM receiving is blocking which we cannot do here, because it would block
-    // the Libvirt migration protocol.
-    // Prepare a thread to receive the migration data
-    // VIR_FREE(priv->migrationDstReceiveThr);
+    /* VM receiving is blocking which we cannot do here, because it would block
+     * the Libvirt migration protocol. Prepare a thread to receive the
+     * migration data. */
     priv->migrationDstReceiveThr = g_new0(virThread, 1);
-    if (virThreadCreateFull(priv->migrationDstReceiveThr, true,
+    VIR_DEBUG("Creating migration thread");
+    if (virThreadCreateFull(priv->migrationDstReceiveThr,
+                            true,
                             chDoMigrateDstReceive,
-                            threadname,
+                            "mig-ch",
                             false,
                             args) < 0) {
         virReportError(VIR_ERR_OPERATION_FAILED, "%s",
                        _("Failed to create thread for receiving migration data"));
         goto cleanup;
     }
+    VIR_DEBUG("Finished creating migration thread");
 
-    VIR_WARN("Finished creating migration thread");
+    /* The thread owns the @args now. */
+    args = NULL;
 
-
-    VIR_WARN("Fin migrationPrepare");
-
-
+    ret = 0;
  cleanup:
     virDomainObjEndAPI(&vm);
     return rc;

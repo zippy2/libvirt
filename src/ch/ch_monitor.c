@@ -1286,7 +1286,7 @@ int virCHMonitorMigrationReceive(virCHMonitor *mon,
     if (virCHMonitorBuildKeyValueStringJson(&payload, "receiver_url", rcv_uri) != 0)
         return -1;
 
-    VIR_WARN("Receive VM from url %s json: %s", rcv_uri, payload);
+    VIR_DEBUG("Receive VM from url %s json: %s", rcv_uri, payload);
 
     VIR_WITH_OBJECT_LOCK_GUARD(mon) {
         /* reset all options of a libcurl session handle at first */
