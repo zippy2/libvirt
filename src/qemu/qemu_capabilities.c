@@ -741,6 +741,7 @@ VIR_ENUM_IMPL(virQEMUCaps,
               "amd-iommu", /* QEMU_CAPS_AMD_IOMMU */
               "amd-iommu.pci-id", /* QEMU_CAPS_AMD_IOMMU_PCI_ID */
               "usb-bot", /* QEMU_CAPS_DEVICE_USB_BOT */
+              "acpi-generic-initiator", /* QEMU_CAPS_ACPI_GENERIC_INITIATOR */
     );
 
 
@@ -1429,6 +1430,7 @@ struct virQEMUCapsStringFlags virQEMUCapsObjectTypes[] = {
     { "nvme-ns", QEMU_CAPS_DEVICE_NVME_NS },
     { "amd-iommu", QEMU_CAPS_AMD_IOMMU },
     { "usb-bot", QEMU_CAPS_DEVICE_USB_BOT },
+    { "acpi-generic-initiator", QEMU_CAPS_ACPI_GENERIC_INITIATOR },
 };
 
 
