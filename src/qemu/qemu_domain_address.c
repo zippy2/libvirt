@@ -471,6 +471,7 @@ qemuDomainDeviceSupportZPCI(virDomainDeviceDef *device)
     case VIR_DOMAIN_DEVICE_AUDIO:
     case VIR_DOMAIN_DEVICE_CRYPTO:
     case VIR_DOMAIN_DEVICE_PSTORE:
+    case VIR_DOMAIN_DEVICE_ACPI_INITIATOR:
         break;
 
     case VIR_DOMAIN_DEVICE_NONE:
@@ -822,6 +823,9 @@ qemuDomainDeviceCalculatePCIConnectFlags(virDomainDeviceDef *dev,
 
         return pciFlags;
     }
+
+    case VIR_DOMAIN_DEVICE_ACPI_INITIATOR:
+        return pciFlags;
 
     case VIR_DOMAIN_DEVICE_MEMBALLOON:
         switch (dev->data.memballoon->model) {
