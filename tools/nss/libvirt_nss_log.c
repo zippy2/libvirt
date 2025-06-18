@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "libvirt_nss_log.h"
 #include "libvirt_nss.h"
@@ -53,6 +54,9 @@ nssLog(nssLogPriority prio,
     const size_t ebuf_size = 512;
     g_autofree char *ebuf = NULL;
     va_list ap;
+
+    if (!getenv(NSS_LOG_ENV_VAR))
+        return;
 
     fprintf(stderr, "%s %s:%d : ", nssLogPriorityToString(prio), func, linenr);
 
