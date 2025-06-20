@@ -51,6 +51,6 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-QEMUGuest1/.config \
 -device '{"driver":"virtio-balloon-pci-non-transitional","id":"balloon0","bus":"pci.7","addr":"0x0"}' \
 -object '{"qom-type":"rng-random","id":"objrng0","filename":"/dev/urandom"}' \
 -device '{"driver":"virtio-rng-pci-non-transitional","rng":"objrng0","id":"rng0","bus":"pci.8","addr":"0x0"}' \
--sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -device '{"driver":"vhost-vsock-pci-non-transitional","id":"vsock0","guest-cid":4,"vhostfd":"6789","bus":"pci.9","addr":"0x0"}' \
+-sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on

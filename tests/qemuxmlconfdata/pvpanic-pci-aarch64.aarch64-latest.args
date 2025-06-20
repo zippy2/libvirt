@@ -29,6 +29,6 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-guest/.config \
 -no-shutdown \
 -boot strict=on \
 -audiodev '{"id":"audio1","driver":"none"}' \
--sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -device '{"driver":"pvpanic-pci","bus":"pcie.0","addr":"0x4"}' \
+-sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on
