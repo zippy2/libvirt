@@ -42,6 +42,6 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-guest/.config \
 -device '{"driver":"cirrus-vga","id":"video0","bus":"pcie.0","addr":"0x1"}' \
 -global ICH9-LPC.noreboot=off \
 -watchdog-action reset \
--sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -device '{"driver":"pvpanic"}' \
+-sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on

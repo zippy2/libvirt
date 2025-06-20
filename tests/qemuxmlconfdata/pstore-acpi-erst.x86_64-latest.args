@@ -32,7 +32,7 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-guest/.config \
 -audiodev '{"id":"audio1","driver":"none"}' \
 -global ICH9-LPC.noreboot=off \
 -watchdog-action reset \
--sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -object '{"qom-type":"memory-backend-file","id":"mempstore0","mem-path":"/tmp/guest_acpi_esrt","size":8192,"share":true}' \
 -device '{"driver":"acpi-erst","id":"pstore0","memdev":"mempstore0","bus":"pci.2","addr":"0x1"}' \
+-sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on
