@@ -10528,13 +10528,9 @@ qemuBuildPstoreCommandLine(virCommand *cmd,
 
 static int
 qemuBuildAcpiInitiatorCommandLine(virCommand *cmd,
-                                  const virDomainAcpiInitiatorDef *acpiinitiator,
-                                  virQEMUCaps *qemuCaps)
+                                  const virDomainAcpiInitiatorDef *acpiinitiator)
 {
     g_autoptr(virJSONValue) props = NULL;
-
-    if (!virQEMUCapsGet(qemuCaps, QEMU_CAPS_ACPI_GENERIC_INITIATOR))
-        return -1;
 
     if (virJSONValueObjectAdd(&props,
                              "s:qom-type", "acpi-generic-initiator",
@@ -10904,7 +10900,7 @@ qemuBuildCommandLine(virDomainObj *vm,
         return NULL;
 
     for (i = 0; i < def->nacpiinitiator; i++) {
-        if (qemuBuildAcpiInitiatorCommandLine(cmd, def->acpiinitiator[i], qemuCaps) < 0)
+        if (qemuBuildAcpiInitiatorCommandLine(cmd, def->acpiinitiator[i]) < 0)
             return NULL;
     }
 
