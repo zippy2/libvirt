@@ -31,6 +31,6 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-QEMUGuest1/.config \
 -device '{"driver":"virtconsole","chardev":"charconsole0","id":"console0"}' \
 -audiodev '{"id":"audio1","driver":"none"}' \
 -device '{"driver":"virtio-balloon-ccw","id":"balloon0","devno":"fe.0.0001"}' \
--sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -run-with async-teardown=on \
+-sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on
