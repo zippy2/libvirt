@@ -10965,9 +10965,6 @@ qemuBuildCommandLine(virDomainObj *vm,
                                  NULLSTR_EMPTY(qemuxmlns->env[i].value));
     }
 
-    if (qemuBuildSeccompSandboxCommandLine(cmd, cfg, qemuCaps) < 0)
-        return NULL;
-
     if (qemuBuildPanicCommandLine(cmd, def, qemuCaps) < 0)
         return NULL;
 
@@ -10988,6 +10985,9 @@ qemuBuildCommandLine(virDomainObj *vm,
         return NULL;
 
     if (qemuBuildAsyncTeardownCommandLine(cmd, def, qemuCaps) < 0)
+        return NULL;
+
+    if (qemuBuildSeccompSandboxCommandLine(cmd, cfg, qemuCaps) < 0)
         return NULL;
 
     if (cfg->logTimestamp)
