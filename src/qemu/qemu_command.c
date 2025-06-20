@@ -10840,18 +10840,6 @@ qemuBuildCommandLine(virDomainObj *vm,
     if (qemuBuildSecCommandLine(vm, cmd, def->sec) < 0)
         return NULL;
 
-    if (def->namespaceData) {
-        qemuDomainXmlNsDef *qemuxmlns;
-        GStrv n;
-
-        qemuxmlns = def->namespaceData;
-        for (n = qemuxmlns->args; n && *n; n++)
-            virCommandAddArg(cmd, *n);
-        for (i = 0; i < qemuxmlns->num_env; i++)
-            virCommandAddEnvPair(cmd, qemuxmlns->env[i].name,
-                                 NULLSTR_EMPTY(qemuxmlns->env[i].value));
-    }
-
     if (qemuBuildPanicCommandLine(cmd, def, qemuCaps) < 0)
         return NULL;
 
@@ -10876,6 +10864,18 @@ qemuBuildCommandLine(virDomainObj *vm,
 
     if (qemuBuildSeccompSandboxCommandLine(cmd, cfg, qemuCaps) < 0)
         return NULL;
+
+    if (def->namespaceData) {
+        qemuDomainXmlNsDef *qemuxmlns;
+        GStrv n;
+
+        qemuxmlns = def->namespaceData;
+        for (n = qemuxmlns->args; n && *n; n++)
+            virCommandAddArg(cmd, *n);
+        for (i = 0; i < qemuxmlns->num_env; i++)
+            virCommandAddEnvPair(cmd, qemuxmlns->env[i].name,
+                                 NULLSTR_EMPTY(qemuxmlns->env[i].value));
+    }
 
     if (cfg->logTimestamp)
         virCommandAddArgList(cmd, "-msg", "timestamp=on", NULL);
