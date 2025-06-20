@@ -28,7 +28,6 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-QEMUGuest1/.config \
 -boot strict=on \
 -device '{"driver":"piix3-usb-uhci","id":"usb","bus":"pci.0","addr":"0x1.0x2"}' \
 -audiodev '{"id":"audio1","driver":"none"}' \
--sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -object '{"qom-type":"memory-backend-file","id":"shmmem-shmem0","mem-path":"/dev/shm/shmem0","size":4194304,"share":true}' \
 -device '{"driver":"ivshmem-plain","id":"shmem0","memdev":"shmmem-shmem0","bus":"pci.0","addr":"0x2"}' \
 -object '{"qom-type":"memory-backend-file","id":"shmmem-shmem1","mem-path":"/dev/shm/shmem1","size":134217728,"share":true}' \
@@ -45,4 +44,5 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-QEMUGuest1/.config \
 -chardev socket,id=charshmem6,path=/tmp/shmem6-sock \
 -device '{"driver":"ivshmem-doorbell","id":"shmem7","chardev":"charshmem7","vectors":32,"ioeventfd":true,"bus":"pci.0","addr":"0x9"}' \
 -chardev socket,id=charshmem7,path=/tmp/shmem7-sock \
+-sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on
