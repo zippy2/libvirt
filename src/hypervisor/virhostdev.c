@@ -1368,9 +1368,9 @@ virHostdevFindUSBDeviceWithFlags(virDomainHostdevDef *hostdev,
     unsigned vendor = usbsrc->vendor;
     unsigned product = usbsrc->product;
     unsigned bus = usbsrc->bus;
-    char *port = usbsrc->port;
+    const char *port = usbsrc->port;
     unsigned device = usbsrc->device;
-    virUSBDeviceList *devs;
+    g_autoptr(virUSBDeviceList) devs = NULL;
     int rc;
 
     rc = virUSBDeviceFind(vendor, product, bus, device, port, NULL,
@@ -1382,7 +1382,6 @@ virHostdevFindUSBDeviceWithFlags(virDomainHostdevDef *hostdev,
         *usb = virUSBDeviceListGet(devs, 0);
         virUSBDeviceListSteal(devs, *usb);
     }
-    virObjectUnref(devs);
 
     if (rc > 1) {
         virReportError(VIR_ERR_OPERATION_FAILED,
@@ -1404,7 +1403,7 @@ virHostdevFindUSBDevice(virDomainHostdevDef *hostdev,
     unsigned vendor = usbsrc->vendor;
     unsigned bus = usbsrc->bus;
     unsigned device = usbsrc->device;
-    char *port = usbsrc->port;
+    const char *port = usbsrc->port;
     bool autoAddress = usbsrc->autoAddress;
     unsigned int flags = 0;
     int rc;
@@ -1421,12 +1420,13 @@ virHostdevFindUSBDevice(virDomainHostdevDef *hostdev,
     /* Rule out invalid cases. */
     if (vendor && device && port) {
         VIR_WARN("Cannot match USB device on vendor/product, bus/device, and bus/port at once. Ignoring bus/device.");
-        flags &= ~((unsigned int) USB_DEVICE_FIND_BY_DEVICE);
+        flags &= ~USB_DEVICE_FIND_BY_DEVICE;
     } else if (device && port) {
         VIR_WARN("Cannot match USB device on bus/device and bus/port at once. Ignoring bus/device.");
-        flags &= ~((unsigned int) USB_DEVICE_FIND_BY_DEVICE);
+        flags &= ~USB_DEVICE_FIND_BY_DEVICE;
     } else if (!vendor && !device && !port) {
-        VIR_WARN("No matching fields for USB device found. Vendor/product, bus/device, or bus/port required.");
+        virReportError(VIR_ERR_OPERATION_FAILED, "%s",
+                       _("No matching fields for USB device found. Vendor/product, bus/device, or bus/port required."));
         return -1;
     }
 
@@ -1442,7 +1442,7 @@ virHostdevFindUSBDevice(virDomainHostdevDef *hostdev,
                  "(bus:%u device:%u)", bus, device);
 
         /* Second attempt, for when the device number has changed. */
-        flags &= ~((unsigned int) USB_DEVICE_FIND_BY_DEVICE);
+        flags &= ~USB_DEVICE_FIND_BY_DEVICE;
         usbsrc->device = 0;
 
         rc = virHostdevFindUSBDeviceWithFlags(hostdev, mandatory,

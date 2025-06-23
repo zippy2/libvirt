@@ -42,14 +42,14 @@ virUSBDevice *virUSBDeviceNew(unsigned int bus,
                                 const char *vroot);
 
 int virUSBDeviceFind(unsigned int vendor,
-                 unsigned int product,
-                 unsigned int bus,
-                 unsigned int devno,
-                 const char *port,
-                 const char *vroot,
-                 bool mandatory,
-                 unsigned int flags,
-                 virUSBDeviceList **devices);
+                     unsigned int product,
+                     unsigned int bus,
+                     unsigned int devno,
+                     const char *port,
+                     const char *vroot,
+                     bool mandatory,
+                     unsigned int flags,
+                     virUSBDeviceList **devices);
 
 void virUSBDeviceFree(virUSBDevice *dev);
 int virUSBDeviceSetUsedBy(virUSBDevice *dev,
