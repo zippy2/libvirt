@@ -96,8 +96,10 @@ static int virUSBSysReadFile(const char *f_name, const char *d_name,
     return 0;
 }
 
-static int virUSBSysReadFileStr(const char *f_name, const char *d_name,
-                                char **value)
+static int
+virUSBSysReadFileStr(const char *f_name,
+                     const char *d_name,
+                     char **value)
 {
     char *buf = NULL;
     g_autofree char *filename = NULL;
@@ -137,7 +139,7 @@ virUSBDeviceSearch(unsigned int vendor,
 
     while ((direrr = virDirRead(dir, &de, USB_SYSFS "/devices")) > 0) {
         unsigned int found_prod, found_vend, found_bus, found_devno;
-        char *found_port;
+        g_autofree char *found_port = NULL;
         bool port_matches;
         char *tmpstr = de->d_name;
 
@@ -167,12 +169,11 @@ virUSBDeviceSearch(unsigned int vendor,
             goto cleanup;
 
         if (virUSBSysReadFileStr("devpath", de->d_name,
-                              &found_port) < 0) {
+                                 &found_port) < 0) {
             goto cleanup;
         } else {
-            found_port[strlen(found_port) - 1] = '\0'; /* remove newline */
+            virStringTrimOptionalNewline(found_port);
             port_matches = STREQ_NULLABLE(found_port, port);
-            VIR_FREE(found_port);
         }
 
         if (flags & USB_DEVICE_FIND_BY_VENDOR) {
@@ -224,7 +225,7 @@ virUSBDeviceFind(unsigned int vendor,
                  unsigned int flags,
                  virUSBDeviceList **devices)
 {
-    virUSBDeviceList *list;
+    g_autoptr(virUSBDeviceList) list = NULL;
     int count;
 
     if (!(list = virUSBDeviceSearch(vendor, product, bus, devno, port,
@@ -233,7 +234,6 @@ virUSBDeviceFind(unsigned int vendor,
 
     count = list->count;
     if (count == 0) {
-        virObjectUnref(list);
         if (!mandatory) {
             if (devices)
                 *devices = NULL;
@@ -241,15 +241,13 @@ virUSBDeviceFind(unsigned int vendor,
         }
 
         virReportError(VIR_ERR_INTERNAL_ERROR,
-            _("Did not find matching USB device: vid:%1$04x, pid:%2$04x, bus:%3$u, device:%4$u, port:%5$s"),
-                vendor, product, bus, devno, port ? port : "");
+                       _("Did not find matching USB device: vid:%1$04x, pid:%2$04x, bus:%3$u, device:%4$u, port:%5$s"),
+                       vendor, product, bus, devno, port ? port : "");
         return -1;
     }
 
     if (devices)
-        *devices = list;
-    else
-        virObjectUnref(list);
+        *devices = g_steal_pointer(&list);
 
     return count;
 }

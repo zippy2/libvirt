@@ -96,8 +96,8 @@ static int testDeviceFind(const void *opaque)
     }
 
     rv = virUSBDeviceFind(info->vendor, info->product,
-        info->bus, info->devno, info->port,
-        info->vroot, info->mandatory, flags, &devs);
+                          info->bus, info->devno, info->port,
+                          info->vroot, info->mandatory, flags, &devs);
 
     if (info->expectFailure) {
         if (rv >= 0) {
