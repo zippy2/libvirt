@@ -2325,7 +2325,7 @@ qemuMonitorJSONGetBlockInfo(qemuMonitor *mon,
     for (i = 0; i < virJSONValueArraySize(devices); i++) {
         virJSONValue *dev;
         virJSONValue *image;
-        struct qemuDomainDiskInfo info = { false };
+        struct qemuDomainDiskInfo info = { 0 };
         const char *thisdev;
         const char *status;
         const char *qdev;
