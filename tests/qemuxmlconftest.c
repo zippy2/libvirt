@@ -1273,6 +1273,13 @@ mymain(void)
     virFileWrapperAddPrefix("/usr/libexec/virtiofsd",
                             abs_srcdir "/qemuvhostuserdata/usr/libexec/qemu/vhost-user/test-virtiofsd");
 
+    driver.hostdevMgr = virHostdevManagerGetDefault();
+    if (driver.hostdevMgr == NULL) {
+        VIR_TEST_VERBOSE("Could not initialize HostdevManager - %s\n",
+                         virGetLastErrorMessage());
+        return EXIT_FAILURE;
+    }
+
     if (!(conn = virGetConnect()))
         return EXIT_FAILURE;
 
@@ -3405,7 +3412,8 @@ VIR_TEST_MAIN_PRELOAD(mymain,
                       VIR_TEST_MOCK("domaincaps"),
                       VIR_TEST_MOCK("virrandom"),
                       VIR_TEST_MOCK("qemucpu"),
-                      VIR_TEST_MOCK("virnuma"))
+                      VIR_TEST_MOCK("virnuma"),
+                      VIR_TEST_MOCK("virhostdev"))
 
 #else
 
