@@ -1032,6 +1032,17 @@ init_env(void)
     MAKE_PCI_DEVICE("0000:00:01.0", 0x8086, 0x0044, 1);
     MAKE_PCI_DEVICE("0000:00:02.0", 0x8086, 0x0046, 2);
     MAKE_PCI_DEVICE("0000:00:03.0", 0x8086, 0x0048, 3);
+    MAKE_PCI_DEVICE("0000:01:00.0", 0x1cc1, 0x8201, 14, .klass = 0x010802);
+    MAKE_PCI_DEVICE("0000:02:00.0", 0x1cc1, 0x8201, 15, .klass = 0x010802);
+    MAKE_PCI_DEVICE("0000:03:00.0", 0x15b3, 0xa2d6, 16, .vpd = exampleVPD);
+    MAKE_PCI_DEVICE("0000:06:12.0", 0x8086, 0x0047, 9);
+    MAKE_PCI_DEVICE("0000:06:12.1", 0x8086, 0x0047, 10,
+                    .physfn = "0000:06:12.0"); /* Virtual Function */
+    MAKE_PCI_DEVICE("0000:06:12.2", 0x8086, 0x0047, 11,
+                    .physfn = "0000:06:12.0"); /* Virtual Function */
+    MAKE_PCI_DEVICE("0000:0a:01.0", 0x8086, 0x0047, 8);
+    MAKE_PCI_DEVICE("0000:0a:02.0", 0x8286, 0x0048, 8);
+    MAKE_PCI_DEVICE("0000:0a:03.0", 0x8386, 0x0048, 8);
     MAKE_PCI_DEVICE("0001:00:00.0", 0x1014, 0x03b9, 4, .klass = 0x060400);
     MAKE_PCI_DEVICE("0001:01:00.0", 0x8086, 0x105e, 5);
     MAKE_PCI_DEVICE("0001:01:00.1", 0x8086, 0x105e, 5);
@@ -1040,22 +1051,10 @@ init_env(void)
     MAKE_PCI_DEVICE("0005:90:01.1", 0x1033, 0x0035, 7);
     MAKE_PCI_DEVICE("0005:90:01.2", 0x1033, 0x00e0, 7);
     MAKE_PCI_DEVICE("0005:90:01.3", 0x1033, 0x00e0, 7);
-    MAKE_PCI_DEVICE("0000:0a:01.0", 0x8086, 0x0047, 8);
-    MAKE_PCI_DEVICE("0000:0a:02.0", 0x8286, 0x0048, 8);
-    MAKE_PCI_DEVICE("0000:0a:03.0", 0x8386, 0x0048, 8);
-    MAKE_PCI_DEVICE("0000:06:12.0", 0x8086, 0x0047, 9);
-    MAKE_PCI_DEVICE("0000:06:12.1", 0x8086, 0x0047, 10,
-                    .physfn = "0000:06:12.0"); /* Virtual Function */
-    MAKE_PCI_DEVICE("0000:06:12.2", 0x8086, 0x0047, 11,
-                    .physfn = "0000:06:12.0"); /* Virtual Function */
     MAKE_PCI_DEVICE("0021:de:1f.0", 0x8086, 0x0047, 12);
     MAKE_PCI_DEVICE("0021:de:1f.1", 0x8086, 0x0047, 13,
                     .physfn = "0021:de:1f.0"); /* Virtual Function */
 
-    MAKE_PCI_DEVICE("0000:01:00.0", 0x1cc1, 0x8201, 14, .klass = 0x010802);
-    MAKE_PCI_DEVICE("0000:02:00.0", 0x1cc1, 0x8201, 15, .klass = 0x010802);
-
-    MAKE_PCI_DEVICE("0000:03:00.0", 0x15b3, 0xa2d6, 16, .vpd = exampleVPD);
 }
 
 
