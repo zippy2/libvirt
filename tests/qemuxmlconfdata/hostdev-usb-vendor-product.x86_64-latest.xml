@@ -35,8 +35,8 @@
     <audio id='1' type='none'/>
     <hostdev mode='subsystem' type='usb' managed='no'>
       <source guestReset='uninitialized'>
-        <vendor id='0x1234'/>
-        <product id='0x4321'/>
+        <vendor id='0x04f2'/>
+        <product id='0xb221'/>
       </source>
     </hostdev>
     <memballoon model='none'/>
