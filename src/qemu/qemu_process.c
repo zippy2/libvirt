@@ -9008,6 +9008,8 @@ qemuProcessCreatePretendCmdPrepare(virQEMUDriver *driver,
                                    const char *migrateURI,
                                    unsigned int flags)
 {
+    unsigned int hostdev_flags = VIR_HOSTDEV_STRICT_ACS_CHECK;
+
     virCheckFlags(VIR_QEMU_PROCESS_START_COLD |
                   VIR_QEMU_PROCESS_START_PAUSED |
                   VIR_QEMU_PROCESS_START_AUTODESTROY, -1);
@@ -9022,6 +9024,12 @@ qemuProcessCreatePretendCmdPrepare(virQEMUDriver *driver,
         return -1;
 
     if (qemuProcessPrepareDomain(driver, vm, flags) < 0)
+        return -1;
+
+    if (flags & VIR_QEMU_PROCESS_START_NEW)
+        hostdev_flags |= VIR_HOSTDEV_COLD_BOOT;
+
+    if (qemuHostdevPrepareDomainDevices(driver, vm->def, hostdev_flags) < 0)
         return -1;
 
     return 0;
