@@ -78,7 +78,7 @@
     </video>
     <hostdev mode='subsystem' type='usb' managed='yes'>
       <source>
-        <address bus='14' device='6'/>
+        <address bus='1' device='5'/>
       </source>
     </hostdev>
     <hub type='usb'/>
