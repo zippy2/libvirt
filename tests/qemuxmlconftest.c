@@ -141,19 +141,24 @@ testCompareXMLToArgvCreateArgs(virQEMUDriver *drv,
                                unsigned int flags)
 {
     qemuDomainObjPrivate *priv = vm->privateData;
+    const unsigned int hostdev_flags = VIR_HOSTDEV_STRICT_ACS_CHECK;
+    virCommand *ret = NULL;
     size_t i;
 
     if (qemuProcessCreatePretendCmdPrepare(drv, vm, migrateURI,
                                            VIR_QEMU_PROCESS_START_COLD) < 0)
         return NULL;
 
+    if (qemuHostdevPrepareDomainDevices(drv, vm->def, hostdev_flags) < 0)
+        return NULL;
+
     if (qemuDomainDeviceBackendChardevForeach(vm->def,
                                               testQemuPrepareHostBackendChardevOne,
                                               vm) < 0)
-        return NULL;
+        goto cleanup;
 
     if (testQemuPrepareHostBackendChardevOne(NULL, priv->monConfig, vm) < 0)
-        return NULL;
+        goto cleanup;
 
     for (i = 0; i < vm->def->ndisks; i++) {
         virDomainDiskDef *disk = vm->def->disks[i];
@@ -262,7 +267,10 @@ testCompareXMLToArgvCreateArgs(virQEMUDriver *drv,
         }
     }
 
-    return qemuProcessCreatePretendCmdBuild(vm, migrateURI);
+    ret = qemuProcessCreatePretendCmdBuild(vm, migrateURI);
+ cleanup:
+    qemuHostdevReAttachDomainDevices(drv, vm->def);
+    return ret;
 }
 
 
