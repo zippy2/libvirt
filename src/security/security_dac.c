@@ -2435,14 +2435,6 @@ virSecurityDACGenLabel(virSecurityManager *mgr,
         return rc;
     }
 
-    if (seclabel->model
-        && STRNEQ(seclabel->model, SECURITY_DAC_NAME)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label model %1$s is not supported with selinux"),
-                       seclabel->model);
-            return rc;
-    }
-
     switch ((virDomainSeclabelType)seclabel->type) {
     case VIR_DOMAIN_SECLABEL_STATIC:
         if (seclabel->label == NULL) {
