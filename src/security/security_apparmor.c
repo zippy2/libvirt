@@ -521,14 +521,6 @@ AppArmorSetSecurityProcessLabel(virSecurityManager *mgr G_GNUC_UNUSED,
     if ((profile_name = get_profile_name(def)) == NULL)
         return -1;
 
-    if (STRNEQ(SECURITY_APPARMOR_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: \'%1$s\' model configured for domain, but hypervisor driver is \'%2$s\'."),
-                       secdef->model, SECURITY_APPARMOR_NAME);
-        if (use_apparmor() > 0)
-            return -1;
-    }
-
     VIR_DEBUG("Changing AppArmor profile to %s", profile_name);
     if (aa_change_profile(profile_name) < 0) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -557,14 +549,6 @@ AppArmorSetSecurityChildProcessLabel(virSecurityManager *mgr G_GNUC_UNUSED,
 
     if (!secdef || !secdef->label)
         return 0;
-
-    if (STRNEQ(SECURITY_APPARMOR_NAME, secdef->model)) {
-        virReportError(VIR_ERR_INTERNAL_ERROR,
-                       _("security label driver mismatch: \'%1$s\' model configured for domain, but hypervisor driver is \'%2$s\'."),
-                       secdef->model, SECURITY_APPARMOR_NAME);
-        if (use_apparmor() > 0)
-            return -1;
-    }
 
     if ((profile_name = get_profile_name(def)) == NULL)
         return -1;
