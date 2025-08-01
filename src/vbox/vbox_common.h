@@ -448,6 +448,8 @@ typedef struct nsIException nsIException;
         result = 0; \
         if (uVersion >= 7000000 && uVersion < 7001000) { \
             vbox70InstallUniformedAPI(&gVBoxAPI); \
+        } else if (uVersion >= 7003000 && uVersion < 7004000) { \
+            vbox73InstallUniformedAPI(&gVBoxAPI); \
         } else { \
             result = -1; \
         } \
