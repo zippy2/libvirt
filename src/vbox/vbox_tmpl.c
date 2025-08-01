@@ -46,6 +46,8 @@
 /* This one changes from version to version. */
 #if VBOX_API_VERSION == 7000000
 # include "vbox_CAPI_v7_0.h"
+#elif VBOX_API_VERSION == 7003000
+# include "vbox_CAPI_v7_3.h"
 #else
 # error "Unsupported VBOX_API_VERSION"
 #endif
