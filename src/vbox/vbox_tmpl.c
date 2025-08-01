@@ -46,6 +46,8 @@
 /* This one changes from version to version. */
 #if VBOX_API_VERSION == 7000000
 # include "vbox_CAPI_v7_0.h"
+#elif VBOX_API_VERSION == 7003000
+# include "vbox_CAPI_v7_3.h"
 #else
 # error "Unsupported VBOX_API_VERSION"
 #endif
@@ -632,6 +634,20 @@ _virtualboxCreateMachine(struct _vboxDriver *data, virDomainDef *def, IMachine *
     vboxIIDFromUUID(&iid, def->uuid);
     createFlags = g_strdup_printf("UUID=%s,forceOverwrite=0", uuidstr);
     VBOX_UTF8_TO_UTF16(createFlags, &createFlagsUtf16);
+#if VBOX_API_VERSION >= 7003000
+    rc = data->vboxObj->vtbl->CreateMachine(data->vboxObj,
+                                            NULL,
+                                            machineNameUtf16,
+                                            0,
+                                            0,
+                                            nsnull,
+                                            nsnull,
+                                            createFlagsUtf16,
+                                            NULL,
+                                            NULL,
+                                            NULL,
+                                            machine);
+#else
     rc = data->vboxObj->vtbl->CreateMachine(data->vboxObj,
                                             NULL,
                                             machineNameUtf16,
@@ -643,6 +659,7 @@ _virtualboxCreateMachine(struct _vboxDriver *data, virDomainDef *def, IMachine *
                                             NULL,
                                             NULL,
                                             machine);
+#endif
     VIR_FREE(createFlags);
     VBOX_UTF16_FREE(machineNameUtf16);
     VBOX_UTF16_FREE(createFlagsUtf16);
@@ -816,11 +833,21 @@ _machineGetId(IMachine *machine, vboxIID *iid)
     return machine->vtbl->GetId(machine, &iid->value);
 }
 
+#if VBOX_API_VERSION >= 7003000
+static nsresult
+_machineGetFirmwareSettings(IMachine *machine, IFirmwareSettings **firmware)
+{
+    return machine->vtbl->GetFirmwareSettings(machine, firmware);
+}
+
+#else
+
 static nsresult
 _machineGetBIOSSettings(IMachine *machine, IBIOSSettings **bios)
 {
     return machine->vtbl->GetBIOSSettings(machine, bios);
 }
+#endif
 
 static nsresult
 _machineGetAudioAdapter(IMachine *machine, IAudioAdapter **audioadapter)
@@ -843,7 +870,18 @@ _machineGetNetworkAdapter(IMachine *machine, PRUint32 slot, INetworkAdapter **ad
 static nsresult
 _machineGetChipsetType(IMachine *machine, PRUint32 *chipsetType)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatform *platform = NULL;
+    nsresult rc;
+
+    rc = machine->vtbl->GetPlatform(machine, &platform);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platform->vtbl->GetChipsetType(platform, chipsetType);
+#else
     return machine->vtbl->GetChipsetType(machine, chipsetType);
+#endif
 }
 
 static nsresult
@@ -909,13 +947,45 @@ _machineSetMemorySize(IMachine *machine, PRUint32 memorySize)
 static nsresult
 _machineGetCPUProperty(IMachine *machine, PRUint32 property, PRBool *value)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatform *platform = NULL;
+    IPlatformX86 *platformX86 = NULL;
+    nsresult rc;
+
+    rc = machine->vtbl->GetPlatform(machine, &platform);
+    if (NS_FAILED(rc))
+        return rc;
+
+    rc = platform->vtbl->GetX86(platform, &platformX86);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformX86->vtbl->GetCPUProperty(platformX86, property, value);
+#else
     return machine->vtbl->GetCPUProperty(machine, property, value);
+#endif
 }
 
 static nsresult
 _machineSetCPUProperty(IMachine *machine, PRUint32 property, PRBool value)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatform *platform = NULL;
+    IPlatformX86 *platformX86 = NULL;
+    nsresult rc;
+
+    rc = machine->vtbl->GetPlatform(machine, &platform);
+    if (NS_FAILED(rc))
+        return rc;
+
+    rc = platform->vtbl->GetX86(platform, &platformX86);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformX86->vtbl->SetCPUProperty(platformX86, property, value);
+#else
     return machine->vtbl->SetCPUProperty(machine, property, value);
+#endif
 }
 
 static nsresult
@@ -992,7 +1062,11 @@ _machineGetAccelerate3DEnabled(IMachine *machine, PRBool *accelerate3DEnabled)
     if (NS_FAILED(ret))
         return ret;
 
+#if VBOX_API_VERSION >= 7003000
+    return ga->vtbl->IsFeatureEnabled(ga, GraphicsFeature_Acceleration3D, accelerate3DEnabled);
+#else
     return ga->vtbl->GetAccelerate3DEnabled(ga, accelerate3DEnabled);
+#endif
 }
 
 static nsresult
@@ -1005,7 +1079,11 @@ _machineSetAccelerate3DEnabled(IMachine *machine, PRBool accelerate3DEnabled)
     if (NS_FAILED(ret))
         return ret;
 
+#if VBOX_API_VERSION >= 7003000
+    return ga->vtbl->SetFeature(ga, GraphicsFeature_Acceleration3D, accelerate3DEnabled);
+#else
     return ga->vtbl->SetAccelerate3DEnabled(ga, accelerate3DEnabled);
+#endif
 }
 
 static nsresult
@@ -1019,7 +1097,11 @@ _machineGetAccelerate2DVideoEnabled(IMachine *machine,
     if (NS_FAILED(ret))
         return ret;
 
+#if VBOX_API_VERSION >= 7003000
+    return ga->vtbl->IsFeatureEnabled(ga, GraphicsFeature_Acceleration2DVideo, accelerate2DVideoEnabled);
+#else
     return ga->vtbl->GetAccelerate2DVideoEnabled(ga, accelerate2DVideoEnabled);
+#endif
 }
 
 static nsresult
@@ -1033,7 +1115,11 @@ _machineSetAccelerate2DVideoEnabled(IMachine *machine,
     if (NS_FAILED(ret))
         return ret;
 
+#if VBOX_API_VERSION >= 7003000
+    return ga->vtbl->SetFeature(ga, GraphicsFeature_Acceleration2DVideo, accelerate2DVideoEnabled);
+#else
     return ga->vtbl->SetAccelerate2DVideoEnabled(ga, accelerate2DVideoEnabled);
+#endif
 }
 
 static nsresult
@@ -1224,42 +1310,108 @@ _systemPropertiesGetMaxGuestCPUCount(ISystemProperties *systemProperties, PRUint
 static nsresult
 _systemPropertiesGetMaxBootPosition(ISystemProperties *systemProperties, PRUint32 *maxBootPosition)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatformProperties *platformProperties = NULL;
+    nsresult rc;
+
+    rc = systemProperties->vtbl->GetPlatform(systemProperties, &platformProperties);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformProperties->vtbl->GetMaxBootPosition(platformProperties, maxBootPosition);
+#else
     return systemProperties->vtbl->GetMaxBootPosition(systemProperties, maxBootPosition);
+#endif
 }
 
 static nsresult
 _systemPropertiesGetMaxNetworkAdapters(ISystemProperties *systemProperties, PRUint32 chipset,
                                        PRUint32 *maxNetworkAdapters)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatformProperties *platformProperties = NULL;
+    nsresult rc;
+
+    rc = systemProperties->vtbl->GetPlatform(systemProperties, &platformProperties);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformProperties->vtbl->GetMaxNetworkAdapters(platformProperties, chipset, maxNetworkAdapters);
+#else
     return systemProperties->vtbl->GetMaxNetworkAdapters(systemProperties, chipset,
                                                          maxNetworkAdapters);
+#endif
 }
 
 static nsresult
 _systemPropertiesGetSerialPortCount(ISystemProperties *systemProperties, PRUint32 *SerialPortCount)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatformProperties *platformProperties = NULL;
+    nsresult rc;
+
+    rc = systemProperties->vtbl->GetPlatform(systemProperties, &platformProperties);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformProperties->vtbl->GetSerialPortCount(platformProperties, SerialPortCount);
+#else
     return systemProperties->vtbl->GetSerialPortCount(systemProperties, SerialPortCount);
+#endif
 }
 
 static nsresult
 _systemPropertiesGetParallelPortCount(ISystemProperties *systemProperties, PRUint32 *ParallelPortCount)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatformProperties *platformProperties = NULL;
+    nsresult rc;
+
+    rc = systemProperties->vtbl->GetPlatform(systemProperties, &platformProperties);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformProperties->vtbl->GetParallelPortCount(platformProperties, ParallelPortCount);
+#else
     return systemProperties->vtbl->GetParallelPortCount(systemProperties, ParallelPortCount);
+#endif
 }
 
 static nsresult
 _systemPropertiesGetMaxPortCountForStorageBus(ISystemProperties *systemProperties, PRUint32 bus,
                                               PRUint32 *maxPortCount)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatformProperties *platformProperties = NULL;
+    nsresult rc;
+
+    rc = systemProperties->vtbl->GetPlatform(systemProperties, &platformProperties);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformProperties->vtbl->GetMaxPortCountForStorageBus(platformProperties, bus, maxPortCount);
+#else
     return systemProperties->vtbl->GetMaxPortCountForStorageBus(systemProperties, bus, maxPortCount);
+#endif
 }
 
 static nsresult
 _systemPropertiesGetMaxDevicesPerPortForStorageBus(ISystemProperties *systemProperties,
                                                    PRUint32 bus, PRUint32 *maxDevicesPerPort)
 {
+#if VBOX_API_VERSION >= 7003000
+    IPlatformProperties *platformProperties = NULL;
+    nsresult rc;
+
+    rc = systemProperties->vtbl->GetPlatform(systemProperties, &platformProperties);
+    if (NS_FAILED(rc))
+        return rc;
+
+    return platformProperties->vtbl->GetMaxDevicesPerPortForStorageBus(platformProperties, bus, maxDevicesPerPort);
+#else
     return systemProperties->vtbl->GetMaxDevicesPerPortForStorageBus(systemProperties,
                                                                      bus, maxDevicesPerPort);
+#endif
 }
 
 static nsresult
@@ -1267,6 +1419,33 @@ _systemPropertiesGetMaxGuestRAM(ISystemProperties *systemProperties, PRUint32 *m
 {
     return systemProperties->vtbl->GetMaxGuestRAM(systemProperties, maxGuestRAM);
 }
+
+#if VBOX_API_VERSION >= 7003000
+static nsresult
+_firmwareSettingsGetACPIEnabled(IFirmwareSettings *firmware, PRBool *ACPIEnabled)
+{
+    return firmware->vtbl->GetACPIEnabled(firmware, ACPIEnabled);
+}
+
+static nsresult
+_firmwareSettingsSetACPIEnabled(IFirmwareSettings *firmware, PRBool ACPIEnabled)
+{
+    return firmware->vtbl->SetACPIEnabled(firmware, ACPIEnabled);
+}
+
+static nsresult
+_firmwareSettingsGetIOAPICEnabled(IFirmwareSettings *firmware, PRBool *IOAPICEnabled)
+{
+    return firmware->vtbl->GetIOAPICEnabled(firmware, IOAPICEnabled);
+}
+
+static nsresult
+_firmwareSettingsSetIOAPICEnabled(IFirmwareSettings *firmware, PRBool IOAPICEnabled)
+{
+    return firmware->vtbl->SetIOAPICEnabled(firmware, IOAPICEnabled);
+}
+
+#else
 
 static nsresult
 _biosSettingsGetACPIEnabled(IBIOSSettings *bios, PRBool *ACPIEnabled)
@@ -1291,6 +1470,7 @@ _biosSettingsSetIOAPICEnabled(IBIOSSettings *bios, PRBool IOAPICEnabled)
 {
     return bios->vtbl->SetIOAPICEnabled(bios, IOAPICEnabled);
 }
+#endif
 
 static nsresult
 _audioAdapterGetEnabled(IAudioAdapter *audioAdapter, PRBool *enabled)
@@ -1457,13 +1637,21 @@ _serialPortSetIRQ(ISerialPort *port, PRUint32 IRQ)
 static nsresult
 _serialPortGetIOBase(ISerialPort *port, PRUint32 *IOBase)
 {
+#if VBOX_API_VERSION >= 7003000
+    return port->vtbl->GetIOAddress(port, IOBase);
+#else
     return port->vtbl->GetIOBase(port, IOBase);
+#endif
 }
 
 static nsresult
 _serialPortSetIOBase(ISerialPort *port, PRUint32 IOBase)
 {
+#if VBOX_API_VERSION >= 7003000
+    return port->vtbl->SetIOAddress(port, IOBase);
+#else
     return port->vtbl->SetIOBase(port, IOBase);
+#endif
 }
 
 static nsresult
@@ -2282,7 +2470,6 @@ static vboxUniformedIMachine _UIMachine = {
     .GetState = _machineGetState,
     .GetName = _machineGetName,
     .GetId = _machineGetId,
-    .GetBIOSSettings = _machineGetBIOSSettings,
     .GetAudioAdapter = _machineGetAudioAdapter,
     .GetNetworkAdapter = _machineGetNetworkAdapter,
     .GetChipsetType = _machineGetChipsetType,
@@ -2312,6 +2499,11 @@ static vboxUniformedIMachine _UIMachine = {
     .SetExtraData = _machineSetExtraData,
     .GetSnapshotCount = _machineGetSnapshotCount,
     .SaveSettings = _machineSaveSettings,
+#if VBOX_API_VERSION >= 7003000
+    .GetFirmwareSettings = _machineGetFirmwareSettings
+#else
+    .GetBIOSSettings = _machineGetBIOSSettings,
+#endif
 };
 
 static vboxUniformedISession _UISession = {
@@ -2352,12 +2544,21 @@ static vboxUniformedISystemProperties _UISystemProperties = {
     .GetMaxGuestRAM = _systemPropertiesGetMaxGuestRAM,
 };
 
+#if VBOX_API_VERSION >= 7003000
+static vboxUniformedIFirmwareSettings _UIFirmwareSettings = {
+    .GetACPIEnabled = _firmwareSettingsGetACPIEnabled,
+    .SetACPIEnabled = _firmwareSettingsSetACPIEnabled,
+    .GetIOAPICEnabled = _firmwareSettingsGetIOAPICEnabled,
+    .SetIOAPICEnabled = _firmwareSettingsSetIOAPICEnabled,
+};
+#else
 static vboxUniformedIBIOSSettings _UIBIOSSettings = {
     .GetACPIEnabled = _biosSettingsGetACPIEnabled,
     .SetACPIEnabled = _biosSettingsSetACPIEnabled,
     .GetIOAPICEnabled = _biosSettingsGetIOAPICEnabled,
     .SetIOAPICEnabled = _biosSettingsSetIOAPICEnabled,
 };
+#endif
 
 static vboxUniformedIAudioAdapter _UIAudioAdapter = {
     .GetEnabled = _audioAdapterGetEnabled,
@@ -2561,7 +2762,11 @@ void NAME(InstallUniformedAPI)(vboxUniformedAPI *pVBoxAPI)
     pVBoxAPI->UIConsole = _UIConsole;
     pVBoxAPI->UIProgress = _UIProgress;
     pVBoxAPI->UISystemProperties = _UISystemProperties;
+#if VBOX_API_VERSION >= 7003000
+    pVBoxAPI->UIFirmwareSettings = _UIFirmwareSettings;
+#else
     pVBoxAPI->UIBIOSSettings = _UIBIOSSettings;
+#endif
     pVBoxAPI->UIAudioAdapter = _UIAudioAdapter;
     pVBoxAPI->UINetworkAdapter = _UINetworkAdapter;
     pVBoxAPI->UISerialPort = _UISerialPort;
