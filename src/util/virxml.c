@@ -1920,27 +1920,38 @@ virXMLFormatMetadata(virBuffer *buf,
 {
     g_autoptr(xmlBuffer) xmlbuf = NULL;
     const char *xmlbufContent = NULL;
-    int oldIndentTreeOutput = xmlIndentTreeOutput;
+    xmlSaveCtxt *save = NULL;
+    const unsigned int saveOpts = XML_SAVE_INDENT | XML_SAVE_FORMAT;
+    const char *saveEncoding = NULL;
+    int saveErr;
 
     if (!metadata)
         return 0;
 
+    xmlbuf = virXMLBufferCreate();
     /* Indentation on output requires that we previously set
      * xmlKeepBlanksDefault to 0 when parsing; also, libxml does 2
      * spaces per level of indentation of intermediate elements,
      * but no leading indentation before the starting element.
      * Thankfully, libxml maps what looks like globals into
      * thread-local uses, so we are thread-safe.  */
-    xmlIndentTreeOutput = 1;
-    xmlbuf = virXMLBufferCreate();
+    save = xmlSaveToBuffer(xmlbuf, saveEncoding, saveOpts);
 
-    if (xmlNodeDump(xmlbuf, metadata->doc, metadata,
-                    virBufferGetIndent(buf) / 2, 1) < 0) {
-        xmlIndentTreeOutput = oldIndentTreeOutput;
+    if (!save) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("Unable to create XML save context"));
+        return -1;
+    }
+
+    xmlSaveSetIndentLevel(save, virBufferGetIndent(buf) / 2);
+    xmlSaveTree(save, metadata);
+    saveErr = xmlSaveFinish(save);
+    if (saveErr != XML_ERR_OK) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
                        _("Unable to format metadata element"));
         return -1;
     }
+
 
     /* After libxml2-v2.9.12-2-g85b1792e even the first line is indented.
      * But virBufferAsprintf() also adds indentation. Skip one of them. */
@@ -1948,7 +1959,6 @@ virXMLFormatMetadata(virBuffer *buf,
     virSkipSpaces(&xmlbufContent);
 
     virBufferAsprintf(buf, "%s\n", xmlbufContent);
-    xmlIndentTreeOutput = oldIndentTreeOutput;
 
     return 0;
 }
