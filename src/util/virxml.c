@@ -1920,22 +1920,21 @@ virXMLFormatMetadata(virBuffer *buf,
 {
     g_autoptr(xmlBuffer) xmlbuf = NULL;
     const char *xmlbufContent = NULL;
+#ifdef WITH_XML_SAVE_SET_INDENT_LEVEL
     xmlSaveCtxt *save = NULL;
     const unsigned int saveOpts = XML_SAVE_INDENT | XML_SAVE_FORMAT;
-    const char *saveEncoding = NULL;
     int saveErr;
+#else
+    int oldIndentTreeOutput = xmlIndentTreeOutput;
+#endif
 
     if (!metadata)
         return 0;
 
     xmlbuf = virXMLBufferCreate();
-    /* Indentation on output requires that we previously set
-     * xmlKeepBlanksDefault to 0 when parsing; also, libxml does 2
-     * spaces per level of indentation of intermediate elements,
-     * but no leading indentation before the starting element.
-     * Thankfully, libxml maps what looks like globals into
-     * thread-local uses, so we are thread-safe.  */
-    save = xmlSaveToBuffer(xmlbuf, saveEncoding, saveOpts);
+
+#ifdef WITH_XML_SAVE_SET_INDENT_LEVEL
+    save = xmlSaveToBuffer(xmlbuf, NULL, saveOpts);
 
     if (!save) {
         virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
@@ -1952,6 +1951,24 @@ virXMLFormatMetadata(virBuffer *buf,
         return -1;
     }
 
+#else /* !WITH_XML_SAVE_SET_INDENT_LEVEL */
+
+    /* Indentation on output requires that we previously set
+     * xmlKeepBlanksDefault to 0 when parsing; also, libxml does 2
+     * spaces per level of indentation of intermediate elements,
+     * but no leading indentation before the starting element.
+     * Thankfully, libxml maps what looks like globals into
+     * thread-local uses, so we are thread-safe.  */
+    xmlIndentTreeOutput = 1;
+
+    if (xmlNodeDump(xmlbuf, metadata->doc, metadata,
+                    virBufferGetIndent(buf) / 2, 1) < 0) {
+        xmlIndentTreeOutput = oldIndentTreeOutput;
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("Unable to format metadata element"));
+        return -1;
+    }
+#endif /* !WITH_XML_SAVE_SET_INDENT_LEVEL */
 
     /* After libxml2-v2.9.12-2-g85b1792e even the first line is indented.
      * But virBufferAsprintf() also adds indentation. Skip one of them. */
