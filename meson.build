@@ -1113,6 +1113,10 @@ endif
 libxml_version = '2.9.1'
 libxml_dep = dependency('libxml-2.0', version: '>=' + libxml_version)
 
+if cc.has_function('xmlSaveSetIndentLevel', dependencies: libxml_dep)
+  conf.set('WITH_XML_SAVE_SET_INDENT_LEVEL', 1)
+endif
+
 libm_dep = cc.find_library('m')
 
 netcf_version = '0.1.8'
