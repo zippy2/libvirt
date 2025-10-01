@@ -8134,6 +8134,11 @@
                 <ref name="featurestate"/>
               </element>
             </optional>
+            <optional>
+              <element name="time">
+                <ref name="featurestate"/>
+              </element>
+            </optional>
           </interleave>
         </group>
       </choice>

@@ -66,6 +66,7 @@ struct _virCPUx86MSR {
 #define VIR_CPU_x86_HV_EVMCS     "hv-evmcs"
 #define VIR_CPU_x86_HV_AVIC      "hv-avic"
 #define VIR_CPU_x86_HV_EMSR_BITMAP "hv-emsr_bitmap"
+#define VIR_CPU_x86_HV_TIME      "hv-time"
 
 /* Hyper-V Synthetic Timer option */
 #define VIR_CPU_x86_HV_STIMER_DIRECT "hv-stimer-direct"

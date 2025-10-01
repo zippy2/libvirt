@@ -31,6 +31,7 @@
       <avic state='on'/>
       <emsr_bitmap state='on'/>
       <xmm_input state='on'/>
+      <time state='on'/>
     </hyperv>
   </features>
   <cpu mode='custom' match='exact' check='none'>

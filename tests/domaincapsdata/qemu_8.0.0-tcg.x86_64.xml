@@ -1754,6 +1754,7 @@
         <value>avic</value>
         <value>emsr_bitmap</value>
         <value>xmm_input</value>
+        <value>time</value>
       </enum>
       <defaults>
         <spinlocks>0xfff</spinlocks>
