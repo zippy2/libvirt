@@ -6860,14 +6860,22 @@ qemuProcessEnableDomainFeatures(virDomainObj *vm)
         vm->def->hyperv.features[i] = VIR_TRISTATE_SWITCH_ON;
 
         if (i == VIR_DOMAIN_HYPERV_SPINLOCKS) {
-            vm->def->hyperv.spinlocks = hv->spinlocks;
+            if (hv->spinlocks != 0) {
+                vm->def->hyperv.spinlocks = hv->spinlocks;
+            } else {
+                vm->def->hyperv.features[i] = VIR_TRISTATE_SWITCH_ABSENT;
+            }
         } else if (i == VIR_DOMAIN_HYPERV_STIMER) {
             vm->def->hyperv.stimer_direct = hv->stimer_direct;
         } else if (i == VIR_DOMAIN_HYPERV_TLBFLUSH) {
             vm->def->hyperv.tlbflush_direct = hv->tlbflush_direct;
             vm->def->hyperv.tlbflush_extended = hv->tlbflush_extended;
         } else if (i == VIR_DOMAIN_HYPERV_VENDOR_ID) {
-            vm->def->hyperv.vendor_id = g_strdup(hv->vendor_id);
+            if (hv->vendor_id) {
+                vm->def->hyperv.vendor_id = g_strdup(hv->vendor_id);
+            } else {
+                vm->def->hyperv.features[i] = VIR_TRISTATE_SWITCH_ABSENT;
+            }
         }
     }
 
