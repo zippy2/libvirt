@@ -647,6 +647,10 @@ libxlMakeDomBuildInfo(virDomainDef *def,
                     libxl_bitmap_set(&b_info->u.hvm.viridian_enable,
                                      LIBXL_VIRIDIAN_ENLIGHTENMENT_HCALL_IPI);
                     break;
+                case VIR_DOMAIN_HYPERV_TIME:
+                    libxl_bitmap_set(&b_info->u.hvm.viridian_enable,
+                                     LIBXL_VIRIDIAN_ENLIGHTENMENT_TIME_REF_COUNT);
+                    break;
                 case VIR_DOMAIN_HYPERV_SPINLOCKS:
                 case VIR_DOMAIN_HYPERV_VENDOR_ID:
                     VIR_WARN("Hyper-v flag '%s' specified per-domain but is a global Xen setting and will be ignored.",

@@ -3374,6 +3374,7 @@
     <cap name='avic'/>
     <cap name='emsr_bitmap'/>
     <cap name='xmm_input'/>
+    <cap name='time'/>
     <spinlocks>4095</spinlocks>
     <stimer_direct>on</stimer_direct>
     <tlbflush_direct>on</tlbflush_direct>
