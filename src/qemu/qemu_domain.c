@@ -2073,7 +2073,7 @@ qemuStorageSourcePrivateDataParse(xmlXPathContextPtr ctxt,
     g_autofree char *authalias = NULL;
     g_autofree char *httpcookiealias = NULL;
     g_autofree char *tlskeyalias = NULL;
-    g_autofree char *thresholdEventWithIndex = NULL;
+    virTristateBool thresholdEventWithIndex;
     bool fdsetPresent = false;
     unsigned int fdSetID;
     int enccount;
@@ -2139,9 +2139,10 @@ qemuStorageSourcePrivateDataParse(xmlXPathContextPtr ctxt,
     if (virStorageSourcePrivateDataParseRelPath(ctxt, src) < 0)
         return -1;
 
-    if ((thresholdEventWithIndex = virXPathString("string(./thresholdEvent/@indexUsed)", ctxt)) &&
-        virTristateBoolTypeFromString(thresholdEventWithIndex) == VIR_TRISTATE_BOOL_YES)
-        src->thresholdEventWithIndex = true;
+    if (virXPathTristateBool("string(./thresholdEvent/@indexUsed)",
+                             ctxt, &thresholdEventWithIndex) >= 0) {
+        virTristateBoolToBool(thresholdEventWithIndex, &src->thresholdEventWithIndex);
+    }
 
     if ((nbdkitnode = virXPathNode("nbdkit", ctxt))) {
         if (qemuStorageSourcePrivateDataParseNbdkit(nbdkitnode, ctxt, src) < 0)
@@ -3210,13 +3211,10 @@ qemuDomainObjPrivateXMLParseBlockjobs(virDomainObj *vm,
 {
     g_autofree xmlNodePtr *nodes = NULL;
     ssize_t nnodes = 0;
-    g_autofree char *active = NULL;
-    int tmp;
     size_t i;
 
-    if ((active = virXPathString("string(./blockjobs/@active)", ctxt)) &&
-        (tmp = virTristateBoolTypeFromString(active)) > 0)
-        priv->reconnectBlockjobs = tmp;
+    virXPathTristateBool("string(./blockjobs/@active)",
+                         ctxt, &priv->reconnectBlockjobs);
 
     if ((nnodes = virXPathNodeSet("./blockjobs/blockjob", ctxt, &nodes)) < 0)
         return -1;
