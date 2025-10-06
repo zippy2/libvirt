@@ -23,6 +23,11 @@ v11.9.0 (unreleased)
     enlightenments at domain startup into the live XML so that's obvious which
     enlightenments are enabled.
 
+  * ch: Network hotplug Support
+
+    Users can now attach and detach network interfaces of Cloud Hypervisor
+    domains at runtime.
+
 * **Improvements**
 
   * qemu: Improvements to USB controller model selection
