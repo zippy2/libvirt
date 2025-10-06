@@ -18,9 +18,11 @@
 
 #include <config.h>
 
-#include "ch_hotplug.h"
 #include "ch_alias.h"
 #include "ch_domain.h"
+#include "ch_hotplug.h"
+#include "ch_process.h"
+
 #include "domain_event.h"
 #include "domain_validate.h"
 #include "virlog.h"
