@@ -75,6 +75,16 @@ chDomainAttachDeviceLive(virCHDriver *driver,
         break;
 
     case VIR_DOMAIN_DEVICE_NET:
+        if (chProcessAddNetworkDevice(driver, mon, vm->def, dev->data.net,
+                                      NULL, NULL) < 0) {
+            break;
+        }
+
+        virDomainNetInsert(vm->def, dev->data.net);
+
+        dev->data.net = NULL;
+        ret = 0;
+        break;
     case VIR_DOMAIN_DEVICE_LEASE:
     case VIR_DOMAIN_DEVICE_FS:
     case VIR_DOMAIN_DEVICE_INPUT:
