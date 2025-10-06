@@ -17,6 +17,12 @@ v11.9.0 (unreleased)
 
 * **New features**
 
+  * Support ``time`` Hyper-V enlightenment
+
+    The ``time`` Hyper-V enlightenment enables two Hyper-V specific clock
+    sources: Hyper-V clocksource  and Reference TSC page.
+
+
 * **Improvements**
 
   * qemu: Improvements to USB controller model selection
