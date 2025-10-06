@@ -22,6 +22,12 @@ v11.9.0 (unreleased)
     The ``time`` Hyper-V enlightenment enables two Hyper-V specific clock
     sources: Hyper-V clocksource  and Reference TSC page.
 
+  * Introduce hyperv host-model mode
+
+    Similarly to CPUs, ``host-model`` mode expands available Hyper-V
+    enlightenments at domain startup into the live XML so that's obvious which
+    enlightenments are enabled.
+
 
 * **Improvements**
 
