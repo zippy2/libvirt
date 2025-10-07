@@ -2437,7 +2437,7 @@ Windows, however, expects it to be in so called 'localtime'.
       The ``name`` attribute selects which timer is being modified, and can be
       one of "platform" (currently unsupported), "hpet" (xen, qemu, lxc),
       "kvmclock" (qemu), "pit" (qemu), "rtc" (qemu, lxc), "tsc" (xen, qemu -
-      :since:`since 3.2.0` ), "hypervclock" (qemu - :since:`since 1.2.2` ) or
+      :since:`since 3.2.0` ), "hypervclock" (qemu - :since:`since 2.0.0` ) or
       "armvtimer" (qemu - :since:`since 6.1.0` ). The ``hypervclock`` timer adds
       support for the reference time counter and the reference page for iTSC
       feature for guests running the Microsoft Windows operating system.
