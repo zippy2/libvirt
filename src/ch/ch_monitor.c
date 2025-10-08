@@ -379,7 +379,6 @@ virCHMonitorBuildRngJson(virJSONValue *content, virDomainDef *vmdef)
 /**
  * virCHMonitorBuildNetJson:
  * @net: pointer to a guest network definition
- * @netindex: index of the guest network definition
  * @jsonstr: returned network json
  *
  * Build net json to send to CH
@@ -387,15 +386,13 @@ virCHMonitorBuildRngJson(virJSONValue *content, virDomainDef *vmdef)
  */
 int
 virCHMonitorBuildNetJson(virDomainNetDef *net,
-                         int netindex,
                          char **jsonstr)
 {
     char macaddr[VIR_MAC_STRING_BUFLEN];
     g_autoptr(virJSONValue) net_json = virJSONValueNewObject();
     virDomainNetType actualType = virDomainNetGetActualType(net);
 
-    g_autofree char *id = g_strdup_printf("%s_%d", CH_NET_ID_PREFIX, netindex);
-    if (virJSONValueObjectAppendString(net_json, "id", id) < 0)
+    if (virJSONValueObjectAppendString(net_json, "id", net->info.alias) < 0)
         return -1;
 
     if (actualType == VIR_DOMAIN_NET_TYPE_ETHERNET &&
@@ -1272,11 +1269,12 @@ virCHMonitorBuildRestoreJson(virDomainDef *vmdef,
     if (vmdef->nnets) {
         g_autoptr(virJSONValue) nets = virJSONValueNewArray();
         for (i = 0; i < vmdef->nnets; i++) {
+            virDomainNetDef *net = vmdef->nets[i];
             g_autoptr(virJSONValue) net_json = virJSONValueNewObject();
-            g_autofree char *id = g_strdup_printf("%s_%zu", CH_NET_ID_PREFIX, i);
-            if (virJSONValueObjectAppendString(net_json, "id", id) < 0)
+
+            if (virJSONValueObjectAppendString(net_json, "id", net->info.alias) < 0)
                 return -1;
-            if (virJSONValueObjectAppendNumberInt(net_json, "num_fds", vmdef->nets[i]->driver.virtio.queues))
+            if (virJSONValueObjectAppendNumberInt(net_json, "num_fds", net->driver.virtio.queues))
                 return -1;
             if (virJSONValueArrayAppend(nets, &net_json) < 0)
                 return -1;
