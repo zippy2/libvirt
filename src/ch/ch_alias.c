@@ -24,7 +24,6 @@
 #include "ch_alias.h"
 
 #define VIR_FROM_THIS VIR_FROM_CH
-#define CH_NET_ID_PREFIX "net"
 
 int chAssignDeviceDiskAlias(virDomainDiskDef *disk)
 {
@@ -69,7 +68,11 @@ int chDomainDeviceAliasIndex(const virDomainDeviceInfo *info,
     return idx;
 }
 
-void chAssignDeviceNetAlias(virDomainDef *def, virDomainNetDef *net)
+#define CH_NET_ID_PREFIX "net"
+
+void
+chAssignDeviceNetAlias(virDomainDef *def,
+                       virDomainNetDef *net)
 {
     size_t idx = 0;
     size_t i;
@@ -89,6 +92,8 @@ void chAssignDeviceNetAlias(virDomainDef *def, virDomainNetDef *net)
 
     net->info.alias = g_strdup_printf("%s%lu", CH_NET_ID_PREFIX, idx);
 }
+
+#undef CH_NET_ID_PREFIX
 
 int chAssignDeviceAliases(virDomainDef *def)
 {
