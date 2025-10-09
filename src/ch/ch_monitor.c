@@ -63,11 +63,25 @@ int virCHMonitorShutdownVMM(virCHMonitor *mon);
 int virCHMonitorPutNoContent(virCHMonitor *mon, const char *endpoint,
                              domainLogContext *logCtxt);
 static int
+virCHMonitorPutWithFDs(virCHMonitor *mon,
+                       const char *endpoint,
+                       virJSONValue *payload,
+                       domainLogContext *logCtxt,
+                       int *fds,
+                       size_t nfds,
+                       virJSONValue **answer);
+
+static int
 virCHMonitorPut(virCHMonitor *mon,
                 const char *endpoint,
                 virJSONValue *payload,
                 domainLogContext *logCtxt,
-                virJSONValue **answer);
+                virJSONValue **answer)
+{
+    return virCHMonitorPutWithFDs(mon, endpoint, payload,
+                                  logCtxt, NULL, 0, answer);
+}
+
 
 static int
 virCHMonitorBuildCPUJson(virJSONValue *content, virDomainDef *vmdef)
@@ -888,6 +902,81 @@ virCHMonitorCurlPerform(CURL *handle)
     return responseCode;
 }
 
+
+#define RESP_SIZE 2048
+
+static int
+virCHMonitorPutWithFDsInternal(virCHMonitor *mon,
+                               const char *endpoint,
+                               virJSONValue *payload,
+                               domainLogContext *logCtxt,
+                               int *fds,
+                               size_t nfds,
+                               virJSONValue **answer)
+{
+    g_autofree char *payloadStr = NULL;
+    g_autofree char *respBuf = NULL;
+    const char *content;
+    const char *msg;
+    size_t msgLen;
+    int monfd = -1;
+    int ret = -1;
+
+    if (payload)
+        payload_str = virJSONValueToString(payload);
+
+    /* Format HTTP header */
+    virBufferAsprintf(&buf, "PUT /api/v1/%s HTTP/1.1\r\n");
+    virBufferAddLit(&buf, "Host: localhost\r\n");
+    virBufferAddLit(&buf, "Content-Type: application/json\r\n");
+
+    if (payload_str) {
+    virBufferAsprintf(&buf, "Content-Length: %zu\r\n", strlen(payload_str));
+    } else {
+        virBufferAddLit(&buf, "Content-Length: 0\r\n")
+    }
+    virBufferAddLit(&buf, "\r\n");
+
+    /* Format body */
+    if (payload_str)
+        virBufferAddStr(&buf, payload_str);
+
+    msg = virBufferCurrentContent(&buf);
+    msgLen = virBufferUse(&buf);
+
+    rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &monfd);
+    if (rc != CURLE_OK) {
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("curl_easy_getinfo(CURLINFO_ACTIVESOCKET) returned an error: %1$s (%2$d)"),
+                       curl_easy_strerror(errorCode),
+                       errorCode);
+        return -1;
+    }
+
+    if (monfd == CURL_SOCKET_BAD) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("curl_easy_getinfo(CURLINFO_ACTIVESOCKET) returned an invalid socked FD"));
+        return -1;
+    }
+
+    if (virSocketSendMsgWithFDs(monfd, msg, msgLen, fds, nfds) < 0) {
+        virReportSystemError(errno, "%s",
+                             _("Failed to send FDs to cloud-hypervisor"));
+        return -1;
+    }
+
+    if (virFileReadLimFD(monfd, RESP_SIZE, &respBuf) < 0) {
+        virReportSystemError(errno, "%s"
+                             _("Failed to read cloud-hypervisor's reply"));
+        return -1;
+    }
+
+    if (answer)
+        *answer = virJSONValueFromString(data.content);
+    return 0;
+}
+
+
 struct curl_data {
     char *content;
     size_t size;
@@ -911,11 +1000,13 @@ curl_callback(void *contents, size_t size, size_t nmemb, void *userp)
 }
 
 static int
-virCHMonitorPut(virCHMonitor *mon,
-                const char *endpoint,
-                virJSONValue *payload,
-                domainLogContext *logCtxt,
-                virJSONValue **answer)
+virCHMonitorPutWithFDs(virCHMonitor *mon,
+                       const char *endpoint,
+                       virJSONValue *payload,
+                       domainLogContext *logCtxt,
+                       int *fds,
+                       size_t nfds,
+                       virJSONValue **answer)
 {
     VIR_LOCK_GUARD lock = virObjectLockGuard(mon);
     g_autofree char *url = NULL;
@@ -924,6 +1015,12 @@ virCHMonitorPut(virCHMonitor *mon,
     int ret = -1;
     struct curl_data data = {0};
     struct curl_slist *headers = NULL;
+
+    if (nfds != 0) {
+        /* TODO: Figure out how to do this with curl. */
+        return virCHMonitorPutWithFDsInternal(mon, endpoint, payload,
+                                              logCtxt, fds, nfds, answer);
+    }
 
     url = g_strdup_printf("%s/%s", URL_ROOT, endpoint);
 

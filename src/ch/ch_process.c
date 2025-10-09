@@ -658,7 +658,6 @@ chProcessAddNetworkDevice(virCHDriver *driver,
     virBufferAddLit(&http_headers, "Host: localhost\r\n");
     virBufferAddLit(&http_headers, "Content-Type: application/json\r\n");
 
-
     if (net->driver.virtio.queues == 0) {
         /* "queues" here refers to queue pairs. When 0, initialize
             * queue pairs to 1.
