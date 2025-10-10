@@ -466,11 +466,7 @@ dissect_libvirt_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
                  vir_val_to_str(prog, program_strings, "%x"));
 
     vs = get_program_data(prog, VIR_PROGRAM_PROCSTRINGS);
-    if (vs == NULL) {
-        col_append_fstr(pinfo->cinfo, COL_INFO, " Proc=%u", proc);
-    } else {
-        col_append_fstr(pinfo->cinfo, COL_INFO, " Proc=%s", vir_val_to_str(proc, vs, "%d"));
-    }
+    col_append_fstr(pinfo->cinfo, COL_INFO, " Proc=%s", vir_val_to_str(proc, vs, "%u"));
 
     col_append_fstr(pinfo->cinfo, COL_INFO, " Type=%s Serial=%u Status=%s",
                     vir_val_to_str(type, type_strings, "%d"), serial,
