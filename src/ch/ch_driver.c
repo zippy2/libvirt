@@ -267,12 +267,49 @@ chDomainCreateXML(virConnectPtr conn,
 }
 
 static int
+chDomainRestoreFromSave(virCHDriver *driver,
+                        virDomainObj *vm)
+{
+    virCHDomainObjPrivate *priv = vm->privateData;
+    g_autofree char *managed_save_path = NULL;
+
+    if (!vm->hasManagedSave) {
+        virReportError(VIR_ERR_OPERATION_INVALID, "%s",
+                       _("Domain has no managed save image"));
+        return -1;
+    }
+
+    managed_save_path = chDomainManagedSavePath(driver, vm);
+    if (virCHProcessStartRestore(driver, vm, managed_save_path) < 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("failed to restore domain from managed save"));
+        return -1;
+    }
+
+    if (virCHMonitorResumeVM(priv->monitor) < 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("failed to resume domain after restore from managed save"));
+        return -1;
+    }
+    virDomainObjSetState(vm, VIR_DOMAIN_RUNNING, VIR_DOMAIN_RUNNING_RESTORED);
+
+    /* cleanup the save dir after restore */
+    if (virFileDeleteTree(managed_save_path) < 0) {
+        virReportSystemError(errno,
+                             _("Failed to remove managed save path '%1$s'"),
+                             managed_save_path);
+        return -1;
+    }
+
+    vm->hasManagedSave = false;
+    return 0;
+}
+
+static int
 chDomainCreateWithFlags(virDomainPtr dom, unsigned int flags)
 {
     virCHDriver *driver = dom->conn->privateData;
     virDomainObj *vm;
-    virCHDomainObjPrivate *priv;
-    g_autofree char *managed_save_path = NULL;
     int ret = -1;
 
     virCheckFlags(0, -1);
@@ -287,27 +324,8 @@ chDomainCreateWithFlags(virDomainPtr dom, unsigned int flags)
         goto cleanup;
 
     if (vm->hasManagedSave) {
-        priv = vm->privateData;
-        managed_save_path = chDomainManagedSavePath(driver, vm);
-        if (virCHProcessStartRestore(driver, vm, managed_save_path) < 0) {
-            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
-                           _("failed to restore domain from managed save"));
+        if (chDomainRestoreFromSave(driver, vm) < 0)
             goto endjob;
-        }
-        if (virCHMonitorResumeVM(priv->monitor) < 0) {
-            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
-                           _("failed to resume domain after restore from managed save"));
-            goto endjob;
-        }
-        virDomainObjSetState(vm, VIR_DOMAIN_RUNNING, VIR_DOMAIN_RUNNING_RESTORED);
-        /* cleanup the save dir after restore */
-        if (virFileDeleteTree(managed_save_path) < 0) {
-            virReportSystemError(errno,
-                                 _("Failed to remove managed save path '%1$s'"),
-                                 managed_save_path);
-            goto endjob;
-        }
-        vm->hasManagedSave = false;
         ret = 0;
     } else {
         ret = virCHProcessStart(driver, vm, VIR_DOMAIN_RUNNING_BOOTED);
