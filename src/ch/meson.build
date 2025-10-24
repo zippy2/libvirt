@@ -10,6 +10,7 @@ ch_driver_sources = [
   'ch_interface.c',
   'ch_monitor.c',
   'ch_process.c',
+  'ch_saveimage.c',
 ]
 
 driver_source_files += files(ch_driver_sources)
