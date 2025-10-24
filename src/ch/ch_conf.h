@@ -108,17 +108,6 @@ struct _virCHDriver
     virObjectEventState *domainEventState;
 };
 
-#define CH_SAVE_MAGIC "libvirt-xml\n \0 \r"
-#define CH_SAVE_XML "libvirt-save.xml"
-
-typedef struct _CHSaveXMLHeader CHSaveXMLHeader;
-struct _CHSaveXMLHeader {
-    char magic[sizeof(CH_SAVE_MAGIC)-1];
-    uint32_t xmlLen;
-    /* 20 bytes used, pad up to 64 bytes */
-    uint32_t unused[11];
-};
-
 int virCHDriverConfigLoadFile(virCHDriverConfig *cfg,
                                 const char *filename);
 virCaps *virCHDriverCapsInit(void);
