@@ -461,6 +461,54 @@ qemuTeardownInputCgroup(virDomainObj *vm,
 }
 
 
+int
+qemuSetupIommufdCgroup(virDomainObj *vm)
+{
+    qemuDomainObjPrivate *priv = vm->privateData;
+    g_autoptr(DIR) dir = NULL;
+    struct dirent *dent;
+    g_autofree char *path = NULL;
+    int iommufd = 0;
+    size_t i;
+
+    for (i = 0; i < vm->def->nhostdevs; i++) {
+        if (vm->def->hostdevs[i]->source.subsys.u.pci.driver.iommufd) {
+            iommufd = 1;
+            break;
+        }
+    }
+
+    if (iommufd == 1) {
+        if (!virCgroupHasController(priv->cgroup, VIR_CGROUP_CONTROLLER_DEVICES))
+            return 0;
+        if (virDirOpen(&dir, "/dev/vfio/devices") < 0) {
+            if (errno == ENOENT)
+                return 0;
+            return -1;
+        }
+        while (virDirRead(dir, &dent, "/dev/vfio/devices") > 0) {
+            if (STRPREFIX(dent->d_name, "vfio")) {
+                path = g_strdup_printf("/dev/vfio/devices/%s", dent->d_name);
+            }
+            if (path &&
+                qemuCgroupAllowDevicePath(vm, path,
+                                          VIR_CGROUP_DEVICE_RW, false) < 0) {
+                return -1;
+            }
+            path = NULL;
+        }
+        if (virFileExists("/dev/iommu"))
+            path = g_strdup("/dev/iommu");
+        if (path &&
+            qemuCgroupAllowDevicePath(vm, path,
+                                      VIR_CGROUP_DEVICE_RW, false) < 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+
 /**
  * qemuSetupHostdevCgroup:
  * vm: domain object
@@ -759,6 +807,7 @@ qemuSetupDevicesCgroup(virDomainObj *vm)
     g_autoptr(virQEMUDriverConfig) cfg = virQEMUDriverGetConfig(priv->driver);
     const char *const *deviceACL = (const char *const *) cfg->cgroupDeviceACL;
     int rv = -1;
+    int iommufd = 0;
     size_t i;
 
     if (!virCgroupHasController(priv->cgroup, VIR_CGROUP_CONTROLLER_DEVICES))
@@ -833,6 +882,18 @@ qemuSetupDevicesCgroup(virDomainObj *vm)
         /* This may allow /dev/vfio/vfio multiple times, but that
          * is not a problem. Kernel will have only one record. */
         if (qemuSetupHostdevCgroup(vm, vm->def->hostdevs[i]) < 0)
+            return -1;
+    }
+
+    for (i = 0; i < vm->def->nhostdevs; i++) {
+        if (vm->def->hostdevs[i]->source.subsys.u.pci.driver.iommufd) {
+            iommufd = 1;
+            break;
+        }
+    }
+
+    if (iommufd == 1) {
+        if (qemuSetupIommufdCgroup(vm) < 0)
             return -1;
     }
 

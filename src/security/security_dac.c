@@ -1290,6 +1290,24 @@ virSecurityDACSetHostdevLabel(virSecurityManager *mgr,
             ret = virSecurityDACSetHostdevLabelHelper(vfioGroupDev,
                                                       false,
                                                       &cbdata);
+            if (dev->source.subsys.u.pci.driver.iommufd) {
+                g_autofree char *vfiofdDev = virPCIDeviceGetIOMMUFDDev(pci);
+                const char *iommufdDir = "/dev/iommu";
+                if (vfiofdDev) {
+                    int ret2 = virSecurityDACSetHostdevLabelHelper(vfiofdDev,
+                                                                   false,
+                                                                   &cbdata);
+                    if (ret2 < 0)
+                        ret = ret2;
+                    ret2 = virSecurityDACSetHostdevLabelHelper(iommufdDir,
+                                                               false,
+                                                               &cbdata);
+                    if (ret2 < 0)
+                        ret = ret2;
+                } else {
+                    return -1;
+                }
+            }
         } else {
             ret = virPCIDeviceFileIterate(pci,
                                           virSecurityDACSetPCILabel,
@@ -1450,6 +1468,22 @@ virSecurityDACRestoreHostdevLabel(virSecurityManager *mgr,
 
             ret = virSecurityDACRestoreFileLabelInternal(mgr, NULL,
                                                          vfioGroupDev, false);
+            if (dev->source.subsys.u.pci.driver.iommufd) {
+                g_autofree char *vfiofdDev = virPCIDeviceGetIOMMUFDDev(pci);
+                const char *iommufdDir = "/dev/iommu";
+                if (vfiofdDev) {
+                    int ret2 = virSecurityDACRestoreFileLabelInternal(mgr, NULL,
+                                                                      vfiofdDev, false);
+                    if (ret2 < 0)
+                        ret = ret2;
+                    ret2 = virSecurityDACRestoreFileLabelInternal(mgr, NULL,
+                                                                  iommufdDir, false);
+                    if (ret2 < 0)
+                        ret = ret2;
+                } else {
+                    return -1;
+                }
+            }
         } else {
             ret = virPCIDeviceFileIterate(pci, virSecurityDACRestorePCILabel, mgr);
         }

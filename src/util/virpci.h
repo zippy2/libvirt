@@ -203,6 +203,7 @@ int virPCIDeviceAddressGetIOMMUGroupNum(virPCIDeviceAddress *addr);
 char *virPCIDeviceAddressGetIOMMUGroupDev(const virPCIDeviceAddress *devAddr);
 bool virPCIDeviceExists(const virPCIDeviceAddress *addr);
 char *virPCIDeviceGetIOMMUGroupDev(virPCIDevice *dev);
+char *virPCIDeviceGetIOMMUFDDev(virPCIDevice *dev);
 
 int virPCIDeviceIsAssignable(virPCIDevice *dev,
                              int strict_acs_check);

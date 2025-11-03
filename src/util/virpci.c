@@ -2478,6 +2478,74 @@ virPCIDeviceGetIOMMUGroupDev(virPCIDevice *dev)
     return g_strdup_printf("/dev/vfio/%s", groupFile);
 }
 
+/* virPCIDeviceGetIOMMUFDDev - return the name of the device used
+ * to control this PCI device's group (e.g. "/dev/vfio/devices/vfio15")
+ */
+char *
+virPCIDeviceGetIOMMUFDDev(virPCIDevice *dev)
+{
+    g_autofree char *path = NULL;
+    const char *pci_addr = NULL;
+    g_autoptr(DIR) dir = NULL;
+    struct dirent *entry;
+    char *vfiodev = NULL;
+
+    /* Get PCI device address */
+    pci_addr = virPCIDeviceGetName(dev);
+    if (!pci_addr)
+        return NULL;
+
+    /* First try: look in PCI device's vfio-dev subdirectory */
+    path = g_strdup_printf("/sys/bus/pci/devices/%s/vfio-dev", pci_addr);
+
+    if (virDirOpen(&dir, path) == 1) {
+        while (virDirRead(dir, &entry, path) > 0) {
+            if (!g_str_has_prefix(entry->d_name, "vfio"))
+                continue;
+
+            vfiodev = g_strdup_printf("/dev/vfio/devices/%s", entry->d_name);
+            break;
+        }
+        /* g_autoptr will automatically close dir when it goes out of scope */
+        dir = NULL;
+    }
+
+    /* Second try: scan /sys/class/vfio-dev for matching device */
+    if (!vfiodev) {
+        g_free(path);
+        path = g_strdup("/sys/class/vfio-dev");
+
+        if (virDirOpen(&dir, path) == 1) {
+            while (virDirRead(dir, &entry, path) > 0) {
+                g_autofree char *dev_link = NULL;
+                g_autofree char *target = NULL;
+
+                if (!g_str_has_prefix(entry->d_name, "vfio"))
+                    continue;
+
+                dev_link = g_strdup_printf("/sys/class/vfio-dev/%s/device", entry->d_name);
+
+                if (virFileResolveLink(dev_link, &target) < 0)
+                    continue;
+
+                if (strstr(target, pci_addr)) {
+                    vfiodev = g_strdup_printf("/dev/vfio/devices/%s", entry->d_name);
+                    break;
+                }
+            }
+            /* g_autoptr will automatically close dir */
+        }
+    }
+
+    /* Verify the device path exists and is accessible */
+    if (vfiodev && !virFileExists(vfiodev)) {
+        VIR_FREE(vfiodev);
+        return NULL;
+    }
+
+    return vfiodev;
+}
+
 static int
 virPCIDeviceDownstreamLacksACS(virPCIDevice *dev)
 {

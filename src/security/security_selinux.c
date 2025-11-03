@@ -2248,6 +2248,25 @@ virSecuritySELinuxSetHostdevSubsysLabel(virSecurityManager *mgr,
             ret = virSecuritySELinuxSetHostdevLabelHelper(vfioGroupDev,
                                                           false,
                                                           &data);
+            if (dev->source.subsys.u.pci.driver.iommufd) {
+                g_autofree char *vfiofdDev = virPCIDeviceGetIOMMUFDDev(pci);
+                const char *iommufdDir = "/dev/iommu";
+                if (vfiofdDev) {
+                    int ret2 = virSecuritySELinuxSetHostdevLabelHelper(vfiofdDev,
+                                                                       false,
+                                                                       &data);
+                    if (ret2 < 0)
+                        ret = ret2;
+                    ret2 = virSecuritySELinuxSetHostdevLabelHelper(iommufdDir,
+                                                                   false,
+                                                                   &data);
+                    if (ret2 < 0)
+                        ret = ret2;
+                } else {
+                    return -1;
+                }
+            }
+
         } else {
             ret = virPCIDeviceFileIterate(pci, virSecuritySELinuxSetPCILabel, &data);
         }
@@ -2481,6 +2500,21 @@ virSecuritySELinuxRestoreHostdevSubsysLabel(virSecurityManager *mgr,
                 return -1;
 
             ret = virSecuritySELinuxRestoreFileLabel(mgr, vfioGroupDev, false);
+
+            if (dev->source.subsys.u.pci.driver.iommufd) {
+                g_autofree char *vfiofdDev = virPCIDeviceGetIOMMUFDDev(pci);
+                const char *iommufdDir = "/dev/iommu";
+                if (vfiofdDev) {
+                    int ret2 = virSecuritySELinuxRestoreFileLabel(mgr, vfiofdDev, false);
+                    if (ret2 < 0)
+                        ret = ret2;
+                    ret2 = virSecuritySELinuxRestoreFileLabel(mgr, iommufdDir, false);
+                    if (ret2 < 0)
+                        ret = ret2;
+                } else {
+                    return -1;
+                }
+            }
         } else {
             ret = virPCIDeviceFileIterate(pci, virSecuritySELinuxRestorePCILabel, mgr);
         }

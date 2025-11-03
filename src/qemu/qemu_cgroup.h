@@ -42,6 +42,7 @@ int qemuSetupHostdevCgroup(virDomainObj *vm,
 int qemuTeardownHostdevCgroup(virDomainObj *vm,
                               virDomainHostdevDef *dev)
    G_GNUC_WARN_UNUSED_RESULT;
+int qemuSetupIommufdCgroup(virDomainObj *vm);
 int qemuSetupMemoryDevicesCgroup(virDomainObj *vm,
                                  virDomainMemoryDef *mem);
 int qemuTeardownMemoryDevicesCgroup(virDomainObj *vm,
