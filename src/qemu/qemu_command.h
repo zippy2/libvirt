@@ -180,7 +180,8 @@ qemuBuildThreadContextProps(virJSONValue **tcProps,
 /* Current, best practice */
 virJSONValue *
 qemuBuildPCIHostdevDevProps(const virDomainDef *def,
-                            virDomainHostdevDef *dev);
+                            virDomainHostdevDef *dev,
+                            virDomainObj *vm);
 
 virJSONValue *
 qemuBuildRNGDevProps(const virDomainDef *def,

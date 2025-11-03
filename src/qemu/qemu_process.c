@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #if WITH_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
@@ -8091,6 +8092,9 @@ qemuProcessLaunch(virConnectPtr conn,
     if (qemuExtDevicesStart(driver, vm, incomingMigrationExtDevices) < 0)
         goto cleanup;
 
+    if (qemuProcessOpenVfioFds(vm) < 0)
+        goto cleanup;
+
     if (!(cmd = qemuBuildCommandLine(vm,
                                      incoming ? "defer" : NULL,
                                      vmop,
@@ -10266,4 +10270,232 @@ qemuProcessHandleNbdkitExit(qemuNbdkitProcess *nbdkit,
     VIR_DEBUG("nbdkit process %i died", nbdkit->pid);
     qemuProcessEventSubmit(vm, QEMU_PROCESS_EVENT_NBDKIT_EXITED, 0, 0, nbdkit);
     virObjectUnlock(vm);
+}
+
+/**
+ * qemuProcessOpenIommuFd:
+ * @vm: domain object
+ * @iommuFd: returned file descriptor
+ *
+ * Opens /dev/iommu file descriptor for the VM.
+ *
+ * Returns: 0 on success, -1 on failure
+ */
+static int
+qemuProcessOpenIommuFd(virDomainObj *vm, int *iommuFd)
+{
+    int fd = -1;
+
+    VIR_DEBUG("Opening IOMMU FD for domain %s", vm->def->name);
+
+    if ((fd = open("/dev/iommu", O_RDWR | O_CLOEXEC)) < 0) {
+        if (errno == ENOENT) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                           _("IOMMU FD support requires /dev/iommu device"));
+        } else {
+            virReportSystemError(errno, "%s",
+                                 _("cannot open /dev/iommu"));
+        }
+        return -1;
+    }
+
+    *iommuFd = fd;
+    VIR_DEBUG("Opened IOMMU FD %d for domain %s", fd, vm->def->name);
+    return 0;
+}
+
+/**
+ * qemuProcessGetVfioDevicePath:
+ * @hostdev: host device definition
+ * @vfioPath: returned VFIO device path
+ *
+ * Constructs the VFIO device path for a PCI hostdev.
+ *
+ * Returns: 0 on success, -1 on failure
+ */
+static int
+qemuProcessGetVfioDevicePath(virDomainHostdevDef *hostdev,
+                             char **vfioPath)
+{
+    virPCIDeviceAddress *addr;
+    g_autofree char *sysfsPath = NULL;
+    DIR *dir = NULL;
+    struct dirent *entry = NULL;
+    int ret = -1;
+
+    if (hostdev->mode != VIR_DOMAIN_HOSTDEV_MODE_SUBSYS ||
+        hostdev->source.subsys.type != VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_PCI) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("VFIO FD only supported for PCI hostdevs"));
+        return -1;
+    }
+
+    addr = &hostdev->source.subsys.u.pci.addr;
+
+    /* Build sysfs path: /sys/bus/pci/devices/DDDD:BB:DD.F/vfio-dev/ */
+    sysfsPath = g_strdup_printf("/sys/bus/pci/devices/"
+                                "%04x:%02x:%02x.%d/vfio-dev/",
+                                addr->domain, addr->bus,
+                                addr->slot, addr->function);
+
+    if (virDirOpen(&dir, sysfsPath) < 0) {
+        virReportSystemError(errno,
+                             _("cannot open VFIO sysfs directory %1$s"),
+                             sysfsPath);
+        return -1;
+    }
+
+    /* Find the vfio device name in the directory */
+    while (virDirRead(dir, &entry, sysfsPath) > 0) {
+        if (STRPREFIX(entry->d_name, "vfio")) {
+            *vfioPath = g_strdup_printf("/dev/vfio/devices/%s", entry->d_name);
+            ret = 0;
+            break;
+        }
+    }
+
+    if (ret < 0) {
+        virReportError(VIR_ERR_INTERNAL_ERROR,
+                       _("cannot find VFIO device for PCI device %1$04x:%2$02x:%3$02x.%4$d"),
+                       addr->domain, addr->bus, addr->slot, addr->function);
+    }
+
+    virDirClose(dir);
+    return ret;
+}
+
+/**
+ * qemuProcessOpenVfioDeviceFd:
+ * @hostdev: host device definition
+ * @vfioFd: returned file descriptor
+ *
+ * Opens the VFIO device file descriptor for a hostdev.
+ *
+ * Returns: 0 on success, -1 on failure
+ */
+static int
+qemuProcessOpenVfioDeviceFd(virDomainHostdevDef *hostdev,
+                            int *vfioFd)
+{
+    g_autofree char *vfioPath = NULL;
+    int fd = -1;
+
+    if (qemuProcessGetVfioDevicePath(hostdev, &vfioPath) < 0)
+        return -1;
+
+    VIR_DEBUG("Opening VFIO device %s", vfioPath);
+
+    if ((fd = open(vfioPath, O_RDWR | O_CLOEXEC)) < 0) {
+        if (errno == ENOENT) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+                           _("VFIO device %1$s not found - ensure device is bound to vfio-pci driver"),
+                           vfioPath);
+        } else {
+            virReportSystemError(errno,
+                                 _("cannot open VFIO device %1$s"), vfioPath);
+        }
+        return -1;
+    }
+
+    *vfioFd = fd;
+    VIR_DEBUG("Opened VFIO device FD %d for %s", *vfioFd, vfioPath);
+    return 0;
+}
+
+/**
+ * qemuProcessOpenVfioFds:
+ * @vm: domain object
+ *
+ * Opens all necessary VFIO file descriptors for the domain.
+ *
+ * Returns: 0 on success, -1 on failure
+ */
+int
+qemuProcessOpenVfioFds(virDomainObj *vm)
+{
+    qemuDomainObjPrivate *priv = vm->privateData;
+    bool needsIommuFd = false;
+    size_t i;
+
+    /* Check if we have any hostdevs that need VFIO FDs */
+    for (i = 0; i < vm->def->nhostdevs; i++) {
+        virDomainHostdevDef *hostdev = vm->def->hostdevs[i];
+        int vfioFd = -1;
+        g_autofree char *fdname = NULL;
+
+        if (hostdev->mode == VIR_DOMAIN_HOSTDEV_MODE_SUBSYS &&
+            hostdev->source.subsys.type == VIR_DOMAIN_HOSTDEV_SUBSYS_TYPE_PCI) {
+
+            /* Check if this hostdev uses VFIO with IOMMU FD */
+            if (hostdev->source.subsys.u.pci.driver.name == VIR_DEVICE_HOSTDEV_PCI_DRIVER_NAME_VFIO &&
+                hostdev->source.subsys.u.pci.driver.iommufd) {
+
+                needsIommuFd = true;
+
+                /* Open VFIO device FD */
+                if (qemuProcessOpenVfioDeviceFd(hostdev, &vfioFd) < 0)
+                    goto error;
+
+                /* Store the FD */
+                fdname = g_strdup_printf("vfio-%04x:%02x:%02x.%d",
+                                         hostdev->source.subsys.u.pci.addr.domain,
+                                         hostdev->source.subsys.u.pci.addr.bus,
+                                         hostdev->source.subsys.u.pci.addr.slot,
+                                         hostdev->source.subsys.u.pci.addr.function);
+
+                g_hash_table_insert(priv->vfioDeviceFds, g_steal_pointer(&fdname), GINT_TO_POINTER(vfioFd));
+
+                VIR_DEBUG("Stored VFIO FD for device %s", fdname);
+            }
+        }
+    }
+
+    /* Open IOMMU FD if needed */
+    if (needsIommuFd) {
+        int iommuFd = -1;
+
+        if (qemuProcessOpenIommuFd(vm, &iommuFd) < 0)
+            goto error;
+
+        priv->iommufd = iommuFd;
+
+        VIR_DEBUG("Stored IOMMU FD");
+    }
+
+    return 0;
+
+ error:
+    qemuProcessCloseVfioFds(vm);
+    return -1;
+}
+
+/**
+ * qemuProcessCloseVfioFds:
+ * @vm: domain object
+ *
+ * Closes all VFIO file descriptors for the domain.
+ */
+void
+qemuProcessCloseVfioFds(virDomainObj *vm)
+{
+    qemuDomainObjPrivate *priv = vm->privateData;
+    GHashTableIter iter;
+    gpointer key, value;
+
+    /* Close all VFIO device FDs */
+    if (priv->vfioDeviceFds) {
+        g_hash_table_iter_init(&iter, priv->vfioDeviceFds);
+        while (g_hash_table_iter_next(&iter, &key, &value)) {
+            int fd = GPOINTER_TO_INT(value);
+            VIR_DEBUG("Closing VFIO device FD %d for %s", fd, (char*)key);
+            VIR_FORCE_CLOSE(fd);
+        }
+        g_hash_table_remove_all(priv->vfioDeviceFds);
+    }
+
+    /* Close IOMMU FD */
+    if (priv->iommufd >= 0) {
+        VIR_DEBUG("Closing IOMMU FD %d", priv->iommufd);
+        VIR_FORCE_CLOSE(priv->iommufd);
+    }
 }
