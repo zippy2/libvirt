@@ -4845,6 +4845,7 @@ or:
    device; if PCI ROM loading is disabled through this attribute, attempts to
    tweak the loading process further using the ``bar`` or ``file`` attributes
    will be rejected. :since:`Since 4.3.0 (QEMU and KVM only)`.
+
 ``address``
    The ``address`` element for USB devices has a ``bus`` and ``device``
    attribute to specify the USB bus and device number the device appears at on
@@ -4884,6 +4885,13 @@ or:
    by setting driver name, or if the device-specific driver that is
    found is "problematic" in some way, the generic vfio-pci driver
    similarly be forced.
+
+   The ``<driver>`` element's ``iommufd`` attribute is used to specify
+   using the iommufd interface to propagate DMA mappings to the kernel,
+   instead of legacy VFIO. When the attribute is present, an iommufd
+   object will be created by the resulting qemu command. Libvirt will
+   open the /dev/iommu and VFIO device cdev, passing the associated
+   file descriptor numbers to the qemu command.
 
    (Note: :since:`Since 1.0.5`, the ``name`` attribute has been
    described to be used to select the type of PCI device assignment
