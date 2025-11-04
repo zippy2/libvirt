@@ -60,8 +60,6 @@ int
 virDeviceHostdevPCIDriverInfoParseXML(xmlNodePtr node,
                                       virDeviceHostdevPCIDriverInfo *driver)
 {
-    virTristateBool iommufd;
-    driver->iommufd = false;
     if (virXMLPropEnum(node, "name",
                        virDeviceHostdevPCIDriverNameTypeFromString,
                        VIR_XML_PROP_NONZERO,
@@ -69,9 +67,10 @@ virDeviceHostdevPCIDriverInfoParseXML(xmlNodePtr node,
         return -1;
     }
 
-    if (virXMLPropTristateBool(node, "iommufd", VIR_XML_PROP_NONE, &iommufd) < 0)
+    if (virXMLPropTristateBool(node, "iommufd",
+                               VIR_XML_PROP_NONE,
+                               &driver->iommufd) < 0)
         return -1;
-    virTristateBoolToBool(iommufd, &driver->iommufd);
 
     driver->model = virXMLPropString(node, "model");
     return 0;
@@ -99,8 +98,10 @@ virDeviceHostdevPCIDriverInfoFormat(virBuffer *buf,
 
     virBufferEscapeString(&driverAttrBuf, " model='%s'", driver->model);
 
-    if (driver->iommufd)
-        virBufferAddLit(&driverAttrBuf, " iommufd='yes'");
+    if (driver->iommufd != VIR_TRISTATE_BOOL_ABSENT) {
+        virBufferAsprintf(&driverAttrBuf, " iommufd='%s'",
+                          virTristateSwitchTypeToString(driver->iommufd));
+    }
 
     virXMLFormatElement(buf, "driver", &driverAttrBuf, NULL);
     return 0;

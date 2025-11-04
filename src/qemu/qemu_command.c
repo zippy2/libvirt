@@ -4728,6 +4728,8 @@ qemuBuildVideoCommandLine(virCommand *cmd,
 }
 
 
+#define IOMMUFD_ALIAS "iommufd0"
+
 virJSONValue *
 qemuBuildPCIHostdevDevProps(const virDomainDef *def,
                             virDomainHostdevDef *dev)
@@ -4772,8 +4774,8 @@ qemuBuildPCIHostdevDevProps(const virDomainDef *def,
         teaming->persistent)
         failover_pair_id = teaming->persistent;
 
-    if (pcisrc->driver.iommufd)
-        iommufdId = "iommufd0";
+    if (pcisrc->driver.iommufd == VIR_TRISTATE_BOOL_YES)
+        iommufdId = IOMMUFD_ALIAS;
 
     if (virJSONValueObjectAdd(&props,
                               "s:driver", driver,
@@ -5200,9 +5202,7 @@ qemuBuildHostdevCommandLine(virCommand *cmd,
                             virQEMUCaps *qemuCaps)
 {
     size_t i;
-    g_autoptr(virJSONValue) props = NULL;
-    int iommufd = 0;
-    const char * iommufdId = "iommufd0";
+    bool iommufd = false;
 
     for (i = 0; i < def->nhostdevs; i++) {
         virDomainHostdevDef *hostdev = def->hostdevs[i];
@@ -5231,15 +5231,20 @@ qemuBuildHostdevCommandLine(virCommand *cmd,
            if (hostdev->info->type == VIR_DOMAIN_DEVICE_ADDRESS_TYPE_UNASSIGNED)
                continue;
 
-            if (subsys->u.pci.driver.iommufd && iommufd == 0) {
-                iommufd = 1;
+            if (subsys->u.pci.driver.iommufd == VIR_TRISTATE_BOOL_YES &&
+                iommufd == false) {
+                g_autoptr(virJSONValue) props = NULL;
+
                 if (qemuMonitorCreateObjectProps(&props, "iommufd",
-                                                 iommufdId,
-                                                 NULL) < 0)
+                                                 IOMMUFD_ALIAS,
+                                                 NULL) < 0) {
                     return -1;
+                }
 
                 if (qemuBuildObjectCommandlineFromJSON(cmd, props) < 0)
                     return -1;
+
+                iommufd = true;
             }
 
             if (qemuCommandAddExtDevice(cmd, hostdev->info, def, qemuCaps) < 0)
