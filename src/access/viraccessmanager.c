@@ -197,8 +197,9 @@ static int
 virAccessManagerSanitizeError(int ret,
                               const char *driverName)
 {
-    if (ret < 0) {
-        virResetLastError();
+    if (ret <= 0) {
+        if (ret < 0)
+            virResetLastError();
         virReportError(VIR_ERR_ACCESS_DENIED,
                        _("'%1$s' denied access"), driverName);
     }
