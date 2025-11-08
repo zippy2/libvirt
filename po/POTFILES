@@ -1,6 +1,3 @@
-src/access/viraccessapicheck.c
-src/access/viraccessapichecklxc.c
-src/access/viraccessapicheckqemu.c
 src/access/org.libvirt.api.policy.in
 src/admin/admin_client.h
 src/admin/admin_server_dispatch_stubs.h
