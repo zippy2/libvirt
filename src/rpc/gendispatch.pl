@@ -2206,9 +2206,6 @@ elsif ($mode eq "client") {
                     }
                     print "(rv = $method(" . join(", ", @argvars, $perm) . ")) <= 0) {\n";
                     if ($action eq "Ensure") {
-                        print "        if (rv == 0)\n";
-                        print "            virReportError(VIR_ERR_ACCESS_DENIED,\n";
-                        print"                            _(\"'%1\$s' denied access\"), conn->driver->name);\n";
                         print "        return $fail;\n";
                     } else {
                         print "        virResetLastError();\n";
