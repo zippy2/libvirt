@@ -143,9 +143,6 @@ testParseVMXFileName(const char *fileName,
     } else if (STRPREFIX(fileName, "/")) {
         /* Found absolute path referencing a file outside a datastore */
         *src = g_strdup(fileName);
-    } else if (strchr(fileName, '/') != NULL) {
-        /* Found relative path, this is not supported */
-        return -1;
     } else {
         /* Found single file name referencing a file inside a datastore */
         *src = g_strdup_printf("[datastore] directory/%s", fileName);
