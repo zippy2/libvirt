@@ -84,7 +84,7 @@ iptablesPrivateChainCreate(virFirewall *fw,
 {
     iptablesGlobalChainData *data = opaque;
     g_autoptr(GHashTable) chains = virHashNew(NULL);
-    g_autoptr(GHashTable) links = virHashNew(NULL);
+    g_autoptr(GHashTable) links = virHashNew(g_free);
     const char *const *line;
     size_t i;
 
@@ -98,10 +98,9 @@ iptablesPrivateChainCreate(virFirewall *fw,
         } else if ((tmp = STRSKIP(*line, "-A "))) { /* eg "-A INPUT -j LIBVIRT_INP" */
             char *sep = strchr(tmp, ' ');
             if (sep) {
-                *sep = '\0';
                 if (STRPREFIX(sep + 1, "-j ")) {
-                    if (virHashUpdateEntry(links, sep + 4,
-                                           (char *)tmp) < 0)
+                    char *chain = g_strndup(tmp, sep - tmp);
+                    if (virHashUpdateEntry(links, sep + 4, chain) < 0)
                         return -1;
                 }
             }
