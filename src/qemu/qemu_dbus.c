@@ -119,6 +119,12 @@ static int
 qemuDBusWriteConfig(const char *filename, const char *path, bool privileged)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
+    /* Escape @path pointing to socket where the dbus-daemon is going to listen
+     * to. Valid characters are alphanumeric, '-', '_', '/', '\\', '*' and '.'.
+     * The rest must be URI escaped. g_uri_escape_string() treads alphanumeric,
+     * '-', '.', '_' and '~' as valid.
+     */
+    g_autofree char *escapedPath = g_uri_escape_string(path, "/\\*", false);
     g_autofree char *config = NULL;
 
     virBufferAddLit(&buf, "<!DOCTYPE busconfig PUBLIC \"-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN\"\n");
@@ -127,7 +133,7 @@ qemuDBusWriteConfig(const char *filename, const char *path, bool privileged)
     virBufferAdjustIndent(&buf, 2);
 
     virBufferAddLit(&buf, "<type>org.libvirt.qemu</type>\n");
-    virBufferAsprintf(&buf, "<listen>unix:path=%s</listen>\n", path);
+    virBufferAsprintf(&buf, "<listen>unix:path=%s</listen>\n", escapedPath);
     virBufferAddLit(&buf, "<auth>EXTERNAL</auth>\n");
 
     virBufferAddLit(&buf, "<policy context='default'>\n");
