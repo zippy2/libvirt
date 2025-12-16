@@ -25,6 +25,7 @@
 #include "virtime.h"
 #include "virpidfile.h"
 #include "virutil.h"
+#include "virstring.h"
 
 #define VIR_FROM_THIS VIR_FROM_NONE
 
@@ -119,6 +120,7 @@ static int
 qemuDBusWriteConfig(const char *filename, const char *path, bool privileged)
 {
     g_auto(virBuffer) buf = VIR_BUFFER_INITIALIZER;
+    g_autofree char *escapedPath = virStringEscapeDBus(path);
     g_autofree char *config = NULL;
 
     virBufferAddLit(&buf, "<!DOCTYPE busconfig PUBLIC \"-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN\"\n");
@@ -127,7 +129,7 @@ qemuDBusWriteConfig(const char *filename, const char *path, bool privileged)
     virBufferAdjustIndent(&buf, 2);
 
     virBufferAddLit(&buf, "<type>org.libvirt.qemu</type>\n");
-    virBufferAsprintf(&buf, "<listen>unix:path=%s</listen>\n", path);
+    virBufferAsprintf(&buf, "<listen>unix:path=%s</listen>\n", escapedPath);
     virBufferAddLit(&buf, "<auth>EXTERNAL</auth>\n");
 
     virBufferAddLit(&buf, "<policy context='default'>\n");
