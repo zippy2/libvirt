@@ -31,10 +31,10 @@ testCompareXMLToConfFiles(const char *inxml, const char *outconf,
     if (!(xmlopt = networkDnsmasqCreateXMLConf()))
         goto fail;
 
-    if (!(def = virNetworkDefParse(NULL, inxml, xmlopt, false)))
+    if (!(obj = virNetworkObjNew()))
         goto fail;
 
-    if (!(obj = virNetworkObjNew()))
+    if (!(def = virNetworkDefParse(NULL, inxml, xmlopt, false)))
         goto fail;
 
     virNetworkObjSetDef(obj, def);
