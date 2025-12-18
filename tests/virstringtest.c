@@ -486,6 +486,29 @@ static int testFilterChars(const void *args)
     return 0;
 }
 
+
+struct testDBusData {
+    const char *string;
+    const char *expected;
+};
+
+
+static int
+testDBusEscape(const void *args)
+{
+    const struct testDBusData *data = args;
+    g_autofree char *res = virStringEscapeDBus(data->string);
+
+    if (STRNEQ_NULLABLE(res, data->expected)) {
+        fprintf(stderr, "%s: returned '%s', expected '%s'\n",
+                __FUNCTION__, NULLSTR(res), NULLSTR(data->expected));
+        return -1;
+    }
+
+    return 0;
+}
+
+
 static int
 mymain(void)
 {
@@ -766,6 +789,26 @@ mymain(void)
 
     TEST_FILTER_CHARS(NULL, NULL, NULL);
     TEST_FILTER_CHARS("hello 123 hello", "helo", "hellohello");
+
+#define TEST_DBUS_ESCAPE(str, exp) \
+    do { \
+        struct testDBusData dbusData = { \
+            .string = str, \
+            .expected = exp, \
+        }; \
+        if (virTestRun("DBus escape " #str, \
+                       testDBusEscape, &dbusData) < 0) \
+            ret = -1; \
+    } while (0)
+
+    TEST_DBUS_ESCAPE(NULL, NULL);
+    TEST_DBUS_ESCAPE("", "");
+    TEST_DBUS_ESCAPE("-_/\\*.", "-_/\\*.");
+    TEST_DBUS_ESCAPE("abcdefghijklmnopqrstuvwxyz",
+                     "abcdefghijklmnopqrstuvwxyz");
+    TEST_DBUS_ESCAPE("/some/~/path/with space/-_\\*./#$",
+                     "/some/%7E/path/with%20space/-_\\*./%23%24");
+
 
     return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
