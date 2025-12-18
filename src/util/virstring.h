@@ -141,3 +141,4 @@ int virStringParseVersion(unsigned long long *version,
 
 void virStringListRemoveDuplicates(char ***list);
 char *virStringFormatHex(const unsigned char *buf, size_t len);
+char *virStringEscapeDBus(const char *str);
