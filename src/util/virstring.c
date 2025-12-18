@@ -1118,3 +1118,67 @@ virStringFormatHex(const unsigned char *buf, size_t len)
 
     return g_steal_pointer(&hex);
 }
+
+
+/**
+ * virStringEscapeDBus:
+ * @str: string to escape
+ *
+ * Produces new string that's safe to pass to DBUS. Specifically,
+ * alphanumerical characters, digits, '-', '_', '/', '\\', '*' and '.' are
+ * kept. Everything else is escaped using "%NN", where NN is value of the
+ * character in hex.
+ *
+ * Returns: newly allocated string. Caller must free.
+ */
+char *
+virStringEscapeDBus(const char *str)
+{
+    size_t len;
+    size_t i;
+    size_t j = 0;
+    size_t alloc = 1;
+    char *ret;
+
+    if (!str)
+        return NULL;
+
+    len = strlen(str);
+    alloc = len * 1.25; /* assume some escaping */
+    ret = g_new0(char, alloc + 1);
+
+    for (i = 0; str[i]; i++) {
+        const char c = str[i];
+
+        if ((c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= '0' && c <= '9') ||
+            (c == '-') ||
+            (c == '_') ||
+            (c == '/') ||
+            (c == '\\') ||
+            (c == '*') ||
+            (c == '.')) {
+            if (j >= alloc) {
+                ret = g_renew(char, ret, alloc + 11);
+                alloc += 10;
+            }
+
+            ret[j++] = c;
+        } else {
+            static const char hextable[] = "0123456789ABCDEF";
+
+            if (j + 3 >= alloc) {
+                ret = g_renew(char, ret, alloc + 11);
+                alloc += 10;
+            }
+
+            ret[j++] = '%';
+            ret[j++] = hextable[(c >> 4) & 15];
+            ret[j++] = hextable[c & 15];
+        }
+    }
+
+    ret[j++] = '\0';
+    return ret;
+}
