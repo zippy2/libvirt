@@ -726,6 +726,19 @@ virSecurityManagerReleaseLabel(virSecurityManager *mgr,
 }
 
 
+int
+virSecurityManagerLoadProfile(virSecurityManager *mgr,
+                              virDomainDef *def)
+{
+    VIR_LOCK_GUARD lock = virObjectLockGuard(mgr);
+
+    if (!mgr->drv->domainLoadProfile)
+        return 0;
+
+    return mgr->drv->domainLoadProfile(mgr, def);
+}
+
+
 static int virSecurityManagerCheckModel(virSecurityManager *mgr,
                                         char *secmodel)
 {

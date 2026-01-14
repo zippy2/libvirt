@@ -281,6 +281,19 @@ virSecurityStackReserveLabel(virSecurityManager *mgr,
 
 
 static int
+virSecurityStackLoadProfile(virSecurityManager *mgr,
+                            virDomainDef *vm)
+{
+    int rc = 0;
+
+    if (virSecurityManagerLoadProfile(virSecurityStackGetPrimary(mgr), vm) < 0)
+        rc = -1;
+
+    return rc;
+}
+
+
+static int
 virSecurityStackSetHostdevLabel(virSecurityManager *mgr,
                                 virDomainDef *vm,
                                 virDomainHostdevDef *dev,
@@ -1069,6 +1082,8 @@ virSecurityDriver virSecurityDriverStack = {
     .domainGenSecurityLabel             = virSecurityStackGenLabel,
     .domainReserveSecurityLabel         = virSecurityStackReserveLabel,
     .domainReleaseSecurityLabel         = virSecurityStackReleaseLabel,
+
+    .domainLoadProfile                  = virSecurityStackLoadProfile,
 
     .domainGetSecurityProcessLabel      = virSecurityStackGetProcessLabel,
     .domainSetSecurityProcessLabel      = virSecurityStackSetProcessLabel,

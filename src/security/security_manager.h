@@ -128,6 +128,8 @@ int virSecurityManagerReserveLabel(virSecurityManager *mgr,
                                    pid_t pid);
 int virSecurityManagerReleaseLabel(virSecurityManager *mgr,
                                    virDomainDef *sec);
+int virSecurityManagerLoadProfile(virSecurityManager *mgr,
+                                  virDomainDef *def);
 int virSecurityManagerCheckAllLabel(virSecurityManager *mgr,
                                     virDomainDef *sec);
 int virSecurityManagerSetAllLabel(virSecurityManager *mgr,
