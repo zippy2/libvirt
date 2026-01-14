@@ -388,22 +388,35 @@ AppArmorGenSecurityLabel(virSecurityManager *mgr G_GNUC_UNUSED,
     if (!secdef->model)
         secdef->model = g_strdup(SECURITY_APPARMOR_NAME);
 
-    /* Now that we have a label, load the profile into the kernel. */
+    return 0;
+}
+
+
+static int
+AppArmorLoadProfile(virSecurityManager *mgr G_GNUC_UNUSED,
+                    virDomainDef *def)
+{
+    virSecurityLabelDef *secdef = virDomainDefGetSecurityLabelDef(def,
+                                                 SECURITY_APPARMOR_NAME);
+
+    if (!secdef)
+        return 0;
+
+    if ((secdef->type == VIR_DOMAIN_SECLABEL_STATIC) ||
+        (secdef->type == VIR_DOMAIN_SECLABEL_NONE)) {
+        return 0;
+    }
+
     if (load_profile(mgr, secdef->label, def, NULL, false) < 0) {
         virReportError(VIR_ERR_INTERNAL_ERROR,
                        _("cannot load AppArmor profile \'%1$s\'"),
                        secdef->label);
-        goto err;
+        return -1;
     }
 
     return 0;
-
- err:
-    VIR_FREE(secdef->label);
-    VIR_FREE(secdef->imagelabel);
-    VIR_FREE(secdef->model);
-    return -1;
 }
+
 
 static int
 AppArmorSetSecurityAllLabel(virSecurityManager *mgr,
@@ -1168,6 +1181,8 @@ virSecurityDriver virAppArmorSecurityDriver = {
     .domainGenSecurityLabel             = AppArmorGenSecurityLabel,
     .domainReserveSecurityLabel         = AppArmorReserveSecurityLabel,
     .domainReleaseSecurityLabel         = AppArmorReleaseSecurityLabel,
+
+    .domainLoadProfile                  = AppArmorLoadProfile,
 
     .domainGetSecurityProcessLabel      = AppArmorGetSecurityProcessLabel,
     .domainSetSecurityProcessLabel      = AppArmorSetSecurityProcessLabel,
