@@ -81,6 +81,8 @@ typedef int (*virSecurityDomainReserveLabel) (virSecurityManager *mgr,
                                               pid_t pid);
 typedef int (*virSecurityDomainReleaseLabel) (virSecurityManager *mgr,
                                               virDomainDef *sec);
+typedef int (*virSecurityDomainLoadProfile) (virSecurityManager *mgr,
+                                             virDomainDef *def);
 typedef int (*virSecurityDomainSetAllLabel) (virSecurityManager *mgr,
                                              char *const *sharedFilesystems,
                                              virDomainDef *sec,
@@ -210,6 +212,8 @@ struct _virSecurityDriver {
     virSecurityDomainGenLabel domainGenSecurityLabel;
     virSecurityDomainReserveLabel domainReserveSecurityLabel;
     virSecurityDomainReleaseLabel domainReleaseSecurityLabel;
+
+    virSecurityDomainLoadProfile domainLoadProfile;
 
     virSecurityDomainGetProcessLabel domainGetSecurityProcessLabel;
     virSecurityDomainSetProcessLabel domainSetSecurityProcessLabel;
