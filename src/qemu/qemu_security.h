@@ -137,6 +137,7 @@ int qemuSecurityCommandRun(virQEMUDriver *driver,
 #define qemuSecurityGetMountOptions virSecurityManagerGetMountOptions
 #define qemuSecurityGetNested virSecurityManagerGetNested
 #define qemuSecurityGetProcessLabel virSecurityManagerGetProcessLabel
+#define qemuSecurityManagerLoadProfile virSecurityManagerLoadProfile
 #define qemuSecurityNew virSecurityManagerNew
 #define qemuSecurityNewDAC virSecurityManagerNewDAC
 #define qemuSecurityNewStack virSecurityManagerNewStack
