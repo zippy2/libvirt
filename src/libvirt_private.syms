@@ -1876,6 +1876,7 @@ virSecurityManagerGetModel;
 virSecurityManagerGetMountOptions;
 virSecurityManagerGetNested;
 virSecurityManagerGetProcessLabel;
+virSecurityManagerLoadProfile;
 virSecurityManagerMoveImageMetadata;
 virSecurityManagerNew;
 virSecurityManagerNewDAC;
