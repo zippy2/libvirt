@@ -7161,6 +7161,13 @@ qemuProcessPrepareDomain(virQEMUDriver *driver,
         }
     }
 
+    /* Keep this as the last step so that security drivers can
+     * see all the path generated in steps above. */
+    if (!(flags & VIR_QEMU_PROCESS_START_PRETEND)) {
+        if (qemuSecurityManagerLoadProfile(driver->securityManager, vm->def) < 0)
+            return -1;
+    }
+
     return 0;
 }
 
