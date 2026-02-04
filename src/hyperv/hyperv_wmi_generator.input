@@ -789,6 +789,67 @@ class Msvm_DiskDrive
 end
 
 
+class Msvm_LogicalDisk
+    string   InstanceID
+    string   Caption
+    uint64   Description
+    string   ElementName
+    datetime InstallDate
+    string   Name
+    uint16   OperationalStatus[]
+    string   StatusDescriptions[]
+    string   Status
+    uint16   HealthState
+    uint16   CommunicationStatus
+    uint16   DetailedStatus
+    uint16   OperatingStatus
+    uint16   PrimaryStatus
+    string   EnabledState
+    string   OtherEnabledState
+    uint16   RequestedState
+    uint16   EnabledDefault
+    datetime TimeOfLastStateChange
+    uint16   AvailableRequestedStates[]
+    uint16   TransitioningToState
+    string   SystemCreationClassName
+    string   SystemName
+    uint16   CreationClassName
+    string   DeviceID
+    boolean  PowerManagementSupported
+    uint16   PowerManagementCapabilities[]
+    uint16   Availability
+    uint16   StatusInfo
+    uint32   LastErrorCode
+    string   ErrorDescription
+    boolean  ErrorCleared
+    string   OtherIdentifyingInfo[]
+    uint64   PowerOnHours
+    uint64   TotalPowerOnHours
+    string   IdentifyingDescriptions[]
+    uint16   AdditionalAvailability[]
+    uint64   MaxQuiesceTime
+    uint16   DataOrganization
+    string   Purpose
+    uint16   Access
+    string   ErrorMethodology
+    uint64   BlockSize
+    uint64   NumberOfBlocks
+    uint64   ConsumableBlocks
+    boolean  IsBasedOnUnderlyingRedundancy
+    boolean  SequentialAccess
+    uint16   ExtentStatus[]
+    boolean  NoSinglePointOfFailure
+    uint16   DataRedundancy
+    uint16   PackageRedundancy
+    uint8    DeltaReservation
+    boolean  Primordial
+    uint16   NameFormat
+    uint16   NameNamespace
+    string   OtherNameNamespace
+    string   OtherNameFormat
+end
+
+
 class Msvm_StorageAllocationSettingData
     string  InstanceID
     string  Caption
