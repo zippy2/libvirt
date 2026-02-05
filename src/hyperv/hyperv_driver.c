@@ -1271,6 +1271,16 @@ hypervDomainDefParseVirtualExtent(hypervPrivate *priv,
     Msvm_ResourceAllocationSettingData *diskParent = NULL;
     Msvm_ResourceAllocationSettingData *controller = NULL;
     virDomainDiskDef *disk = NULL;
+    g_auto(virBuffer) query = VIR_BUFFER_INITIALIZER;
+    g_autoptr(CIM_DataFile) fileObj = NULL;
+    const char *diskPath = NULL;
+    g_autofree char *diskPathEscaped = NULL;
+    g_autoptr(Msvm_DiskDrive) diskDrive = NULL;
+    g_autoptr(Msvm_LogicalDisk) logicalDisk = NULL;
+    g_autofree char *instanceIDEscaped = NULL;
+    g_autofree char *deviceIDEscaped = NULL;
+    unsigned long long allocatedSize = 0;
+    unsigned long long virtualSize = 0;
     int result = -1;
 
     if (disk_entry->data->HostResource.count < 1)
@@ -1300,7 +1310,8 @@ hypervDomainDefParseVirtualExtent(hypervPrivate *priv,
         disk->device = VIR_DOMAIN_DISK_DEVICE_DISK;
 
     /* copy in the source path */
-    virDomainDiskSetSource(disk, *(char **)disk_entry->data->HostResource.data);
+    diskPath = ((const char **)disk_entry->data->HostResource.data)[0];
+    virDomainDiskSetSource(disk, diskPath);
 
     /* controller-specific fields */
     if (controller->data->ResourceType == MSVM_RASD_RESOURCETYPE_PARALLEL_SCSI_HBA) {
@@ -1326,6 +1337,60 @@ hypervDomainDefParseVirtualExtent(hypervPrivate *priv,
                        controller->data->ResourceType);
         goto cleanup;
     }
+
+    diskPathEscaped = virStringReplace(diskPath, "\\", "\\\\");
+    virBufferAsprintf(&query,
+                      "SELECT * FROM CIM_DataFile WHERE Name = '%s'",
+                      diskPathEscaped);
+
+    if (hypervGetWmiClass(CIM_DataFile, &fileObj) < 0)
+        goto cleanup;
+
+    if (!fileObj)
+        goto cleanup;
+
+    allocatedSize = fileObj->data->FileSize;
+
+    //virBufferFreeAndReset(&query);
+    //virBufferAsprintf(&query,
+    //                  MSVM_LOGICALDISK_WQL_SELECT "WHERE __PATH !=''");
+
+    //if (hypervGetWmiClass(Msvm_LogicalDisk, &logicalDisk) < 0)
+    //    goto cleanup;
+
+    //if (!logicalDisk)
+    //    goto cleanup;
+
+    //instanceIDEscaped = virStringReplace(disk_entry->data->InstanceID, "\\", "\\\\");
+    //virBufferFreeAndReset(&query);
+    //virBufferAsprintf(&query,
+    //                  "ASSOCIATORS OF {Msvm_StorageAllocationSettingData.InstanceID='%s'} "
+    //                  "WHERE ResultClass = Msvm_DiskDrive",
+    //                  instanceIDEscaped);
+
+    //if (hypervGetWmiClass(Msvm_DiskDrive, &diskDrive) < 0)
+    //    goto cleanup;
+
+    //if (!diskDrive)
+    //    goto cleanup;
+
+    //deviceIDEscaped = virStringReplace(diskDrive->data->DeviceID, "\\", "\\\\");
+    //virBufferFreeAndReset(&query);
+    //virBufferAsprintf(&query,
+    //                  "ASSOCIATORS OF {Msvm_DiskDrive.DeviceID='%s'} "
+    //                  "WHERE ResultClass = Msvm_StorageExtent",
+    //                  deviceIDEscaped);
+
+    //if (hypervGetWmiClass(Msvm_LogicalDisk, &logicalDisk) < 0)
+    //    goto cleanup;
+
+    //if (!logicalDisk)
+    //    goto cleanup;
+
+    //virtualSize = logicalDisk->data->BlockSize * logicalDisk->data->NumberOfBlocks;
+
+    VIR_DEBUG("Allocated size: %llu", allocatedSize);
+    VIR_DEBUG("Virtual size: %llu", virtualSize);
 
     result = 0;
 
