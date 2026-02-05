@@ -59,6 +59,8 @@ hypervGetWmiClassList(hypervPrivate *priv, hypervWmiClassInfo *wmiInfo,
     wqlQuery.info = wmiInfo;
     wqlQuery.query = query;
 
+    VIR_DEBUG("query=%s", virBufferCurrentContent(query));
+
     return hypervEnumAndPull(priv, &wqlQuery, wmiClass);
 }
 
