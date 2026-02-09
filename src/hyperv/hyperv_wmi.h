@@ -263,6 +263,10 @@ int hypervGetEthernetPortAllocationSD(hypervPrivate *priv,
                                       const char *id,
                                       Msvm_EthernetPortAllocationSettingData **data);
 
+int hypervGetSecuritySD(hypervPrivate *priv,
+                        const char *id,
+                        Msvm_SecuritySettingData **data);
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Msvm_VirtualSystemManagementService
  */

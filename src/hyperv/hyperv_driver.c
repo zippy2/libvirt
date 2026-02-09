@@ -2649,6 +2649,7 @@ hypervDomainGetXMLDesc(virDomainPtr domain, unsigned int flags)
     g_autoptr(Msvm_SerialPortSettingData) spsd = NULL;
     Msvm_ResourceAllocationSettingData *serialDevices = NULL;
     g_autoptr(Msvm_EthernetPortAllocationSettingData) nets = NULL;
+    g_autoptr(Msvm_SecuritySettingData) security = NULL;
 
     virCheckFlags(VIR_DOMAIN_XML_COMMON_FLAGS, NULL);
 
@@ -2692,6 +2693,10 @@ hypervDomainGetXMLDesc(virDomainPtr domain, unsigned int flags)
 
     if (hypervGetEthernetPortAllocationSD(priv,
                                           virtualSystemSettingData->data->InstanceID, &nets) < 0)
+        return NULL;
+
+    if (hypervGetSecuritySD(priv,
+                            virtualSystemSettingData->data->InstanceID, &security) < 0)
         return NULL;
 
     /* Fill struct */

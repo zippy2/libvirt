@@ -59,6 +59,8 @@ hypervGetWmiClassList(hypervPrivate *priv, hypervWmiClassInfo *wmiInfo,
     wqlQuery.info = wmiInfo;
     wqlQuery.query = query;
 
+    VIR_DEBUG("wql: %s", virBufferCurrentContent(query));
+
     return hypervEnumAndPull(priv, &wqlQuery, wmiClass);
 }
 
@@ -1503,6 +1505,29 @@ hypervGetEthernetPortAllocationSD(hypervPrivate *priv,
                                   Msvm_EthernetPortAllocationSettingData **data)
 {
     hypervGetSettingData(Msvm_EthernetPortAllocationSettingData, id, data);
+    return 0;
+}
+
+
+int
+hypervGetSecuritySD(hypervPrivate *priv,
+                    const char *id,
+                    Msvm_SecuritySettingData **data)
+{
+    g_auto(virBuffer) query = VIR_BUFFER_INITIALIZER;
+
+    virBufferAsprintf(&query,
+                      "ASSOCIATORS OF {Msvm_VirtualSystemSettingData.InstanceID='%s'} "
+                      "WHERE AssocClass = Msvm_VirtualSystemSettingData "
+                      "ResultClass = Msvm_SecuritySettingData",
+                      id);
+
+    if (hypervGetWmiClass(Msvm_VirtualSystemSettingData, data) < 0 || !*data)
+        return -1;
+    //hypervGetSettingData(Msvm_SecuritySettingData, id, data);
+
+    if (!*data)
+        return -1;
     return 0;
 }
 

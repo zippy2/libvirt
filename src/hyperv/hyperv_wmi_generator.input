@@ -601,6 +601,16 @@ class Msvm_VirtualSystemManagementService
 end
 
 
+class Msvm_SecuritySettingData
+    boolean TpmEnabled
+    boolean KsdEnabled
+    boolean ShieldingRequested
+    boolean DataProtectionRequested
+    boolean EncryptStateAndVmMigrationTraffic
+    boolean VirtualizationBasedSecurityOptOut
+end
+
+
 class Msvm_ResourceAllocationSettingData
     string   InstanceID
     string   Caption
