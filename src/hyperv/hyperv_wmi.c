@@ -1511,23 +1511,34 @@ hypervGetEthernetPortAllocationSD(hypervPrivate *priv,
 
 int
 hypervGetSecuritySD(hypervPrivate *priv,
-                    const char *id,
+                    const char *id G_GNUC_UNUSED,
                     Msvm_SecuritySettingData **data)
 {
     g_auto(virBuffer) query = VIR_BUFFER_INITIALIZER;
 
     virBufferAsprintf(&query,
                       "ASSOCIATORS OF {Msvm_VirtualSystemSettingData.InstanceID='%s'} "
-                      "WHERE AssocClass = Msvm_VirtualSystemSettingData "
+                      "WHERE AssocClass = Msvm_SecurityElementSettingData "
                       "ResultClass = Msvm_SecuritySettingData",
                       id);
 
-    if (hypervGetWmiClass(Msvm_VirtualSystemSettingData, data) < 0 || !*data)
+    if (hypervGetWmiClass(Msvm_VirtualSystemSettingData, data) < 0)
         return -1;
-    //hypervGetSettingData(Msvm_SecuritySettingData, id, data);
 
-    if (!*data)
+    if (!*data) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s", _("no data"));
+    }
+
+    virBufferAsprintf(&query,
+                      "SELECT * FROM Msvm_SecuritySettingData ");
+
+    if (hypervGetWmiClass(Msvm_VirtualSystemSettingData, data) < 0)
         return -1;
+
+    if (!*data) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s", _("no data"));
+    }
+
     return 0;
 }
 
