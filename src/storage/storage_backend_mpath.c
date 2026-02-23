@@ -197,19 +197,25 @@ virStorageBackendGetMaps(virStoragePoolObj *pool)
     struct dm_names *names = NULL;
 
     if (!(dmt = dm_task_create(DM_DEVICE_LIST))) {
-        retval = 1;
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("Failed to create devmapper task"));
+        retval = -1;
         goto out;
     }
 
     dm_task_no_open_count(dmt);
 
     if (!dm_task_run(dmt)) {
-        retval = 1;
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("Failed to run devmapper task"));
+        retval = -1;
         goto out;
     }
 
     if (!(names = dm_task_get_names(dmt))) {
-        retval = 1;
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("Failed to get devmapper device names"));
+        retval = -1;
         goto out;
     }
 
@@ -218,7 +224,10 @@ virStorageBackendGetMaps(virStoragePoolObj *pool)
         goto out;
     }
 
-    virStorageBackendCreateVols(pool, names);
+    if (virStorageBackendCreateVols(pool, names) < 0) {
+        retval = -1;
+        goto out;
+    }
 
  out:
     if (dmt != NULL)
@@ -248,7 +257,8 @@ virStorageBackendMpathRefreshPool(virStoragePoolObj *pool)
 
     virWaitForDevices();
 
-    virStorageBackendGetMaps(pool);
+    if (virStorageBackendGetMaps(pool) < 0)
+        return -1;
 
     return 0;
 }
