@@ -1123,15 +1123,44 @@ init_env(void)
 }
 
 
+static void
+pci_driver_free(struct pciDriver *driver)
+{
+    if (!driver)
+        return;
+
+    g_free(driver->name);
+    g_free(driver->vendor);
+    g_free(driver->device);
+    g_free(driver);
+}
+
+
 static void __attribute__((destructor))
 deinit_env(void)
 {
-    if (!fakerootClean)
-        return;
+    size_t i;
 
-    virFileDeleteTree(fakerootdir);
-    g_clear_pointer(&fakerootdir, g_free);
-    fakerootClean = false;
+    if (fakerootClean) {
+        virFileDeleteTree(fakerootdir);
+        g_clear_pointer(&fakerootdir, g_free);
+        fakerootClean = false;
+    }
+
+    for (i = 0; i < nPCIDrivers; i++) {
+        pci_driver_free(pciDrivers[i]);
+    }
+    g_free(pciDrivers);
+
+    for (i = 0; i < nPCIDevices; i++) {
+        g_free(pciDevices[i]);
+    }
+    g_free(pciDevices);
+
+    for (i = 0; i < npciIommuGroups; i++) {
+        g_free(pciIommuGroups[i]);
+    }
+    g_free(pciIommuGroups);
 }
 
 
