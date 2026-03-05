@@ -407,7 +407,7 @@ valid_name(const char *name)
 {
     /* just try to filter out any dangerous characters in the name that can be
      * used to subvert the profile */
-    const char *bad = "/[]{}?^,\"*";
+    const char *bad = "/{}?^,\"*";
 
     if (strlen(name) == 0)
         return -1;
@@ -757,15 +757,22 @@ vah_add_path(virBuffer *buf, const char *path, const char *perms, bool recursive
     if (tmp[strlen(tmp) - 1] == '/')
         tmp[strlen(tmp) - 1] = '\0';
 
-    virBufferAsprintf(buf, "  \"%s%s\" %s,\n", tmp, recursive ? "/**" : "",
-                      perms_new);
+    virBufferAddLit(buf, "  \"");
+    virBufferEscape(buf, '\\', "[]", "%s", tmp);
+    if (recursive)
+        virBufferAddLit(buf, "/**");
+    virBufferAsprintf(buf, "\" %s,\n", perms_new);
     if (explicit_deny_rule) {
         virBufferAddLit(buf, "  # don't audit writes to readonly files\n");
-        virBufferAsprintf(buf, "  deny \"%s%s\" w,\n", tmp, recursive ? "/**" : "");
+        virBufferAddLit(buf, "  deny \"");
+        virBufferEscape(buf, '\\', "[]", "%s", tmp);
+        if (recursive)
+            virBufferAddLit(buf, "/**");
+        virBufferAddLit(buf, "\" w,\n");
     }
     if (recursive) {
         /* allow reading (but not creating) the dir */
-        virBufferAsprintf(buf, "  \"%s/\" r,\n", tmp);
+        virBufferEscape(buf, '\\', "[]", "  \"%s/\" r,\n", tmp);
     }
 
     return rc;
