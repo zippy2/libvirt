@@ -15,7 +15,7 @@ description_reload="re-exec the daemon to enforce configuration reload"
 
 depend() {
     use ceph dbus iscsid virtlockd
-    after nfs nfsmount
+    after ebtables iptables ip6tables nftables nfs nfsmount
 }
 
 reload() {
