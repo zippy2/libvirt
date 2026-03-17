@@ -17,7 +17,7 @@ depend() {
     need virtlogd
     @NEED_FIREWALLD@
     use ceph dbus iscsid virtlockd
-    after cgconfig corosync ebtables iptables ip6tables nfs nfsmount ntp-client ntpdportmap rpc.statd sanlock xenconsoled
+    after cgconfig corosync ebtables iptables ip6tables nftables nfs nfsmount ntp-client ntpdportmap rpc.statd sanlock xenconsoled
 }
 
 reload() {
