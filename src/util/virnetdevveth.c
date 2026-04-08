@@ -26,6 +26,7 @@
 #include "virerror.h"
 #include "virnetdev.h"
 #include "virnetlink.h"
+#include "virutil.h"
 
 #define VIR_FROM_THIS VIR_FROM_NONE
 
@@ -126,6 +127,9 @@ int virNetDevVethCreate(char **veth1, char **veth2)
 
     if (virNetDevVethCreateInternal(*veth1, *veth2) < 0)
         goto cleanup;
+
+    /* Allow udev to process newly created veth. */
+    virWaitForDevices();
 
     VIR_DEBUG("Create Host: %s guest: %s", *veth1, *veth2);
     return 0;

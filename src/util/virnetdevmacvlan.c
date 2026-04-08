@@ -24,6 +24,7 @@
 #include "virnetdevmacvlan.h"
 #include "virmacaddr.h"
 #include "virerror.h"
+#include "virutil.h"
 
 #define VIR_FROM_THIS VIR_FROM_NET
 
@@ -118,6 +119,9 @@ virNetDevMacVLanCreate(const char *ifname,
                              virMacAddrFormat(macaddress, macstr));
         return -1;
     }
+
+    /* Allow udev to process newly created mactap/macvlan. */
+    virWaitForDevices();
 
     VIR_INFO("created device: '%s'", ifname);
     return 0;

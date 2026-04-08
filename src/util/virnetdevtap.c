@@ -29,6 +29,7 @@
 #include "viralloc.h"
 #include "virlog.h"
 #include "virstring.h"
+#include "virutil.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -265,6 +266,9 @@ int virNetDevTapCreate(char **ifname,
         tapfd[i] = fd;
     }
 
+    /* Allow udev to process newly created TUN/TAP. */
+    virWaitForDevices();
+
     VIR_INFO("created device: '%s'", *ifname);
     ret = 0;
 
@@ -375,6 +379,8 @@ int virNetDevTapCreate(char **ifname,
     if (virNetDevSetName(ifr.ifr_name, *ifname) == -1)
         goto cleanup;
 
+    /* Allow udev to process newly created TUN/TAP. */
+    virWaitForDevices();
 
     ret = 0;
  cleanup:
