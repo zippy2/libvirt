@@ -1868,12 +1868,15 @@ bhyveDomainInterfaceAddresses(virDomainPtr domain,
         goto cleanup;
 
     switch (source) {
+    case VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_ARP:
+        ret = virDomainNetARPInterfaces(vm->def, ifaces);
+        break;
+
     case VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE:
         ret = virDomainNetDHCPInterfaces(vm->def, ifaces);
         break;
 
     case VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT:
-    case VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_ARP:
         virReportError(VIR_ERR_ARGUMENT_UNSUPPORTED,
                        _("Unsupported IP address data source %1$d"),
                        source);
