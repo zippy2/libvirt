@@ -870,8 +870,8 @@ int virConfGetValueString(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value string %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value string %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -918,8 +918,8 @@ int virConfGetValueStringList(virConf *conf,
     size_t len;
     virConfValue *eval;
 
-    VIR_DEBUG("Get value string list %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value string list %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -993,8 +993,8 @@ int virConfGetValueBool(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value bool %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value bool %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -1041,8 +1041,8 @@ int virConfGetValueInt(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value int %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value int %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -1090,8 +1090,8 @@ int virConfGetValueUInt(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value uint %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value uint %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -1138,8 +1138,8 @@ int virConfGetValueSizeT(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value size_t %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value size_t %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -1188,8 +1188,8 @@ int virConfGetValueSSizeT(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value ssize_t %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value ssize_t %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -1245,8 +1245,8 @@ int virConfGetValueLLong(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value long long %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value long long %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
@@ -1292,8 +1292,8 @@ int virConfGetValueULLong(virConf *conf,
 {
     virConfValue *cval = virConfGetValue(conf, setting);
 
-    VIR_DEBUG("Get value unsigned long long %p %d",
-              cval, cval ? cval->type : VIR_CONF_NONE);
+    VIR_DEBUG("Get value unsigned long long %s %p %d",
+              setting, cval, cval ? cval->type : VIR_CONF_NONE);
 
     if (!cval)
         return 0;
