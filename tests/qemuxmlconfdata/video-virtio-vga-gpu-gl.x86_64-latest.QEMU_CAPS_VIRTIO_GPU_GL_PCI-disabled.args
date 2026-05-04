@@ -29,7 +29,7 @@ XDG_CONFIG_HOME=/var/lib/libvirt/qemu/domain--1-QEMUGuest1/.config \
 -device '{"driver":"piix3-usb-uhci","id":"usb","bus":"pci.0","addr":"0x1.0x2"}' \
 -audiodev '{"id":"audio1","driver":"none"}' \
 -device '{"driver":"virtio-vga-gl","id":"video0","max_outputs":1,"bus":"pci.0","addr":"0x2"}' \
--device '{"driver":"virtio-gpu-pci","id":"video1","max_outputs":1,"bus":"pci.0","addr":"0x4"}' \
+-device '{"driver":"virtio-gpu-pci","id":"video1","max_outputs":1,"hostmem":8589934592,"bus":"pci.0","addr":"0x4"}' \
 -device '{"driver":"virtio-balloon-pci","id":"balloon0","bus":"pci.0","addr":"0x3"}' \
 -sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny \
 -msg timestamp=on
