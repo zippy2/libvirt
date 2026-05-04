@@ -4941,6 +4941,11 @@
               </attribute>
             </optional>
             <optional>
+              <attribute name="hostmem">
+                <ref name="unsignedInt"/>
+              </attribute>
+            </optional>
+            <optional>
               <attribute name="heads">
                 <ref name="unsignedInt"/>
               </attribute>
