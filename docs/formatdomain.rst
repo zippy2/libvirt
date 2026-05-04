@@ -7382,6 +7382,11 @@ A video device.
    ``virtio-vga-gl``, and ``virtio-gpu-gl``, but not all combinations of config
    and this field make sense.
 
+   :since:`Since 12.4.0` (QEMU driver only), devices with type ``virtio`` have
+   an optional ``hostmem`` attribute that can be set to specify the size of
+   virtio-gpu host memory window (typically between 256MiB and 8GiB). The units
+   are kibibytes though.
+
 ``acceleration``
    Configure if video acceleration should be enabled.
 
