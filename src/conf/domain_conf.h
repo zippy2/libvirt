@@ -1923,6 +1923,7 @@ struct _virDomainVideoDef {
     unsigned int vram; /* kibibytes (multiples of 1024) */
     unsigned int vram64; /* kibibytes (multiples of 1024) */
     unsigned int vgamem; /* kibibytes (multiples of 1024) */
+    unsigned int hostmem; /* kibibytes (multiples of 1024) */
     unsigned int heads;
     bool primary;
     virDomainVideoAccelDef *accel;
