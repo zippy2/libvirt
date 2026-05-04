@@ -13853,6 +13853,9 @@ virDomainVideoModelDefParseXML(virDomainVideoDef *def,
     if (virXMLPropUInt(node, "vgamem", 10, VIR_XML_PROP_NONE, &def->vgamem) < 0)
         return -1;
 
+    if (virXMLPropUInt(node, "hostmem", 10, VIR_XML_PROP_NONE, &def->hostmem) < 0)
+        return -1;
+
     if (virXMLPropUIntDefault(node, "heads", 10, VIR_XML_PROP_NONE, &def->heads, 1) < 0)
         return -1;
 
@@ -21722,6 +21725,13 @@ virDomainVideoDefCheckABIStability(virDomainVideoDef *src,
         return false;
     }
 
+    if (src->hostmem != dst->hostmem) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+                       _("Target video card hostmem %1$u does not match source %2$u"),
+                       dst->hostmem, src->hostmem);
+        return false;
+    }
+
     if (src->heads != dst->heads) {
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                        _("Target video card heads %1$u does not match source %2$u"),
@@ -27500,6 +27510,8 @@ virDomainVideoDefFormat(virBuffer *buf,
         virBufferAsprintf(&modelAttrBuf, " vram64='%u'", def->vram64);
     if (def->vgamem)
         virBufferAsprintf(&modelAttrBuf, " vgamem='%u'", def->vgamem);
+    if (def->hostmem)
+        virBufferAsprintf(&modelAttrBuf, " hostmem='%u'", def->hostmem);
     if (def->heads)
         virBufferAsprintf(&modelAttrBuf, " heads='%u'", def->heads);
     if (def->primary)

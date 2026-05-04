@@ -229,6 +229,13 @@ virDomainVideoDefValidate(const virDomainVideoDef *video,
                            virDomainVideoTypeToString(video->type));
             return -1;
         }
+
+        if (video->hostmem != 0) {
+            virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
+                           _("video type '%1$s' does not support hostmem"),
+                           virDomainVideoTypeToString(video->type));
+            return -1;
+        }
     }
 
     if ((video->type != VIR_DOMAIN_VIDEO_TYPE_BOCHS) &&
