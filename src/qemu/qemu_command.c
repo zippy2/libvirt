@@ -4650,8 +4650,12 @@ qemuBuildDeviceVideoCmd(virCommand *cmd,
                                   NULL) < 0)
             return -1;
     } else if (video->type == VIR_DOMAIN_VIDEO_TYPE_VIRTIO) {
-        if (virJSONValueObjectAdd(&props, "T:blob", video->blob, NULL) < 0)
+        if (virJSONValueObjectAdd(&props,
+                                  "T:blob", video->blob,
+                                  "P:hostmem", video->hostmem * 1024ULL,
+                                  NULL) < 0) {
             return -1;
+        }
     }
 
     if (virJSONValueObjectAdd(&props, "T:edid", video->edid, NULL) < 0)
