@@ -66,6 +66,7 @@ struct qemuHotplugTestData {
     GHashTable *capsCache;
     GHashTable *schemaCache;
     GHashTable *schema;
+    GHashTable *existingTestCases;
 };
 
 static int
@@ -174,15 +175,20 @@ testQemuHotplug(const void *data)
                                       abs_srcdir, test->domain_filename,
                                       test->device_filename);
 
+    virTestCaseMarkUsed(test->existingTestCases, domain_filename);
+    virTestCaseMarkUsed(test->existingTestCases, device_filename);
+
     if (virTestLoadFile(domain_filename, &domain_xml) < 0 ||
         virTestLoadFile(device_filename, &device_xml) < 0)
         goto cleanup;
 
     if (!fail &&
         (test->action == ATTACH ||
-         test->action == UPDATE) &&
-        virTestLoadFile(result_filename, &result_xml) < 0)
-        goto cleanup;
+         test->action == UPDATE)) {
+        virTestCaseMarkUsed(test->existingTestCases, result_filename);
+        if (virTestLoadFile(result_filename, &result_xml) < 0)
+            goto cleanup;
+    }
 
     if (test->vm) {
         vm = test->vm;
@@ -329,6 +335,7 @@ struct testQemuHotplugCpuParams {
     GHashTable *capsLatestFiles;
     GHashTable *capsCache;
     GHashTable *schemaCache;
+    GHashTable *existingTestCases;
 };
 
 
@@ -488,6 +495,11 @@ testQemuHotplugCpuPrepare(const struct testQemuHotplugCpuParams *params)
     data->file_xml_res_live = g_strdup_printf("%s-result-live.xml", prefix);
     data->file_xml_res_conf = g_strdup_printf("%s-result-conf.xml", prefix);
     data->file_json_monitor = g_strdup_printf("%s-monitor.json", prefix);
+
+    virTestCaseMarkUsed(params->existingTestCases, data->file_xml_dom);
+    virTestCaseMarkUsed(params->existingTestCases, data->file_xml_res_live);
+    virTestCaseMarkUsed(params->existingTestCases, data->file_xml_res_conf);
+    virTestCaseMarkUsed(params->existingTestCases, data->file_json_monitor);
 
     if (virTestLoadFile(data->file_xml_dom, &data->xml_dom) < 0)
         goto error;
@@ -811,12 +823,21 @@ testQemuHotplugCpuIndividual(const void *opaque)
 }
 
 
+static bool
+testCaseEnumerate(struct dirent *ent)
+{
+    return virStringHasSuffix(ent->d_name, ".xml") ||
+        virStringHasSuffix(ent->d_name, ".json");
+}
+
+
 static int
 mymain(void)
 {
     int ret = 0;
     g_autoptr(virConnect) conn = NULL;
     g_autoptr(virQEMUDriverConfig) cfg = NULL;
+    g_autoptr(GHashTable) existingTestCases = NULL;
     g_autoptr(GHashTable) capsLatestFiles = testQemuGetLatestCaps();
     g_autoptr(GHashTable) capsCache = virHashNew(virObjectUnref);
     g_autoptr(GHashTable) schemaCache = virHashNew((GDestroyNotify) g_hash_table_unref);
@@ -826,6 +847,18 @@ mymain(void)
     struct testQemuHotplugCpuParams cpudata = { .capsLatestFiles = capsLatestFiles,
                                                 .capsCache = capsCache,
                                                 .schemaCache = schemaCache };
+
+    if (virTestEnumerateTestCases(&existingTestCases,
+                                  testCaseEnumerate,
+                                  abs_srcdir "/qemuhotplugtestdomains",
+                                  abs_srcdir "/qemuhotplugtestdevices",
+                                  abs_srcdir "/qemuhotplugtestcpus",
+                                  NULL) < 0) {
+        return EXIT_FAILURE;
+    }
+
+    data.existingTestCases = existingTestCases;
+    cpudata.existingTestCases = existingTestCases;
 
     if (qemuTestDriverInit(&driver) < 0)
         return EXIT_FAILURE;
@@ -1199,6 +1232,9 @@ mymain(void)
                        testQemuHotplugCpuGroupAsync, &async) < 0)
             ret = -1;
     } while (0);
+
+    if (virTestCheckUnusedTestCases(existingTestCases) < 0)
+        ret = -1;
 
     qemuTestDriverFree(&driver);
     virObjectUnref(data.vm);
