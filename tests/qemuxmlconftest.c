@@ -1066,9 +1066,10 @@ mymain(void)
 
     /* enumerate and store all available test cases to verify at the end that
      * all of them were invoked */
-    if (virTestEnumerateTestCases(abs_srcdir "/qemuxmlconfdata",
+    if (virTestEnumerateTestCases(&existingTestCases,
                                   testConfXMLEnumerate,
-                                  &existingTestCases) < 0) {
+                                  abs_srcdir "/qemuxmlconfdata",
+                                  NULL) < 0) {
         return EXIT_FAILURE;
     }
 
