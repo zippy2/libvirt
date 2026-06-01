@@ -234,9 +234,9 @@ int virCreateAnonymousFile(const uint8_t *data, size_t len);
 typedef bool (*virTestEnumerateTestCasesCB)(struct dirent *);
 
 int
-virTestEnumerateTestCases(const char *path,
+virTestEnumerateTestCases(GHashTable **existingTestCases,
                           virTestEnumerateTestCasesCB cb,
-                          GHashTable **existingTestCases);
+                          ...);
 
 void
 virTestCaseMarkUsed(GHashTable *existingTestCases,

@@ -999,9 +999,10 @@ mymain(void)
     virDomainCapsCPUModels *ppc_models = NULL;
     int ret = 0;
 
-    if (virTestEnumerateTestCases(abs_srcdir "/cputestdata",
+    if (virTestEnumerateTestCases(&existingTestCases,
                                   testCaseEnumerate,
-                                  &existingTestCases) < 0) {
+                                  abs_srcdir "/cputestdata",
+                                  NULL) < 0) {
         return EXIT_FAILURE;
     }
 

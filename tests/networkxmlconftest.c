@@ -285,9 +285,10 @@ mymain(void)
     g_autoptr(GHashTable) existingTestCases = NULL;
     int ret = 0;
 
-    if (virTestEnumerateTestCases(abs_srcdir "/networkxmlconfdata",
+    if (virTestEnumerateTestCases(&existingTestCases,
                                   testCaseEnumerate,
-                                  &existingTestCases) < 0) {
+                                  abs_srcdir "/networkxmlconfdata",
+                                  NULL) < 0) {
         return -1;
     }
 
