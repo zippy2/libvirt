@@ -1393,29 +1393,38 @@ virCreateAnonymousFile(const uint8_t *data, size_t len)
 #endif
 
 int
-virTestEnumerateTestCases(const char *path,
+virTestEnumerateTestCases(GHashTable **existingTestCases,
                           virTestEnumerateTestCasesCB cb,
-                          GHashTable **existingTestCases)
+                          ...)
 {
     g_autoptr(GHashTable) etc = virHashNew(NULL);
-    struct dirent *ent;
-    g_autoptr(DIR) dir = NULL;
+    const char *path;
+    va_list list;
     int rc;
 
     /* If VIR_TEST_RANGE is in use don't bother filling in the data. */
     if (virTestHasRangeBitmap())
         return 0;
 
-    if (virDirOpen(&dir, path) < 0)
-        return -1;
+    va_start(list, cb);
+    while ((path = va_arg(list, const char *))) {
+        struct dirent *ent;
+        g_autoptr(DIR) dir = NULL;
 
-    while ((rc = virDirRead(dir, &ent, path)) > 0) {
-        if (cb(ent)) {
-            g_hash_table_insert(etc,
-                                g_strdup_printf("%s/%s", path, ent->d_name),
-                                NULL);
+        if (virDirOpen(&dir, path) < 0) {
+            va_end(list);
+            return -1;
+        }
+
+        while ((rc = virDirRead(dir, &ent, path)) > 0) {
+            if (cb(ent)) {
+                g_hash_table_insert(etc,
+                                    g_strdup_printf("%s/%s", path, ent->d_name),
+                                    NULL);
+            }
         }
     }
+    va_end(list);
 
     if (rc == 0)
         *existingTestCases = g_steal_pointer(&etc);
