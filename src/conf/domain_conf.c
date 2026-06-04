@@ -12536,6 +12536,29 @@ virDomainNetDefNew(virDomainXMLOption *xmlopt)
 }
 
 
+static int
+virDomainGraphicsDefParsePrivateData(xmlXPathContextPtr ctxt,
+                                     virDomainGraphicsDef *def,
+                                     virDomainXMLOption *xmlopt)
+{
+    xmlNodePtr privateNode = virXPathNode("./privateData", ctxt);
+    VIR_XPATH_NODE_AUTORESTORE(ctxt)
+
+    if (!xmlopt ||
+        !xmlopt->privateData.graphicsParse ||
+        !privateNode) {
+        return 0;
+    }
+
+    ctxt->node = privateNode;
+
+    if (xmlopt->privateData.graphicsParse(ctxt, def) < 0)
+        return -1;
+
+    return 0;
+}
+
+
 /* Parse the XML definition for a graphics device */
 static virDomainGraphicsDef *
 virDomainGraphicsDefParseXML(virDomainXMLOption *xmlopt,
@@ -12544,6 +12567,9 @@ virDomainGraphicsDefParseXML(virDomainXMLOption *xmlopt,
                              unsigned int flags)
 {
     virDomainGraphicsDef *def;
+    VIR_XPATH_NODE_AUTORESTORE(ctxt)
+
+    ctxt->node = node;
 
     if (!(def = virDomainGraphicsDefNew(xmlopt)))
         return NULL;
@@ -12581,6 +12607,11 @@ virDomainGraphicsDefParseXML(virDomainXMLOption *xmlopt,
         break;
     case VIR_DOMAIN_GRAPHICS_TYPE_LAST:
         break;
+    }
+
+    if (flags & VIR_DOMAIN_DEF_PARSE_STATUS &&
+        virDomainGraphicsDefParsePrivateData(ctxt, def, xmlopt) < 0) {
+        goto error;
     }
 
     return def;
@@ -28121,9 +28152,31 @@ virDomainGraphicsDefFormatDBus(virBuffer *attrBuf,
     virDomainGraphicsDefFormatAudio(childBuf, def->data.dbus.audioId);
 }
 
+
+static int
+virDomainGraphicsDefFormatPrivateData(virBuffer *buf,
+                                      const virDomainGraphicsDef *def,
+                                      virDomainXMLOption *xmlopt)
+{
+    g_auto(virBuffer) childBuf = VIR_BUFFER_INIT_CHILD(buf);
+
+    if (!xmlopt ||
+        !xmlopt ->privateData.graphicsFormat) {
+        return 0;
+    }
+
+    if (xmlopt->privateData.graphicsFormat(&childBuf, def) < 0)
+        return -1;
+
+    virXMLFormatElement(buf, "privateData", NULL, &childBuf);
+    return 0;
+}
+
+
 static int
 virDomainGraphicsDefFormat(virBuffer *buf,
                            virDomainGraphicsDef *def,
+                           virDomainXMLOption *xmlopt,
                            unsigned int flags)
 {
     g_auto(virBuffer) attrBuf = VIR_BUFFER_INITIALIZER;
@@ -28171,6 +28224,11 @@ virDomainGraphicsDefFormat(virBuffer *buf,
 
     case VIR_DOMAIN_GRAPHICS_TYPE_LAST:
         break;
+    }
+
+    if (flags & VIR_DOMAIN_DEF_FORMAT_STATUS &&
+        virDomainGraphicsDefFormatPrivateData(&childBuf, def, xmlopt) < 0) {
+        return -1;
     }
 
     virXMLFormatElement(buf, "graphics", &attrBuf, &childBuf);
@@ -30310,7 +30368,7 @@ virDomainDefFormatInternalSetRootName(virDomainDef *def,
     }
 
     for (n = 0; n < def->ngraphics; n++) {
-        if (virDomainGraphicsDefFormat(buf, def->graphics[n], flags) < 0)
+        if (virDomainGraphicsDefFormat(buf, def->graphics[n], xmlopt, flags) < 0)
             return -1;
     }
 
