@@ -9826,6 +9826,23 @@ qemuProcessReloadMachineTypes(virDomainObj *vm)
 }
 
 
+static int
+qemuProcessRefreshGraphics(virQEMUDriver *driver,
+                           virDomainObj *vm)
+{
+    size_t i;
+
+    for (i = 0; i < vm->def->ngraphics; i++) {
+        virDomainGraphicsDef *graphics = vm->def->graphics[i];
+
+        if (qemuProcessGraphicsReservePorts(graphics, true) < 0)
+            return -1;
+    }
+
+    return 0;
+}
+
+
 struct qemuProcessReconnectData {
     virDomainObj *obj;
     virIdentity *identity;
@@ -9930,10 +9947,8 @@ qemuProcessReconnect(void *opaque)
             goto error;
     }
 
-    for (i = 0; i < obj->def->ngraphics; i++) {
-        if (qemuProcessGraphicsReservePorts(obj->def->graphics[i], true) < 0)
-            goto error;
-    }
+    if (qemuProcessRefreshGraphics(driver, obj) < 0)
+        goto error;
 
     if (qemuProcessUpdateState(obj) < 0)
         goto error;
