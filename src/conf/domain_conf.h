@@ -3634,6 +3634,11 @@ typedef int (*virDomainXMLPrivateDataNetParseFunc)(xmlXPathContextPtr ctxt,
 typedef int (*virDomainXMLPrivateDataNetFormatFunc)(const virDomainNetDef *net,
                                                     virBuffer *buf);
 
+typedef int (*virDomainXMLPrivateDataGraphicsParseFunc)(xmlXPathContextPtr ctxt,
+                                                        virDomainGraphicsDef *def);
+typedef int (*virDomainXMLPrivateDataGraphicsFormatFunc)(virBuffer *buf,
+                                                         const virDomainGraphicsDef *def);
+
 struct _virDomainXMLPrivateDataCallbacks {
     virDomainXMLPrivateDataAllocFunc  alloc;
     virDomainXMLPrivateDataFreeFunc   free;
@@ -3647,6 +3652,8 @@ struct _virDomainXMLPrivateDataCallbacks {
     virDomainXMLPrivateDataNewFunc    vsockNew;
     virDomainXMLPrivateDataNewFunc    cryptoNew;
     virDomainXMLPrivateDataNewFunc    graphicsNew;
+    virDomainXMLPrivateDataGraphicsParseFunc graphicsParse;
+    virDomainXMLPrivateDataGraphicsFormatFunc graphicsFormat;
     virDomainXMLPrivateDataNewFunc    hostdevNew;
     virDomainXMLPrivateDataNewFunc    networkNew;
     virDomainXMLPrivateDataNetParseFunc networkParse;
