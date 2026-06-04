@@ -158,6 +158,56 @@ name_vanished_cb(GDBusConnection *connection G_GNUC_UNUSED,
 }
 
 
+static void
+qemuVncSetupDBus(qemuDomainObjPrivate *priv,
+                 qemuVnc *vnc)
+{
+    vnc->name_watch = g_bus_watch_name_on_connection(priv->dbusConnection,
+                                                     ORG_QEMU_VNC,
+                                                     G_BUS_NAME_WATCHER_FLAGS_NONE,
+                                                     name_appeared_cb,
+                                                     name_vanished_cb,
+                                                     vnc,
+                                                     NULL);
+}
+
+
+int
+qemuVncRefresh(virDomainObj *vm,
+               virDomainGraphicsDef *gfx)
+{
+    qemuDomainObjPrivate *priv = vm->privateData;
+    qemuDomainGraphicsPrivate *gfxpriv = QEMU_DOMAIN_GRAPHICS_PRIVATE(gfx);
+    qemuVnc *vnc = gfxpriv->vnc;
+    g_autofree char *pidfile = NULL;
+    pid_t pid;
+
+    if (vnc->pid == -1)
+        return 0;
+
+    pidfile = qemuVncCreatePidFilename(vm);
+
+    if (virPidFileReadPathIfLocked(pidfile, &pid) < 0) {
+        if (virPidFileDeletePath(pidfile) < 0) {
+            virReportSystemError(errno,
+                                 _("unable to remove pidfile: %1$s"),
+                                 pidfile);
+            return -1;
+        }
+    } else {
+        if (vnc->pid != pid) {
+            virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                           "Mismatching qemu-vnc PIDs from status XML and pidfile");
+            return -1;
+        }
+
+        qemuVncSetupDBus(priv, vnc);
+    }
+
+    return 0;
+}
+
+
 int
 qemuVncStart(virDomainObj *vm, virDomainGraphicsDef *gfx)
 {
@@ -271,13 +321,7 @@ qemuVncStart(virDomainObj *vm, virDomainGraphicsDef *gfx)
             virCommandAddEnvPair(cmd, "SASL_CONF_PATH", cfg->vncSASLdir);
     }
 
-    vnc->name_watch = g_bus_watch_name_on_connection(priv->dbusConnection,
-                                                     ORG_QEMU_VNC,
-                                                     G_BUS_NAME_WATCHER_FLAGS_NONE,
-                                                     name_appeared_cb,
-                                                     name_vanished_cb,
-                                                     vnc,
-                                                     NULL);
+    qemuVncSetupDBus(priv, vnc);
 
     if (qemuExtDeviceLogCommand(driver, vm, cmd, "qemu-vnc") < 0)
         goto error;
