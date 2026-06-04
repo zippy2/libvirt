@@ -34,6 +34,9 @@ qemuVncStop(virDomainObj *vm,
 int
 qemuVncSetupCgroup(qemuVnc *vnc,
                    virCgroup *cgroup);
+int
+qemuVncRefresh(virDomainObj *vm,
+               virDomainGraphicsDef *gfx);
 
 int
 qemuVncSetPassword(virDomainObj *vm,
