@@ -1031,6 +1031,48 @@ qemuDomainGraphicsPrivateNew(void)
 }
 
 
+static int
+qemuDomainGraphicsPrivateParse(xmlXPathContextPtr ctxt,
+                               virDomainGraphicsDef *def)
+{
+    qemuDomainGraphicsPrivate *priv = QEMU_DOMAIN_GRAPHICS_PRIVATE(def);
+    long long processid;
+    int rc;
+
+    rc = virXPathLongLong("string(./vnc/pid/text())", ctxt, &processid);
+
+    if (rc >= 0) {
+        g_autoptr(qemuVnc) vnc = qemuVncNew();
+
+        vnc->pid = processid;
+        priv->vnc = g_steal_pointer(&vnc);
+    } else if (rc == -2) {
+        virReportError(VIR_ERR_INTERNAL_ERROR, "%s",
+                       _("malformed value of qemu-vnc PID in status XML"));
+        return -1;
+    }
+
+    return 0;
+}
+
+
+static int
+qemuDomainGraphicsPrivateFormat(virBuffer *buf,
+                                const virDomainGraphicsDef *def)
+{
+    const qemuDomainGraphicsPrivate *priv = QEMU_DOMAIN_GRAPHICS_PRIVATE(def);
+    g_auto(virBuffer) vncBuf = VIR_BUFFER_INIT_CHILD(buf);
+    const qemuVnc *vnc = priv->vnc;
+
+    if (!vnc)
+        return 0;
+
+    virBufferAsprintf(&vncBuf, "<pid>%lld</pid>\n", (long long)vnc->pid);
+    virXMLFormatElement(buf, "vnc", NULL, &vncBuf);
+    return 0;
+}
+
+
 static void
 qemuDomainGraphicsPrivateDispose(void *obj)
 {
@@ -3578,6 +3620,8 @@ virDomainXMLPrivateDataCallbacks virQEMUDriverPrivateDataCallbacks = {
     .chrSourceNew = qemuDomainChrSourcePrivateNew,
     .vsockNew = qemuDomainVsockPrivateNew,
     .graphicsNew = qemuDomainGraphicsPrivateNew,
+    .graphicsParse = qemuDomainGraphicsPrivateParse,
+    .graphicsFormat = qemuDomainGraphicsPrivateFormat,
     .hostdevNew = qemuDomainHostdevPrivateNew,
     .networkNew = qemuDomainNetworkPrivateNew,
     .networkParse = qemuDomainNetworkPrivateParse,
