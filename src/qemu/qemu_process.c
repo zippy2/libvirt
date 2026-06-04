@@ -9827,6 +9827,23 @@ qemuProcessReloadMachineTypes(virDomainObj *vm)
 
 
 static int
+qemuProcessRefreshGraphicsVNC(virQEMUDriver *driver,
+                              virDomainObj *vm,
+                              virDomainGraphicsDef *gfx)
+{
+    g_autoptr(virQEMUDriverConfig) cfg = virQEMUDriverGetConfig(driver);
+
+    if (!qemuHasNonP2PDbusGraphics(vm->def))
+        return 0;
+
+    if (!qemuVncAvailable(cfg->qemuVncName))
+        return 0;
+
+    return qemuVncRefresh(vm, gfx);
+}
+
+
+static int
 qemuProcessRefreshGraphics(virQEMUDriver *driver,
                            virDomainObj *vm)
 {
@@ -9834,6 +9851,11 @@ qemuProcessRefreshGraphics(virQEMUDriver *driver,
 
     for (i = 0; i < vm->def->ngraphics; i++) {
         virDomainGraphicsDef *graphics = vm->def->graphics[i];
+
+        if (graphics->type == VIR_DOMAIN_GRAPHICS_TYPE_VNC &&
+            qemuProcessRefreshGraphicsVNC(driver, vm, graphics) < 0) {
+            return -1;
+        }
 
         if (qemuProcessGraphicsReservePorts(graphics, true) < 0)
             return -1;
