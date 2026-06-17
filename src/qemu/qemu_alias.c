@@ -32,24 +32,6 @@
 
 VIR_LOG_INIT("qemu.qemu_alias");
 
-int
-qemuDomainDeviceAliasIndex(const virDomainDeviceInfo *info,
-                           const char *prefix)
-{
-    int idx;
-
-    if (!info->alias)
-        return -1;
-    if (!STRPREFIX(info->alias, prefix))
-        return -1;
-
-    if (virStrToLong_i(info->alias + strlen(prefix), NULL, 10, &idx) < 0)
-        return -1;
-
-    return idx;
-}
-
-
 static ssize_t
 qemuGetNextChrDevIndex(virDomainDef *def,
                        virDomainChrDef *chr,
@@ -68,9 +50,9 @@ qemuGetNextChrDevIndex(virDomainDef *def,
 
     for (i = 0; i < cnt; i++) {
         ssize_t thisidx;
-        if (((thisidx = qemuDomainDeviceAliasIndex(&arrPtr[i]->info, prefix)) < 0) &&
+        if (((thisidx = virDomainDeviceAliasIndex(&arrPtr[i]->info, prefix)) < 0) &&
             (prefix2 &&
-             (thisidx = qemuDomainDeviceAliasIndex(&arrPtr[i]->info, prefix2)) < 0))
+             (thisidx = virDomainDeviceAliasIndex(&arrPtr[i]->info, prefix2)) < 0))
             continue;
         if (thisidx >= idx)
             idx = thisidx + 1;
@@ -318,7 +300,7 @@ qemuAssignDeviceHostdevAlias(virDomainDef *def,
         for (i = 0; i < def->nhostdevs; i++) {
             int thisidx;
 
-            if ((thisidx = qemuDomainDeviceAliasIndex(def->hostdevs[i]->info, "hostdev")) < 0)
+            if ((thisidx = virDomainDeviceAliasIndex(def->hostdevs[i]->info, "hostdev")) < 0)
                 continue; /* error just means the alias wasn't "hostdevN", but something else */
             if (thisidx >= idx)
                 idx = thisidx + 1;
@@ -327,7 +309,7 @@ qemuAssignDeviceHostdevAlias(virDomainDef *def,
         for (i = 0; i < def->nnets; i++) {
             int thisidx;
 
-            if ((thisidx = qemuDomainDeviceAliasIndex(&def->nets[i]->info, "hostdev")) < 0)
+            if ((thisidx = virDomainDeviceAliasIndex(&def->nets[i]->info, "hostdev")) < 0)
                 continue;
             if (thisidx >= idx)
                 idx = thisidx + 1;
@@ -362,7 +344,7 @@ qemuAssignDeviceNetAlias(virDomainDef *def,
         for (i = 0; i < def->nnets; i++) {
             int thisidx;
 
-            if ((thisidx = qemuDomainDeviceAliasIndex(&def->nets[i]->info, "net")) < 0)
+            if ((thisidx = virDomainDeviceAliasIndex(&def->nets[i]->info, "net")) < 0)
                 continue; /* failure could be due to "hostdevN" */
             if (thisidx >= idx)
                 idx = thisidx + 1;
@@ -386,7 +368,7 @@ qemuAssignDeviceFSAlias(virDomainDef *def,
     for (i = 0; i < def->nfss; i++) {
         int idx;
 
-        if ((idx = qemuDomainDeviceAliasIndex(&def->fss[i]->info, "fs")) >= maxidx)
+        if ((idx = virDomainDeviceAliasIndex(&def->fss[i]->info, "fs")) >= maxidx)
             maxidx = idx + 1;
     }
 
@@ -461,7 +443,7 @@ qemuAssignDeviceRedirdevAlias(virDomainDef *def,
         idx = 0;
         for (i = 0; i < def->nredirdevs; i++) {
             int thisidx;
-            if ((thisidx = qemuDomainDeviceAliasIndex(&def->redirdevs[i]->info, "redir")) < 0)
+            if ((thisidx = virDomainDeviceAliasIndex(&def->redirdevs[i]->info, "redir")) < 0)
                 continue;
             if (thisidx >= idx)
                 idx = thisidx + 1;
@@ -484,7 +466,7 @@ qemuAssignDeviceRNGAlias(virDomainDef *def,
         return;
 
     for (i = 0; i < def->nrngs; i++) {
-        if ((idx = qemuDomainDeviceAliasIndex(&def->rngs[i]->info, "rng")) >= maxidx)
+        if ((idx = virDomainDeviceAliasIndex(&def->rngs[i]->info, "rng")) >= maxidx)
             maxidx = idx + 1;
     }
 
@@ -509,7 +491,7 @@ qemuDeviceMemoryGetAliasID(virDomainDef *def,
 
     for (i = 0; i < def->nmems; i++) {
         int idx;
-        if ((idx = qemuDomainDeviceAliasIndex(&def->mems[i]->info, prefix)) >= maxidx)
+        if ((idx = virDomainDeviceAliasIndex(&def->mems[i]->info, prefix)) >= maxidx)
             maxidx = idx + 1;
     }
 
@@ -582,8 +564,8 @@ qemuAssignDeviceShmemAlias(virDomainDef *def,
         for (i = 0; i < def->nshmems; i++) {
             int thisidx;
 
-            if ((thisidx = qemuDomainDeviceAliasIndex(&def->shmems[i]->info,
-                                                      "shmem")) < 0)
+            if ((thisidx = virDomainDeviceAliasIndex(&def->shmems[i]->info,
+                                                     "shmem")) < 0)
                 continue;
 
             if (thisidx >= idx)
@@ -607,7 +589,7 @@ qemuAssignDeviceWatchdogAlias(virDomainDef *def,
 
     if (idx == -1) {
         for (i = 0; i < def->nwatchdogs; i++) {
-            int cur_idx = qemuDomainDeviceAliasIndex(&def->watchdogs[i]->info, "watchdog");
+            int cur_idx = virDomainDeviceAliasIndex(&def->watchdogs[i]->info, "watchdog");
             if (cur_idx > idx)
                 idx = cur_idx;
         }
@@ -632,7 +614,7 @@ qemuAssignDeviceInputAlias(virDomainDef *def,
         size_t i;
 
         for (i = 0; i < def->ninputs; i++) {
-            if ((thisidx = qemuDomainDeviceAliasIndex(&def->inputs[i]->info, "input")) >= idx)
+            if ((thisidx = virDomainDeviceAliasIndex(&def->inputs[i]->info, "input")) >= idx)
                 idx = thisidx + 1;
         }
     }
@@ -673,7 +655,7 @@ qemuAssignDeviceCryptoAlias(virDomainDef *def,
         return;
 
     for (i = 0; i < def->ncryptos; i++) {
-        if ((idx = qemuDomainDeviceAliasIndex(&def->cryptos[i]->info, "crypto")) >= maxidx)
+        if ((idx = virDomainDeviceAliasIndex(&def->cryptos[i]->info, "crypto")) >= maxidx)
             maxidx = idx + 1;
     }
 
