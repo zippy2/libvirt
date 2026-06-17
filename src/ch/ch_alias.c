@@ -49,26 +49,6 @@ int chAssignDeviceDiskAlias(virDomainDiskDef *disk)
     return 0;
 }
 
-/**
- * Extract the index number of some device alias
- */
-static
-int chDomainDeviceAliasIndex(const virDomainDeviceInfo *info,
-                             const char *prefix)
-{
-    int idx;
-
-    if (!info->alias)
-        return -1;
-    if (!STRPREFIX(info->alias, prefix))
-        return -1;
-
-    if (virStrToLong_i(info->alias + strlen(prefix), NULL, 10, &idx) < 0)
-        return -1;
-
-    return idx;
-}
-
 void chAssignDeviceNetAlias(virDomainDef *def, virDomainNetDef *net)
 {
     size_t idx = 0;
@@ -81,7 +61,7 @@ void chAssignDeviceNetAlias(virDomainDef *def, virDomainNetDef *net)
     for (i = 0; i < def->nnets; i++) {
         int thisidx;
 
-        if ((thisidx = chDomainDeviceAliasIndex(&def->nets[i]->info, CH_NET_ID_PREFIX)) < 0)
+        if ((thisidx = virDomainDeviceAliasIndex(&def->nets[i]->info, CH_NET_ID_PREFIX)) < 0)
             continue;
         if (thisidx >= idx)
             idx = thisidx + 1;
