@@ -370,6 +370,7 @@ virDomainDefSetVcpus;
 virDomainDefSetVcpusMax;
 virDomainDefVcpuOrderClear;
 virDomainDeleteConfig;
+virDomainDeviceAliasIndex;
 virDomainDeviceAliasIsUserAlias;
 virDomainDeviceDefFree;
 virDomainDeviceDefParse;
