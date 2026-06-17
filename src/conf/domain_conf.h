@@ -3786,6 +3786,9 @@ bool virDomainDefHasUSB(const virDomainDef *def);
 
 bool virDomainDeviceAliasIsUserAlias(const char *aliasStr);
 
+int virDomainDeviceAliasIndex(const virDomainDeviceInfo *info,
+                              const char *prefix);
+
 static inline bool
 virDomainObjIsActive(virDomainObj *dom)
 {
