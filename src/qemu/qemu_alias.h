@@ -74,9 +74,6 @@ void qemuAssignDeviceVsockAlias(virDomainVsockDef *vsock);
 
 int qemuAssignDeviceAliases(virDomainDef *def);
 
-int qemuDomainDeviceAliasIndex(const virDomainDeviceInfo *info,
-                               const char *prefix);
-
 char *qemuAliasDiskDriveFromDisk(const virDomainDiskDef *disk);
 
 const char *qemuAliasDiskDriveSkipPrefix(const char *dev_name);
