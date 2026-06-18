@@ -1,4 +1,5 @@
 hypervisor_sources = [
+  'device_alias.c',
   'domain_cgroup.c',
   'domain_driver.c',
   'domain_interface.c',
