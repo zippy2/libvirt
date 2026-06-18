@@ -1663,6 +1663,11 @@ virSetConnectSecret;
 virSetConnectStorage;
 
 
+# hypervisor/device_alias.h
+virAssignDeviceDiskAlias;
+virDomainAssignDeviceAliases;
+
+
 # hypervisor/domain_cgroup.h
 virDomainCgroupConnectCgroup;
 virDomainCgroupEmulatorAllNodesAllow;
