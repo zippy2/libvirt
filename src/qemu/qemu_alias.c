@@ -25,6 +25,7 @@
 #include "virlog.h"
 #include "virstring.h"
 #include "virutil.h"
+#include "device_alias.h"
 
 #define QEMU_DRIVE_HOST_PREFIX "drive-"
 
@@ -693,6 +694,12 @@ int
 qemuAssignDeviceAliases(virDomainDef *def)
 {
     size_t i;
+    const char *base[VIR_DOMAIN_DEVICE_LAST] =  {
+        [VIR_DOMAIN_DEVICE_DISK] = "disk",
+    };
+
+    if (virDomainAssignDeviceAliases(base, def) < 0)
+        return -1;
 
     for (i = 0; i < def->ndisks; i++) {
         if (qemuAssignDeviceDiskAlias(def, def->disks[i]) < 0)
