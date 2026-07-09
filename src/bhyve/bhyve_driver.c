@@ -2807,6 +2807,115 @@ bhyveDomainRename(virDomainPtr domain,
 }
 
 static int
+bhyveDomainSetLifecycleActionValidate(virDomainDef *def,
+                                      virDomainLifecycle type,
+                                      virDomainLifecycleAction action)
+{
+    virDomainLifecycleAction onPoweroff = def->onPoweroff;
+    virDomainLifecycleAction onReboot = def->onReboot;
+    virDomainLifecycleAction onCrash = def->onCrash;
+
+    switch (type) {
+    case VIR_DOMAIN_LIFECYCLE_POWEROFF:
+        onPoweroff = action;
+        break;
+    case VIR_DOMAIN_LIFECYCLE_REBOOT:
+        onReboot = action;
+        break;
+    case VIR_DOMAIN_LIFECYCLE_CRASH:
+        onCrash = action;
+        break;
+    case VIR_DOMAIN_LIFECYCLE_LAST:
+        break;
+    }
+
+    if (bhyveValidateLifecycleAction(onPoweroff, onReboot, onCrash) < 0)
+        return -1;
+
+    return 0;
+}
+
+static void
+bhyveDomainModifyLifecycleAction(virDomainDef *def,
+                                 virDomainLifecycle type,
+                                 virDomainLifecycleAction action)
+{
+    switch (type) {
+        case VIR_DOMAIN_LIFECYCLE_POWEROFF:
+            def->onPoweroff = action;
+            break;
+        case VIR_DOMAIN_LIFECYCLE_REBOOT:
+            def->onReboot = action;
+            break;
+        case VIR_DOMAIN_LIFECYCLE_CRASH:
+            def->onCrash = action;
+            break;
+        case VIR_DOMAIN_LIFECYCLE_LAST:
+            break;
+    }
+}
+
+static int
+bhyveDomainSetLifecycleAction(virDomainPtr domain,
+                              unsigned int type,
+                              unsigned int action,
+                              unsigned int flags)
+{
+    struct _bhyveConn *privconn = domain->conn->privateData;
+    virDomainObj *vm = NULL;
+    virDomainDef *def = NULL;
+    virDomainDef *persistentDef = NULL;
+    int ret = -1;
+
+    virCheckFlags(VIR_DOMAIN_AFFECT_LIVE |
+                  VIR_DOMAIN_AFFECT_CONFIG, -1);
+
+    if (!virDomainDefLifecycleActionAllowed(type, action))
+        goto cleanup;
+
+    if (!(vm = bhyveDomObjFromDomain(domain)))
+        return -1;
+
+    if (virDomainSetLifecycleActionEnsureACL(domain->conn, vm->def) < 0)
+        goto cleanup;
+
+    if (virDomainObjBeginJob(vm, VIR_JOB_MODIFY) < 0)
+        goto cleanup;
+
+    if (virDomainObjGetDefs(vm, flags, &def, &persistentDef) < 0)
+        goto endjob;
+
+    if ((def && bhyveDomainSetLifecycleActionValidate(def, type, action) < 0) ||
+         (persistentDef && bhyveDomainSetLifecycleActionValidate(persistentDef, type, action) < 0))
+        goto endjob;
+
+    if (def) {
+        bhyveDomainModifyLifecycleAction(def, type, action);
+
+        if (virDomainObjSave(vm, privconn->xmlopt,
+                             BHYVE_STATE_DIR) < 0)
+            goto endjob;
+    }
+
+    if (persistentDef) {
+        bhyveDomainModifyLifecycleAction(persistentDef, type, action);
+
+        if (virDomainDefSave(persistentDef, privconn->xmlopt,
+                             BHYVE_CONFIG_DIR) < 0)
+            goto endjob;
+    }
+
+    ret = 0;
+
+ endjob:
+    virDomainObjEndJob(vm);
+
+ cleanup:
+    virDomainObjEndAPI(&vm);
+    return ret;
+}
+
+static int
 bhyveDomainAgentSetResponseTimeout(virDomainPtr domain,
                                    int timeout,
                                    unsigned int flags)
@@ -3144,6 +3253,7 @@ static virHypervisorDriver bhyveHypervisorDriver = {
     .domainRename = bhyveDomainRename, /* 12.6.0 */
     .domainAgentSetResponseTimeout = bhyveDomainAgentSetResponseTimeout, /* 12.7.0 */
     .domainGetGuestInfo = bhyveDomainGetGuestInfo, /* 12.7.0 */
+    .domainSetLifecycleAction = bhyveDomainSetLifecycleAction, /* 12.8.0 */
 };
 
 
