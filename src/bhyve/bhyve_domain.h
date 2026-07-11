@@ -55,3 +55,6 @@ extern virXMLNamespace virBhyveDriverDomainXMLNamespace;
 int virBhyveDomainObjStartWorker(virDomainObj *dom);
 void virBhyveDomainObjStopWorker(virDomainObj *dom);
 int bhyveDomainNamePathsCleanup(const char *name, bool bestEffort);
+int bhyveValidateLifecycleAction(virDomainLifecycleAction onPoweroff,
+                                 virDomainLifecycleAction onReboot,
+                                 virDomainLifecycleAction onCrash);

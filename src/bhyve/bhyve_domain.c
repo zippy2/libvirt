@@ -520,6 +520,39 @@ bhyveDomainDeviceDefValidate(const virDomainDeviceDef *dev,
 }
 
 
+int
+bhyveValidateLifecycleAction(virDomainLifecycleAction onPoweroff,
+                             virDomainLifecycleAction onReboot,
+                             virDomainLifecycleAction onCrash)
+{
+    if ((onPoweroff != VIR_DOMAIN_LIFECYCLE_ACTION_DESTROY &&
+         onPoweroff != VIR_DOMAIN_LIFECYCLE_ACTION_RESTART) ||
+        (onReboot != VIR_DOMAIN_LIFECYCLE_ACTION_DESTROY &&
+         onReboot != VIR_DOMAIN_LIFECYCLE_ACTION_RESTART)) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("bhyve driver supports only 'restart' and 'destroy' actions for 'on_reboot'/'on_poweroff'"));
+        return -1;
+    }
+
+    if (onCrash != VIR_DOMAIN_LIFECYCLE_ACTION_DESTROY) {
+        virReportError(VIR_ERR_CONFIG_UNSUPPORTED, "%s",
+                       _("bhyve driver does not support 'on_crash' actions other than 'destroy'"));
+        return -1;
+    }
+
+    return 0;
+}
+
+
+static int
+bhyveValidateDomainLifecycleAction(const virDomainDef *def)
+{
+    return bhyveValidateLifecycleAction(def->onPoweroff,
+                                        def->onReboot,
+                                        def->onCrash);
+}
+
+
 static int
 bhyveDomainDefValidate(const virDomainDef *def,
                        void *opaque G_GNUC_UNUSED,
@@ -606,6 +639,9 @@ bhyveDomainDefValidate(const virDomainDef *def,
                            _("Only 'hard_limit' memory tuning parameter is supported by bhyve"));
             return -1;
     }
+
+    if (bhyveValidateDomainLifecycleAction(def) < 0)
+        return -1;
 
     if (!def->os.loader)
         return 0;
