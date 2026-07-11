@@ -1118,12 +1118,6 @@ bhyveDomainShutdownFlags(virDomainPtr dom, unsigned int flags)
     if (!(vm = bhyveDomObjFromDomain(dom)))
         goto cleanup;
 
-    if (vm->def->onPoweroff == VIR_DOMAIN_LIFECYCLE_ACTION_RESTART ||
-        vm->def->onPoweroff == VIR_DOMAIN_LIFECYCLE_ACTION_RESTART_RENAME) {
-        isReboot = true;
-        VIR_INFO("Domain on_poweroff setting overridden, attempting reboot");
-    }
-
     priv = vm->privateData;
     agentRequested = flags & VIR_DOMAIN_SHUTDOWN_GUEST_AGENT;
     signalRequested = flags & VIR_DOMAIN_SHUTDOWN_SIGNAL;
@@ -1188,12 +1182,6 @@ bhyveDomainReboot(virDomainPtr dom, unsigned int flags)
 
     if (!(vm = bhyveDomObjFromDomain(dom)))
         goto cleanup;
-
-    if (vm->def->onReboot == VIR_DOMAIN_LIFECYCLE_ACTION_DESTROY ||
-        vm->def->onReboot == VIR_DOMAIN_LIFECYCLE_ACTION_PRESERVE) {
-        isReboot = false;
-        VIR_INFO("Domain on_reboot setting overridden, shutting down");
-    }
 
     priv = vm->privateData;
     agentRequested = flags & VIR_DOMAIN_REBOOT_GUEST_AGENT;

@@ -161,12 +161,24 @@ bhyveMonitorIO(int watch, int kq, int events G_GNUC_UNUSED, void *opaque)
     } else if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == 0 || mon->reboot) {
             /* 0 - reboot */
-            VIR_INFO("Guest %s rebooted; restarting domain.", name);
-            virBhyveProcessRestart(driver, vm);
+            if (vm->def->onReboot == VIR_DOMAIN_LIFECYCLE_ACTION_DESTROY ||
+                vm->def->onReboot == VIR_DOMAIN_LIFECYCLE_ACTION_PRESERVE) {
+                VIR_INFO("Guest %s rebooted; domain on_reboot setting overridden, shutting down.", name);
+                virBhyveProcessStop(driver, vm, VIR_DOMAIN_SHUTOFF_SHUTDOWN, false);
+            } else {
+                VIR_INFO("Guest %s rebooted; restarting domain.", name);
+                virBhyveProcessRestart(driver, vm);
+            }
         } else if (WEXITSTATUS(status) < 3) {
             /* 1 - shutdown, 2 - halt, 3 - triple fault. others - error */
-            VIR_INFO("Guest %s shut itself down; destroying domain.", name);
-            virBhyveProcessStop(driver, vm, VIR_DOMAIN_SHUTOFF_SHUTDOWN, false);
+            if (vm->def->onPoweroff == VIR_DOMAIN_LIFECYCLE_ACTION_RESTART ||
+                vm->def->onPoweroff == VIR_DOMAIN_LIFECYCLE_ACTION_RESTART_RENAME) {
+                VIR_INFO("Guest %s shut itself down; domain on_poweroff setting overridden, attempting reboot.", name);
+                virBhyveProcessRestart(driver, vm);
+            } else {
+                VIR_INFO("Guest %s shut itself down; destroying domain.", name);
+                virBhyveProcessStop(driver, vm, VIR_DOMAIN_SHUTOFF_SHUTDOWN, false);
+            }
         } else {
             VIR_INFO("Guest %s had an error and exited with status %d; destroying domain.",
                      name, WEXITSTATUS(status));
