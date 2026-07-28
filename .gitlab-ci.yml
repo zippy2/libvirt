@@ -134,7 +134,7 @@ potfile:
   rules:
     - if: '$CI_PROJECT_NAMESPACE == $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
-    - when: never
+    - when: always
   script:
     - source ci/jobs.sh
     - run_potfile
