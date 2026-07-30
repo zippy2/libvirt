@@ -131,6 +131,8 @@ qemuValidateDomainDefHypervFeatures(const virDomainDef *def)
 
     CHECK_HV_FEAT(VIR_DOMAIN_HYPERV_EVMCS, VIR_DOMAIN_HYPERV_VAPIC);
 
+    CHECK_HV_FEAT(VIR_DOMAIN_HYPERV_VSM, VIR_DOMAIN_HYPERV_SYNIC);
+
     if (def->hyperv.features[VIR_DOMAIN_HYPERV_TLBFLUSH] == VIR_TRISTATE_SWITCH_ON &&
         def->hyperv.tlbflush_direct == VIR_TRISTATE_SWITCH_ON) {
         if (def->hyperv.features[VIR_DOMAIN_HYPERV_VAPIC] != VIR_TRISTATE_SWITCH_ON) {
