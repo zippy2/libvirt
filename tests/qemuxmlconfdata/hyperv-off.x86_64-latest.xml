@@ -27,6 +27,7 @@
       <evmcs state='off'/>
       <emsr_bitmap state='off'/>
       <xmm_input state='off'/>
+      <vsm state='off'/>
     </hyperv>
   </features>
   <cpu mode='custom' match='exact' check='none'>
