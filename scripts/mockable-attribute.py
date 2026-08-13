@@ -77,6 +77,12 @@ for func in mocked.keys():
         print("%s is mocked at %s but missing 'ATTRIBUTE_MOCKABLE' annotation" %
               (func, mocked[func]), file=sys.stderr)
 
+for func in noninlined.keys():
+    if func not in mocked:
+        warned = True
+        print("%s has 'ATTRIBUTE_MOCKABLE' annotation but is not mocked" %
+              (func), file=sys.stderr)
+
 if warned:
     sys.exit(1)
 sys.exit(0)
