@@ -6608,6 +6608,7 @@ qemuBuildCpuHypervCommandLine(virBuffer *buf,
         case VIR_DOMAIN_HYPERV_EMSR_BITMAP:
         case VIR_DOMAIN_HYPERV_XMM_INPUT:
         case VIR_DOMAIN_HYPERV_VSM:
+        case VIR_DOMAIN_HYPERV_XMM_OUTPUT:
             if (def->hyperv.features[i] == VIR_TRISTATE_SWITCH_ON) {
                 const char *name = virDomainHypervTypeToString(i);
                 g_autofree char *full_name = g_strdup_printf("hv-%s", name);

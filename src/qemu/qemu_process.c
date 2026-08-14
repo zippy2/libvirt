@@ -4591,6 +4591,7 @@ qemuProcessVerifyHypervFeatures(virDomainDef *def,
         case VIR_DOMAIN_HYPERV_EMSR_BITMAP:
         case VIR_DOMAIN_HYPERV_XMM_INPUT:
         case VIR_DOMAIN_HYPERV_VSM:
+        case VIR_DOMAIN_HYPERV_XMM_OUTPUT:
             virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                            _("host doesn't support hyperv '%1$s' feature"),
                            virDomainHypervTypeToString(i));

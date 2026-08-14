@@ -2161,6 +2161,7 @@ Hypervisors may allow certain CPU / machine features to be toggled on/off.
        <emsr_bitmap state='on'/>
        <xmm_input state='on'/>
        <vsm state='on'/>
+       <xmm_output state='on'/>
      </hyperv>
      <kvm>
        <hidden state='on'/>
@@ -2257,6 +2258,7 @@ are:
    emsr_bitmap     Avoid unnecessary updates to L2 MSR Bitmap upon vmexits.               on, off                                      :since:`10.7.0 (QEMU 7.1)`
    xmm_input       Enable XMM Fast Hypercall Input                                        on, off                                      :since:`10.7.0 (QEMU 7.1)`
    vsm             Enable Virtual Secure Mode                                             on, off                                      :since:`12.7.0 (QEMU 12.0)`
+   xmm_output      Enable XMM Fast Hypercall Output                                       on, off                                      :since:`12.7.0 (QEMU 12.0)`
    =============== ====================================================================== ============================================ ========================================================================
 
    :since:`Since 8.0.0 (QEMU) Since 11.3.0 (Xen)`, the hypervisor can be
