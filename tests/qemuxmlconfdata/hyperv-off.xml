@@ -28,6 +28,7 @@
       <emsr_bitmap state='off'/>
       <xmm_input state='off'/>
       <vsm state='off'/>
+      <xmm_output state='off'/>
     </hyperv>
   </features>
   <clock offset='utc'/>
