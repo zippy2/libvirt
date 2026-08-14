@@ -32,6 +32,7 @@
       <emsr_bitmap state='on'/>
       <xmm_input state='on'/>
       <vsm state='on'/>
+      <xmm_output state='on'/>
     </hyperv>
   </features>
   <cpu mode='custom' match='exact' check='none'>
