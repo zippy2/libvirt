@@ -3883,6 +3883,7 @@ virQEMUCapsCPUFeatureTranslationTable virQEMUCapsCPUFeaturesX86[] = {
     {"hv-vendor_id", "hv-vendor-id"},
     {"hv-emsr_bitmap", "hv-emsr-bitmap"},
     {"hv-xmm_input", "hv-xmm-input"},
+    {"hv-xmm_output", "hv-xmm-output"},
     {NULL, NULL}
 };
 

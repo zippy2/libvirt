@@ -660,6 +660,7 @@ libxlMakeDomBuildInfo(virDomainDef *def,
                 case VIR_DOMAIN_HYPERV_EMSR_BITMAP:
                 case VIR_DOMAIN_HYPERV_XMM_INPUT:
                 case VIR_DOMAIN_HYPERV_VSM:
+                case VIR_DOMAIN_HYPERV_XMM_OUTPUT:
                     virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                                    _("Hyper-v enlightenment feature '%1$s' is not supported for Xen domains."),
                                    virDomainHypervTypeToString(i));
