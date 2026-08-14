@@ -218,6 +218,7 @@ VIR_ENUM_IMPL(virDomainHyperv,
               "emsr_bitmap",
               "xmm_input",
               "vsm",
+              "xmm_output",
 );
 
 VIR_ENUM_IMPL(virDomainKVM,
@@ -17515,6 +17516,7 @@ virDomainFeaturesHyperVDefParse(virDomainDef *def,
         case VIR_DOMAIN_HYPERV_EMSR_BITMAP:
         case VIR_DOMAIN_HYPERV_XMM_INPUT:
         case VIR_DOMAIN_HYPERV_VSM:
+        case VIR_DOMAIN_HYPERV_XMM_OUTPUT:
             break;
 
         case VIR_DOMAIN_HYPERV_TLBFLUSH:
@@ -22408,6 +22410,7 @@ virDomainDefFeaturesCheckABIStability(virDomainDef *src,
             case VIR_DOMAIN_HYPERV_EMSR_BITMAP:
             case VIR_DOMAIN_HYPERV_XMM_INPUT:
             case VIR_DOMAIN_HYPERV_VSM:
+            case VIR_DOMAIN_HYPERV_XMM_OUTPUT:
                 if (src->hyperv.features[i] != dst->hyperv.features[i]) {
                     virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                                    _("State of HyperV enlightenment feature '%1$s' differs: source: '%2$s', destination: '%3$s'"),
@@ -29642,6 +29645,7 @@ virDomainFeaturesHyperVDefFormat(virBuffer *buf,
         case VIR_DOMAIN_HYPERV_EMSR_BITMAP:
         case VIR_DOMAIN_HYPERV_XMM_INPUT:
         case VIR_DOMAIN_HYPERV_VSM:
+        case VIR_DOMAIN_HYPERV_XMM_OUTPUT:
             break;
 
         case VIR_DOMAIN_HYPERV_SPINLOCKS:
