@@ -6,6 +6,9 @@
   <os>
     <type arch='aarch64' machine='virt'>hvm</type>
   </os>
+  <features>
+    <ioapic driver='kvm'/>
+  </features>
   <devices>
     <emulator>/usr/bin/qemu-system-aarch64</emulator>
     <controller type='usb' model='none'/>

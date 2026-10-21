@@ -160,7 +160,9 @@ qemuValidateDomainDefFeatures(const virDomainDef *def,
         switch ((virDomainFeature) i) {
         case VIR_DOMAIN_FEATURE_IOAPIC:
             if (def->features[i] != VIR_DOMAIN_IOAPIC_NONE) {
-                if (!ARCH_IS_X86(def->os.arch)) {
+                if (!ARCH_IS_X86(def->os.arch) &&
+                    !(qemuDomainIsARMVirt(def) &&
+                      def->features[i] == VIR_DOMAIN_IOAPIC_KVM)) {
                     virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                                    _("The '%1$s' feature is not supported for architecture '%2$s' or machine type '%3$s'"),
                                    featureName,
