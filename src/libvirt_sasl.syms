@@ -18,6 +18,7 @@ virNetSASLSessionExtKeySize;
 virNetSASLSessionGetIdentity;
 virNetSASLSessionGetKeySize;
 virNetSASLSessionGetMaxBufSize;
+virNetSASLSessionIsStarted;
 virNetSASLSessionListMechanisms;
 virNetSASLSessionNewClient;
 virNetSASLSessionNewServer;

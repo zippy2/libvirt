@@ -43,6 +43,7 @@ struct _virNetSASLSession {
     sasl_conn_t *conn;
     size_t maxbufsize;
     sasl_callback_t *callbacks;
+    bool started;
 };
 
 
@@ -529,6 +530,13 @@ int virNetSASLSessionServerStart(virNetSASLSession *sasl,
     int ret = -1;
 
     virObjectLock(sasl);
+
+    if (sasl->started) {
+        virReportError(VIR_ERR_AUTH_FAILED, "%s",
+                       _("unexpected state of SASL session"));
+        goto cleanup;
+    }
+
     err = sasl_server_start(sasl->conn,
                             mechname,
                             clientin,
@@ -542,13 +550,16 @@ int virNetSASLSessionServerStart(virNetSASLSession *sasl,
     case SASL_OK:
         if (virNetSASLSessionUpdateBufSize(sasl) < 0)
             goto cleanup;
+        sasl->started = true;
         ret = VIR_NET_SASL_COMPLETE;
         break;
     case SASL_CONTINUE:
         ret = VIR_NET_SASL_CONTINUE;
+        sasl->started = true;
         break;
     case SASL_INTERACT:
         ret = VIR_NET_SASL_INTERACT;
+        sasl->started = true;
         break;
     default:
         virReportError(VIR_ERR_AUTH_FAILED,
@@ -575,6 +586,13 @@ int virNetSASLSessionServerStep(virNetSASLSession *sasl,
     int ret = -1;
 
     virObjectLock(sasl);
+
+    if (sasl->started == false) {
+        virReportError(VIR_ERR_AUTH_FAILED, "%s",
+                       _("unexpected state of SASL session"));
+        goto cleanup;
+    }
+
     err = sasl_server_step(sasl->conn,
                            clientin,
                            inlen,
@@ -705,6 +723,13 @@ void virNetSASLSessionDispose(void *obj)
     if (sasl->conn)
         sasl_dispose(&sasl->conn);
     g_free(sasl->callbacks);
+}
+
+bool virNetSASLSessionIsStarted(virNetSASLSession *sasl)
+{
+    VIR_LOCK_GUARD lock = virObjectLockGuard(sasl);
+
+    return sasl->started;
 }
 
 #ifdef __APPLE__
