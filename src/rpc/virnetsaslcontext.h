@@ -109,3 +109,5 @@ ssize_t virNetSASLSessionDecode(virNetSASLSession *sasl,
                                 size_t inputLen,
                                 const char **output,
                                 size_t *outputlen);
+
+bool virNetSASLSessionIsStarted(virNetSASLSession *sasl);
