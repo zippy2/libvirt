@@ -268,6 +268,12 @@ virResctrlInfoMonFree(virResctrlInfoMon *mon)
 }
 
 
+typedef struct _virResctrlOneAlloc virResctrlOneAlloc;
+struct _virResctrlOneAlloc {
+    unsigned int id;
+    unsigned long long size;
+};
+
 /* virResctrlAlloc and virResctrlMonitor */
 
 /*
@@ -342,7 +348,7 @@ struct _virResctrlAllocPerType {
      * in virResctrlAlloc (and most of libvirt) goes with pointer arrays we would
      * have to have one more level of allocation anyway, so this stays faithful to
      * the concept */
-    unsigned long long **sizes;
+    virResctrlOneAlloc **sizes;
     size_t nsizes;
 
     /* Mask for each cache */
@@ -1159,7 +1165,7 @@ virResctrlAllocIsEmpty(virResctrlAlloc *alloc)
                 continue;
 
             for (k = 0; k < a_type->nsizes; k++) {
-                if (a_type->sizes[k])
+                if (a_type->sizes[k]->size)
                     return false;
             }
 
@@ -1235,18 +1241,29 @@ virResctrlAllocUpdateSize(virResctrlAlloc *alloc,
                           unsigned long long size)
 {
     virResctrlAllocPerType *a_type = virResctrlAllocGetType(alloc, level, type);
+    virResctrlOneAlloc *one = NULL;
+    size_t i;
 
     if (!a_type)
         return -1;
 
-    if (a_type->nsizes <= cache)
-        VIR_EXPAND_N(a_type->sizes, a_type->nsizes,
-                     cache - a_type->nsizes + 1);
+    for (i = 0; i < a_type->nsizes; i++) {
+        if (a_type->sizes[i]->id != cache)
+            continue;
 
-    if (!a_type->sizes[cache])
-        a_type->sizes[cache] = g_new0(unsigned long long, 1);
+        one = a_type->sizes[i];
+    }
 
-    *(a_type->sizes[cache]) = size;
+    if (one) {
+        one->size = size;
+        return 0;
+    }
+
+    one = g_new0(virResctrlOneAlloc, 1);
+    one->id = cache;
+    one->size = size;
+
+    VIR_APPEND_ELEMENT(a_type->sizes, a_type->nsizes, one);
 
     return 0;
 }
@@ -1270,6 +1287,7 @@ virResctrlAllocCheckCollision(virResctrlAlloc *alloc,
 {
     virResctrlAllocPerLevel *a_level = NULL;
     virResctrlAllocPerType *a_type = NULL;
+    size_t i;
 
     if (!alloc)
         return false;
@@ -1286,24 +1304,48 @@ virResctrlAllocCheckCollision(virResctrlAlloc *alloc,
 
     /* If there is an allocation for type 'both', there can be no other
      * allocation for the same cache */
-    if (a_type && a_type->nsizes > cache && a_type->sizes[cache])
-        return true;
+    if (a_type) {
+        for (i = 0; i < a_type->nsizes; i++) {
+            if (a_type->sizes[i]->id == cache) {
+                return true;
+
+            }
+        }
+    }
 
     if (type == VIR_CACHE_TYPE_BOTH) {
         a_type = a_level->types[VIR_CACHE_TYPE_CODE];
 
-        if (a_type && a_type->nsizes > cache && a_type->sizes[cache])
-            return true;
+        if (a_type) {
+            for (i = 0; i < a_type->nsizes; i++) {
+                if (a_type->sizes[i]->id == cache) {
+                    return true;
+
+                }
+            }
+        }
 
         a_type = a_level->types[VIR_CACHE_TYPE_DATA];
 
-        if (a_type && a_type->nsizes > cache && a_type->sizes[cache])
-            return true;
+        if (a_type) {
+            for (i = 0; i < a_type->nsizes; i++) {
+                if (a_type->sizes[i]->id == cache) {
+                    return true;
+
+                }
+            }
+        }
     } else {
         a_type = a_level->types[type];
 
-        if (a_type && a_type->nsizes > cache && a_type->sizes[cache])
-            return true;
+        if (a_type) {
+            for (i = 0; i < a_type->nsizes; i++) {
+                if (a_type->sizes[i]->id == cache) {
+                    return true;
+
+                }
+            }
+        }
     }
 
     return false;
@@ -1336,7 +1378,7 @@ virResctrlAllocForeachCache(virResctrlAlloc *alloc,
     int ret = 0;
     unsigned int level = 0;
     unsigned int type = 0;
-    unsigned int cache = 0;
+    size_t i;
 
     if (!alloc)
         return 0;
@@ -1353,13 +1395,10 @@ virResctrlAllocForeachCache(virResctrlAlloc *alloc,
             if (!a_type)
                 continue;
 
-            for (cache = 0; cache < a_type->nsizes; cache++) {
-                unsigned long long *size = a_type->sizes[cache];
+            for (i = 0; i < a_type->nsizes; i++) {
+                virResctrlOneAlloc *one = a_type->sizes[i];
 
-                if (!size)
-                    continue;
-
-                ret = cb(level, type, cache, *size, opaque);
+                ret = cb(level, type, one->id, one->size, opaque);
                 if (ret < 0)
                     return ret;
             }
@@ -2028,7 +2067,7 @@ virResctrlAllocFindUnused(virResctrlAlloc *alloc,
                           unsigned int type,
                           unsigned int cache)
 {
-    unsigned long long *size = alloc->levels[level]->types[type]->sizes[cache];
+    virResctrlOneAlloc *one = NULL;
     g_autoptr(virBitmap) a_mask = NULL;
     virBitmap *f_mask = NULL;
     unsigned long long need_bits;
@@ -2037,7 +2076,14 @@ virResctrlAllocFindUnused(virResctrlAlloc *alloc,
     ssize_t last_bits = 0;
     ssize_t last_pos = -1;
 
-    if (!size)
+    for (i = 0; i < alloc->levels[level]->types[type]->nsizes; i++) {
+        if (alloc->levels[level]->types[type]->sizes[i]->id == cache) {
+            one = alloc->levels[level]->types[type]->sizes[i];
+            break;
+        }
+    }
+
+    if (!one)
         return 0;
 
     if (cache >= f_type->nmasks) {
@@ -2055,26 +2101,26 @@ virResctrlAllocFindUnused(virResctrlAlloc *alloc,
         return -1;
     }
 
-    if (*size == i_type->size) {
+    if (one->size == i_type->size) {
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                        _("Cache allocation for the whole cache is not possible, specify size smaller than %1$llu"),
                        i_type->size);
         return -1;
     }
 
-    need_bits = *size / i_type->control.granularity;
+    need_bits = one->size / i_type->control.granularity;
 
-    if (*size % i_type->control.granularity) {
+    if (one->size % i_type->control.granularity) {
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                        _("Cache allocation of size %1$llu is not divisible by granularity %2$llu"),
-                       *size, i_type->control.granularity);
+                       one->size, i_type->control.granularity);
         return -1;
     }
 
     if (need_bits < i_type->min_cbm_bits) {
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                        _("Cache allocation of size %1$llu is smaller than the minimum allowed allocation %2$llu"),
-                       *size,
+                       one->size,
                        i_type->control.granularity * i_type->min_cbm_bits);
         return -1;
     }
@@ -2112,7 +2158,7 @@ virResctrlAllocFindUnused(virResctrlAlloc *alloc,
     if (last_pos < 0) {
         virReportError(VIR_ERR_CONFIG_UNSUPPORTED,
                        _("Not enough room for allocation of %1$llu bytes for level %2$u cache %3$u scope type '%4$s'"),
-                       *size, level, cache,
+                       one->size, level, cache,
                        virCacheTypeToString(type));
         return -1;
     }

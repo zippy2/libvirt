@@ -7,7 +7,7 @@
   <cputune>
     <cachetune vcpus='0-1'>
       <cache id='0' level='3' type='both' size='768' unit='KiB'/>
-      <cache id='1' level='3' type='both' size='768' unit='KiB'/>
+      <cache id='4294967295' level='3' type='both' size='768' unit='KiB'/>
     </cachetune>
     <memorytune vcpus='0-1'>
       <monitor vcpus='0-1'/>
